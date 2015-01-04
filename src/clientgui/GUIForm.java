@@ -12,10 +12,12 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,6 +69,11 @@ public class GUIForm extends javax.swing.JFrame {
     private HashMap<String, Professor> profList;
     private HashMap<String, TimeSlot> timeslotList;
     private HashMap<String, Schedule> scheduledCoursesList;
+    private HashMap<String, Schedule> resultListByCourses;
+    private HashMap<String, ArrayList<Schedule>> resultListByProfessor;
+    private HashMap<Integer, String> timeslotLookup;
+    private HashMap<Integer, String> profLookup;
+    private HashMap<Integer, String> sectionLookup;
     protected Vector courseListData;
     protected Vector courseSectionListData;
     protected Vector unscheduledCourses;
@@ -83,7 +90,7 @@ public class GUIForm extends javax.swing.JFrame {
     private int mutationProbability;
     private TimeSlotVerifier tsVerify;
     private DefaultTableModel dtm;
-
+    private int dtmSelectedRow;
     private JPanel[][] timeblocks;
 
     /**
@@ -95,7 +102,13 @@ public class GUIForm extends javax.swing.JFrame {
                     @Override
                     public void windowClosing(WindowEvent evt) {
                         String[] options = {"Yes", "No", "Browse"};
-                        int choice = JOptionPane.showOptionDialog(pnlContainer, "<html>Would you like to save the current setup to<br />" + txtSetupFileName.getText() + "?</html>", "Save Setup To File", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "Yes");
+                        String message;
+                        if (txtSetupFileName.getText().isEmpty()) {
+                            message = "<html>Would you like to save the current setup?</html>";
+                        } else {
+                            message = "<html>Would you like to save the current setup to<br />" + txtSetupFileName.getText() + "?</html>";
+                        }
+                        int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Save Setup To File", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "Yes");
                         if (choice == 0) {
                             btnSaveSetupActionPerformed(null);
                         } else if (choice == 2) {
@@ -115,33 +128,51 @@ public class GUIForm extends javax.swing.JFrame {
         profList = new HashMap<>();
         timeslotList = new HashMap<>();
         scheduledCoursesList = new HashMap<>();
+        resultListByCourses = new HashMap<>();
+        resultListByProfessor = new HashMap<>();
         courseListData = new Vector();
         profListData = new Vector();
         timeslotListData = new Vector();
         courseSectionListData = new Vector();
         unscheduledCourses = new Vector();
         initComponents();
+        timeslotLookup = new HashMap<>();
+        profLookup = new HashMap<>();
+        sectionLookup = new HashMap<>();
+        tabbedPanels.setEnabledAt(5, false);
         timeblocks = new JPanel[8][56];
-        int hour = 8;
-        pnlTimeColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlMondayColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlTuesdayColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlWednesdayColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlThursdayColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlFridayColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlSaturdayColumn.setLayout(new GridLayout(57, 1, 0, 2));
-        pnlSundayColumn.setLayout(new GridLayout(57, 1, 0, 2));
+
+        pnlTimeColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlMondayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlTuesdayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlWednesdayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlThursdayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlFridayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlSaturdayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        pnlSundayColumn.setLayout(new GridLayout(56, 1, 0, 2));
+        String[] days = {"", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
         for (int day = 0; day < 8; day++) {
-            Random rand = new Random();
-            Color today = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+            int hour = 8;
+            //Random rand = new Random();
+            //Color today = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+            Color today = Color.WHITE;
             for (int time = 0; time < 56; time++) {
                 timeblocks[day][time] = new JPanel();
-                //timeblocks[day][time].setPreferredSize(new Dimension(pnlTimeColumn.getWidth(), 64));
-                if (day == 0 && time % 4 == 0) {
-                    timeblocks[day][time].add(new JLabel(String.valueOf(hour++) + ":00"));
-                }else{
-                    timeblocks[day][time].setBackground(today);
+                if (time % 4 == 0 && time > 0) {
+                    hour++;
                 }
+                if (day == 0 && time % 4 == 0) {
+                    timeblocks[day][time].setPreferredSize(new Dimension(pnlTimeColumn.getWidth() - 2, 25));
+                    timeblocks[day][time].add(new JLabel(ConvertToRegularTime(hour, 0)));
+                    timeblocks[day][time].setToolTipText(days[day] + " " + ConvertToRegularTime(hour, 0));
+                } else {
+                    timeblocks[day][time].setPreferredSize(new Dimension(pnlMondayColumn.getWidth() - 2, 25));
+                    timeblocks[day][time].setToolTipText(days[day] + " " + ConvertToRegularTime(hour, 15 * (time % 4)));
+                }
+//                else{
+
+                timeblocks[day][time].setBackground(today);
+//                }
                 switch (day) {
                     case 0:
                         pnlTimeColumn.add(timeblocks[day][time]);
@@ -188,7 +219,6 @@ public class GUIForm extends javax.swing.JFrame {
         dtm = new DefaultTableModel(0, 3);
         dtm.setColumnIdentifiers(new String[]{"Course", "Professor", "Timeslot"});
         tableSchedule.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (e.getValueIsAdjusting()) {
@@ -196,13 +226,14 @@ public class GUIForm extends javax.swing.JFrame {
                 }
                 int rawIndex = tableSchedule.getSelectedRow();
                 if (rawIndex >= 0 && rawIndex < dtm.getRowCount()) {
-                    int row = tableSchedule.convertRowIndexToModel(rawIndex);
-                    String course = dtm.getValueAt(row, 0).toString();
-                    String prof = dtm.getValueAt(row, 1).toString();
-                    String time = dtm.getValueAt(row, 2).toString();
+                    dtmSelectedRow = tableSchedule.convertRowIndexToModel(rawIndex);
+                    String course = dtm.getValueAt(dtmSelectedRow, 0).toString();
+                    String prof = dtm.getValueAt(dtmSelectedRow, 1).toString();
+                    String time = dtm.getValueAt(dtmSelectedRow, 2).toString();
                     cbScheduleCourse.setSelectedItem(course);
                     cbScheduleProfessor.setSelectedItem(prof);
                     cbScheduleTimeslot.setSelectedItem(time);
+                    currentSchedule = scheduledCoursesList.get(course);
                 }
             }
         });
@@ -250,7 +281,7 @@ public class GUIForm extends javax.swing.JFrame {
                         timeslotList = (HashMap<String, TimeSlot>) input.readObject();
                         scheduledCoursesList = (HashMap<String, Schedule>) input.readObject();
                         if (scheduledCoursesList == null) {
-                            scheduledCoursesList = new HashMap<String, Schedule>();
+                            scheduledCoursesList = new HashMap<>();
                         } else {
                             for (String s : scheduledCoursesList.keySet()) {
                                 unscheduledCourses.removeElement(s);
@@ -323,6 +354,7 @@ public class GUIForm extends javax.swing.JFrame {
                     System.err.println(e.getMessage());
                     e.printStackTrace();
                 }
+                tabbedPanels.setEnabledAt(5, true);
             }
         } else {
             generations = 5000;
@@ -361,6 +393,13 @@ public class GUIForm extends javax.swing.JFrame {
         sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
         sorter.setSortKeys(sortKeys);
         sorter.sort();
+    }
+
+    private void fixIDs() {
+        //Fix all the professor IDs
+        updateProfessorIDs();
+        //Fix all the timeslot IDs
+        updateTimeSlotIDs();
     }
 
     public class DoubleValueInputVerifier extends InputVerifier {
@@ -412,8 +451,6 @@ public class GUIForm extends javax.swing.JFrame {
     private void initComponents() {
 
         viewByGroup = new javax.swing.ButtonGroup();
-        btnNext = new javax.swing.JButton();
-        btnBack = new javax.swing.JButton();
         pnlContainer = new javax.swing.JPanel();
         tabbedPanels = new javax.swing.JTabbedPane();
         pnlCourses = new javax.swing.JPanel();
@@ -557,51 +594,48 @@ public class GUIForm extends javax.swing.JFrame {
         listViewBySelection = new javax.swing.JList();
         btnResultChangeUndo = new javax.swing.JButton();
         btnResultChangeRedo = new javax.swing.JButton();
-        lblChangeEntitiyTo = new javax.swing.JLabel();
+        lblChangeProfessorTo = new javax.swing.JLabel();
         lblChangeTimeTo = new javax.swing.JLabel();
-        cbEntitySelection = new javax.swing.JComboBox();
+        cbProfessorSelection = new javax.swing.JComboBox();
         cbTimeSelection = new javax.swing.JComboBox();
+        lblScheduleSectionLabel = new javax.swing.JLabel();
+        cbScheduleSection = new javax.swing.JComboBox();
         btnStatistics = new javax.swing.JButton();
         btnGenerateResult = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        scrollSchedule = new javax.swing.JScrollPane();
         pnlSchedule = new javax.swing.JPanel();
         pnlTimeColumn = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
         pnlMondayColumn = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
         pnlTuesdayColumn = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
         pnlWednesdayColumn = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
         pnlThursdayColumn = new javax.swing.JPanel();
-        jLabel5 = new javax.swing.JLabel();
         pnlFridayColumn = new javax.swing.JPanel();
-        jLabel6 = new javax.swing.JLabel();
         pnlSaturdayColumn = new javax.swing.JPanel();
-        jLabel7 = new javax.swing.JLabel();
         pnlSundayColumn = new javax.swing.JPanel();
-        jLabel8 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        jPanel2 = new javax.swing.JPanel();
+        lblTimeColumn = new javax.swing.JLabel();
+        jPanel3 = new javax.swing.JPanel();
+        lblSundayColumn1 = new javax.swing.JLabel();
+        jPanel4 = new javax.swing.JPanel();
+        lblSaturdayColumn = new javax.swing.JLabel();
+        jPanel5 = new javax.swing.JPanel();
+        lblFridayColumn = new javax.swing.JLabel();
+        jPanel6 = new javax.swing.JPanel();
+        lblThursdayColumn = new javax.swing.JLabel();
+        jPanel7 = new javax.swing.JPanel();
+        lblWednesdayColumn = new javax.swing.JLabel();
+        jPanel8 = new javax.swing.JPanel();
+        lblTuesdayColumn = new javax.swing.JLabel();
+        jPanel9 = new javax.swing.JPanel();
+        lblMondayColumn = new javax.swing.JLabel();
+        btnOpenResult = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(800, 800));
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
-            }
-        });
-
-        btnNext.setText("Next");
-        btnNext.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnNextActionPerformed(evt);
-            }
-        });
-
-        btnBack.setText("Back");
-        btnBack.setEnabled(false);
-        btnBack.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnBackActionPerformed(evt);
             }
         });
 
@@ -663,7 +697,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addGroup(pnlCoursePreferenceLayout.createSequentialGroup()
                         .addComponent(lblCoursePrefHighest)
                         .addGap(29, 29, 29)
-                        .addComponent(cbCoursePrefHighest, 0, 611, Short.MAX_VALUE))
+                        .addComponent(cbCoursePrefHighest, 0, 683, Short.MAX_VALUE))
                     .addGroup(pnlCoursePreferenceLayout.createSequentialGroup()
                         .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblCoursePrefNormal)
@@ -729,7 +763,7 @@ public class GUIForm extends javax.swing.JFrame {
             .addGroup(pnlIncompatibleCoursesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlIncompatibleCoursesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 676, Short.MAX_VALUE)
+                    .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 748, Short.MAX_VALUE)
                     .addGroup(pnlIncompatibleCoursesLayout.createSequentialGroup()
                         .addComponent(dropIncompCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 481, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -744,7 +778,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(dropIncompCourses, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnModifyIncomp))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 163, Short.MAX_VALUE)
+                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 169, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -972,7 +1006,7 @@ public class GUIForm extends javax.swing.JFrame {
             .addGroup(pnlProfCourseTaughtLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlProfCourseTaughtLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 678, Short.MAX_VALUE)
+                    .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 750, Short.MAX_VALUE)
                     .addGroup(pnlProfCourseTaughtLayout.createSequentialGroup()
                         .addComponent(cbProfCourseTaught, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
@@ -987,7 +1021,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(btnAddCourseTaught)
                     .addComponent(cbProfCourseTaught, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 182, Short.MAX_VALUE)
+                .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1135,7 +1169,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblMondayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtMondayEnd, javax.swing.GroupLayout.DEFAULT_SIZE, 290, Short.MAX_VALUE)
+                .addComponent(txtMondayEnd, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
                 .addContainerGap())
         );
         pnlMondayLayout.setVerticalGroup(
@@ -1385,7 +1419,7 @@ public class GUIForm extends javax.swing.JFrame {
                         .addContainerGap()
                         .addComponent(btnNewTimeslot)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(spTimeslotList, javax.swing.GroupLayout.DEFAULT_SIZE, 702, Short.MAX_VALUE))
+                        .addComponent(spTimeslotList, javax.swing.GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlTimeSlotsLayout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1436,6 +1470,7 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
+        listUnscheduledCourses.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         listUnscheduledCourses.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
             public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
                 listUnscheduledCoursesValueChanged(evt);
@@ -1456,14 +1491,14 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                         .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblUnscheduledCourses, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
+                            .addComponent(lblUnscheduledCourses, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
                             .addComponent(spUnscheduledCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                                 .addComponent(lblScheduledCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGap(2, 2, 2))
-                            .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 696, Short.MAX_VALUE)))
+                            .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)))
                     .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                         .addComponent(btnSaveSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1506,7 +1541,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(spUnscheduledCourses)
-                    .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 561, Short.MAX_VALUE))
+                    .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1545,7 +1580,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(lblPopulationSize)
                     .addComponent(lblMutationProbabilty)
                     .addComponent(lblReplacementWait))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 183, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 255, Short.MAX_VALUE)
                 .addGroup(pnlAdvancedConfigLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(spinnerGenerations, javax.swing.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)
                     .addComponent(spinnerPopulationSize)
@@ -1656,7 +1691,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(btnSaveSetup, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(130, 130, 130)
                 .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(158, Short.MAX_VALUE))
+                .addContainerGap(164, Short.MAX_VALUE))
         );
 
         tabbedPanels.addTab("Configuration", pnlConfiguration);
@@ -1665,6 +1700,11 @@ public class GUIForm extends javax.swing.JFrame {
         lblResultFile.setText("Result File");
 
         btnBrowseResult.setText("Browse");
+        btnBrowseResult.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBrowseResultActionPerformed(evt);
+            }
+        });
 
         txtResultPath.setEditable(false);
         txtResultPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1675,30 +1715,52 @@ public class GUIForm extends javax.swing.JFrame {
 
         pnlViewByControls.setBorder(javax.swing.BorderFactory.createTitledBorder("View By"));
 
+        viewByGroup.add(rdoCourse);
+        rdoCourse.setSelected(true);
         rdoCourse.setText("Section");
+        rdoCourse.setEnabled(false);
 
+        viewByGroup.add(rdoProfessor);
         rdoProfessor.setText("Professor");
+        rdoProfessor.setEnabled(false);
+        rdoProfessor.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                rdoProfessorItemStateChanged(evt);
+            }
+        });
 
-        listViewBySelection.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
+        listViewBySelection.setEnabled(false);
+        listViewBySelection.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                listViewBySelectionValueChanged(evt);
+            }
         });
         spViewBySelection.setViewportView(listViewBySelection);
 
         btnResultChangeUndo.setText("Undo");
+        btnResultChangeUndo.setEnabled(false);
 
         btnResultChangeRedo.setText("Redo");
+        btnResultChangeRedo.setEnabled(false);
 
-        lblChangeEntitiyTo.setLabelFor(cbEntitySelection);
-        lblChangeEntitiyTo.setText("Change Professor to: ");
+        lblChangeProfessorTo.setLabelFor(cbProfessorSelection);
+        lblChangeProfessorTo.setText("Professor");
 
         lblChangeTimeTo.setLabelFor(cbTimeSelection);
-        lblChangeTimeTo.setText("Change time to:");
+        lblChangeTimeTo.setText("Time Slot");
 
-        cbEntitySelection.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cbProfessorSelection.setEnabled(false);
 
-        cbTimeSelection.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cbTimeSelection.setEnabled(false);
+
+        lblScheduleSectionLabel.setText("Section");
+
+        cbScheduleSection.setEnabled(false);
+        cbScheduleSection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbScheduleSectionActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlViewByControlsLayout = new javax.swing.GroupLayout(pnlViewByControls);
         pnlViewByControls.setLayout(pnlViewByControlsLayout);
@@ -1713,23 +1775,22 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(spViewBySelection, javax.swing.GroupLayout.PREFERRED_SIZE, 279, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblChangeEntitiyTo)
-                    .addComponent(lblChangeTimeTo))
+                    .addComponent(lblChangeProfessorTo)
+                    .addComponent(lblChangeTimeTo)
+                    .addComponent(lblScheduleSectionLabel))
                 .addGap(18, 18, 18)
                 .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlViewByControlsLayout.createSequentialGroup()
-                        .addComponent(cbEntitySelection, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnResultChangeUndo))
-                    .addGroup(pnlViewByControlsLayout.createSequentialGroup()
-                        .addComponent(cbTimeSelection, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnResultChangeRedo)))
+                    .addComponent(cbProfessorSelection, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cbScheduleSection, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cbTimeSelection, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnResultChangeUndo)
+                    .addComponent(btnResultChangeRedo))
                 .addContainerGap())
         );
         pnlViewByControlsLayout.setVerticalGroup(
             pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(spViewBySelection)
             .addGroup(pnlViewByControlsLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(rdoCourse)
@@ -1737,25 +1798,36 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(rdoProfessor)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(pnlViewByControlsLayout.createSequentialGroup()
-                .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnResultChangeUndo, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnlViewByControlsLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblChangeEntitiyTo)
-                            .addComponent(cbEntitySelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnResultChangeRedo, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblChangeTimeTo)
-                        .addComponent(cbTimeSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(spViewBySelection, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(pnlViewByControlsLayout.createSequentialGroup()
+                            .addContainerGap()
+                            .addComponent(btnResultChangeUndo))
+                        .addGroup(pnlViewByControlsLayout.createSequentialGroup()
+                            .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblScheduleSectionLabel)
+                                .addComponent(cbScheduleSection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblChangeProfessorTo)
+                                .addComponent(cbProfessorSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblChangeTimeTo)
+                                .addComponent(cbTimeSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(btnResultChangeRedo)))))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
         btnStatistics.setText("Statistics");
+        btnStatistics.setEnabled(false);
 
         btnGenerateResult.setText("Generate Output File");
+        btnGenerateResult.setEnabled(false);
+
+        scrollSchedule.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        scrollSchedule.setEnabled(false);
 
         pnlSchedule.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
@@ -1763,158 +1835,120 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
-        pnlTimeColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
-        pnlTimeColumn.setMinimumSize(new java.awt.Dimension(0, 0));
-
-        jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Time");
+        pnlTimeColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
+        pnlTimeColumn.setMinimumSize(new java.awt.Dimension(152, 20));
+        pnlTimeColumn.setPreferredSize(new java.awt.Dimension(152, 498));
 
         javax.swing.GroupLayout pnlTimeColumnLayout = new javax.swing.GroupLayout(pnlTimeColumn);
         pnlTimeColumn.setLayout(pnlTimeColumnLayout);
         pnlTimeColumnLayout.setHorizontalGroup(
             pnlTimeColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
+            .addGap(0, 150, Short.MAX_VALUE)
         );
         pnlTimeColumnLayout.setVerticalGroup(
             pnlTimeColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlTimeColumnLayout.createSequentialGroup()
-                .addComponent(jLabel1)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlMondayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlMondayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlMondayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
         pnlMondayColumn.setPreferredSize(new java.awt.Dimension(112, 16));
-
-        jLabel2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel2.setText("Monday");
 
         javax.swing.GroupLayout pnlMondayColumnLayout = new javax.swing.GroupLayout(pnlMondayColumn);
         pnlMondayColumn.setLayout(pnlMondayColumnLayout);
         pnlMondayColumnLayout.setHorizontalGroup(
             pnlMondayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 110, Short.MAX_VALUE)
         );
         pnlMondayColumnLayout.setVerticalGroup(
             pnlMondayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlMondayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel2)
-                .addGap(0, 482, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlTuesdayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlTuesdayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlTuesdayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
-
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel3.setText("Tuesday");
 
         javax.swing.GroupLayout pnlTuesdayColumnLayout = new javax.swing.GroupLayout(pnlTuesdayColumn);
         pnlTuesdayColumn.setLayout(pnlTuesdayColumnLayout);
         pnlTuesdayColumnLayout.setHorizontalGroup(
             pnlTuesdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 110, Short.MAX_VALUE)
         );
         pnlTuesdayColumnLayout.setVerticalGroup(
             pnlTuesdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlTuesdayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel3)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlWednesdayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlWednesdayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlWednesdayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
-
-        jLabel4.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel4.setText("Wednesday");
 
         javax.swing.GroupLayout pnlWednesdayColumnLayout = new javax.swing.GroupLayout(pnlWednesdayColumn);
         pnlWednesdayColumn.setLayout(pnlWednesdayColumnLayout);
         pnlWednesdayColumnLayout.setHorizontalGroup(
             pnlWednesdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 110, Short.MAX_VALUE)
         );
         pnlWednesdayColumnLayout.setVerticalGroup(
             pnlWednesdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlWednesdayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel4)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlThursdayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlThursdayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlThursdayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
-
-        jLabel5.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel5.setText("Thursday");
 
         javax.swing.GroupLayout pnlThursdayColumnLayout = new javax.swing.GroupLayout(pnlThursdayColumn);
         pnlThursdayColumn.setLayout(pnlThursdayColumnLayout);
         pnlThursdayColumnLayout.setHorizontalGroup(
             pnlThursdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel5, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 110, Short.MAX_VALUE)
         );
         pnlThursdayColumnLayout.setVerticalGroup(
             pnlThursdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlThursdayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel5)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlFridayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlFridayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlFridayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
-
-        jLabel6.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel6.setText("Friday");
+        pnlFridayColumn.setPreferredSize(new java.awt.Dimension(112, 16));
 
         javax.swing.GroupLayout pnlFridayColumnLayout = new javax.swing.GroupLayout(pnlFridayColumn);
         pnlFridayColumn.setLayout(pnlFridayColumnLayout);
         pnlFridayColumnLayout.setHorizontalGroup(
             pnlFridayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 110, Short.MAX_VALUE)
         );
         pnlFridayColumnLayout.setVerticalGroup(
             pnlFridayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlFridayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel6)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlSaturdayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlSaturdayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlSaturdayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
         pnlSaturdayColumn.setPreferredSize(new java.awt.Dimension(112, 16));
-
-        jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel7.setText("Saturday");
 
         javax.swing.GroupLayout pnlSaturdayColumnLayout = new javax.swing.GroupLayout(pnlSaturdayColumn);
         pnlSaturdayColumn.setLayout(pnlSaturdayColumnLayout);
         pnlSaturdayColumnLayout.setHorizontalGroup(
             pnlSaturdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 110, Short.MAX_VALUE)
         );
         pnlSaturdayColumnLayout.setVerticalGroup(
             pnlSaturdayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlSaturdayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel7)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
-        pnlSundayColumn.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        pnlSundayColumn.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 1, 0, 1, new java.awt.Color(0, 0, 0)));
         pnlSundayColumn.setMinimumSize(new java.awt.Dimension(112, 100));
-
-        jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel8.setText("Sunday");
 
         javax.swing.GroupLayout pnlSundayColumnLayout = new javax.swing.GroupLayout(pnlSundayColumn);
         pnlSundayColumn.setLayout(pnlSundayColumnLayout);
         pnlSundayColumnLayout.setHorizontalGroup(
             pnlSundayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 110, Short.MAX_VALUE)
+            .addGap(0, 112, Short.MAX_VALUE)
         );
         pnlSundayColumnLayout.setVerticalGroup(
             pnlSundayColumnLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlSundayColumnLayout.createSequentialGroup()
-                .addComponent(jLabel8)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addGap(0, 536, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout pnlScheduleLayout = new javax.swing.GroupLayout(pnlSchedule);
@@ -1922,7 +1956,7 @@ public class GUIForm extends javax.swing.JFrame {
         pnlScheduleLayout.setHorizontalGroup(
             pnlScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlScheduleLayout.createSequentialGroup()
-                .addComponent(pnlTimeColumn, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnlTimeColumn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlMondayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1940,17 +1974,195 @@ public class GUIForm extends javax.swing.JFrame {
         );
         pnlScheduleLayout.setVerticalGroup(
             pnlScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(pnlTimeColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(pnlMondayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-            .addComponent(pnlTuesdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-            .addComponent(pnlWednesdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-            .addComponent(pnlThursdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-            .addComponent(pnlFridayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(pnlSaturdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
-            .addComponent(pnlSundayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
+            .addComponent(pnlTimeColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE)
+            .addComponent(pnlMondayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE)
+            .addComponent(pnlTuesdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(pnlWednesdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(pnlThursdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(pnlFridayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE)
+            .addComponent(pnlSaturdayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 536, Short.MAX_VALUE)
+            .addComponent(pnlSundayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        jScrollPane1.setViewportView(pnlSchedule);
+        scrollSchedule.setViewportView(pnlSchedule);
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 2, 0, new java.awt.Color(0, 0, 0)));
+
+        jPanel2.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblTimeColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblTimeColumn.setText("Time");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblTimeColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 152, Short.MAX_VALUE)
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblTimeColumn)
+        );
+
+        jPanel3.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel3.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblSundayColumn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSundayColumn1.setText("Sunday");
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblSundayColumn1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblSundayColumn1)
+        );
+
+        jPanel4.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel4.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblSaturdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSaturdayColumn.setText("Saturday");
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblSaturdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblSaturdayColumn)
+        );
+
+        jPanel5.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel5.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblFridayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblFridayColumn.setText("Friday");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblFridayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblFridayColumn)
+        );
+
+        jPanel6.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel6.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblThursdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblThursdayColumn.setText("Thursday");
+
+        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
+        jPanel6.setLayout(jPanel6Layout);
+        jPanel6Layout.setHorizontalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblThursdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel6Layout.setVerticalGroup(
+            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblThursdayColumn)
+        );
+
+        jPanel7.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel7.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblWednesdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblWednesdayColumn.setText("Wednesday");
+
+        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblWednesdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblWednesdayColumn)
+        );
+
+        jPanel8.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel8.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblTuesdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblTuesdayColumn.setText("Tuesday");
+
+        javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblTuesdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblTuesdayColumn)
+        );
+
+        jPanel9.setMinimumSize(new java.awt.Dimension(104, 0));
+        jPanel9.setPreferredSize(new java.awt.Dimension(104, 100));
+
+        lblMondayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblMondayColumn.setText("Monday");
+
+        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblMondayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblMondayColumn)
+        );
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+        );
+
+        btnOpenResult.setText("Open");
+        btnOpenResult.setEnabled(false);
+        btnOpenResult.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnOpenResultActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlResultContainerLayout = new javax.swing.GroupLayout(pnlResultContainer);
         pnlResultContainer.setLayout(pnlResultContainerLayout);
@@ -1961,18 +2173,19 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnlViewByControls, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnlResultContainerLayout.createSequentialGroup()
-                        .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(pnlResultContainerLayout.createSequentialGroup()
-                                .addComponent(btnStatistics)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(btnGenerateResult))
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlResultContainerLayout.createSequentialGroup()
-                                .addComponent(lblResultFile)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtResultPath)))
+                        .addComponent(lblResultFile)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnBrowseResult))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 982, Short.MAX_VALUE))
+                        .addComponent(txtResultPath)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnBrowseResult)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnOpenResult))
+                    .addComponent(scrollSchedule)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlResultContainerLayout.createSequentialGroup()
+                        .addComponent(btnStatistics, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnGenerateResult, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         pnlResultContainerLayout.setVerticalGroup(
@@ -1982,11 +2195,14 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblResultFile)
                     .addComponent(btnBrowseResult)
-                    .addComponent(txtResultPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtResultPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnOpenResult))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlViewByControls, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 498, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(scrollSchedule)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnStatistics)
@@ -2024,12 +2240,7 @@ public class GUIForm extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnlContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(btnBack)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnNext)))
+                .addComponent(pnlContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -2037,54 +2248,11 @@ public class GUIForm extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(pnlContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnNext)
-                    .addComponent(btnBack))
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void btnNextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNextActionPerformed
-        // TODO add your handling code here:
-        if (CurrentStep < 5) {
-            CurrentStep++;
-            switch (CurrentStep) {
-                case 4:
-                    if (btnNext.isEnabled()) {
-                        btnNext.setEnabled(false);
-                    }
-                case 1:
-                    if (!btnBack.isEnabled()) {
-                        btnBack.setEnabled(true);
-                    }
-                default:
-                    tabbedPanels.setSelectedIndex(CurrentStep);
-                    break;
-            }
-        }
-    }//GEN-LAST:event_btnNextActionPerformed
-
-    private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
-        // TODO add your handling code here:
-        if (CurrentStep > 0) {
-            CurrentStep--;
-            switch (CurrentStep) {
-                case 0:
-                    if (btnBack.isEnabled()) {
-                        btnBack.setEnabled(false);
-                    }
-                    if (!btnNext.isEnabled()) {
-                        btnNext.setEnabled(true);
-                    }
-                default:
-                    tabbedPanels.setSelectedIndex(CurrentStep);
-                    break;
-            }
-        }
-    }//GEN-LAST:event_btnBackActionPerformed
 
     private void tabbedPanelsStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPanelsStateChanged
         if (tabbedPanels.getSelectedIndex() == 3) {
@@ -2097,14 +2265,27 @@ public class GUIForm extends javax.swing.JFrame {
             spUnscheduledCourses.revalidate();
             spUnscheduledCourses.repaint();
         } else if (tabbedPanels.getSelectedIndex() == 5) {
-//            HashSet<String> uniqueTimes = new HashSet<>();
-//            timeslotList.keySet().stream().forEach((s) -> {
-//                uniqueTimes.addAll(timeslotList.get(s).GetUniqueTimes());
-//            });
-//            ArrayList<String> times = new ArrayList<>(uniqueTimes);
-//            Collections.sort(times);
-//            //int rows = uniqueTimes.size();
+            listViewBySelection.setListData(courseSectionListData);
+            if (sectionLookup.isEmpty()) {
+                TreeSet<String> courses = new TreeSet<>();
+                for (String c : courseList.keySet()) {
+                    courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
+                }
+                for (String s : courses) {
+                    String[] parts = s.split(",");
+                    for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
+                        sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
+                    }
+                }
 
+                for (String pr : profList.keySet()) {
+                    profLookup.put(profList.get(pr).getProfID(), pr);
+                }
+
+                for (String s : timeslotList.keySet()) {
+                    timeslotLookup.put(timeslotList.get(s).getID(), s);
+                }
+            }
         }
     }//GEN-LAST:event_tabbedPanelsStateChanged
 
@@ -2167,6 +2348,7 @@ public class GUIForm extends javax.swing.JFrame {
         }
         BufferedWriter writer = null;
         try {
+            fixIDs();
             String inputFile = txtGeneratedFileName.getText();
             File outFile = new File(inputFile);
             writer = new BufferedWriter(new FileWriter(outFile));
@@ -2185,6 +2367,10 @@ public class GUIForm extends javax.swing.JFrame {
                 courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
             }
             for (String s : courses) {
+                String[] parts = s.split(",");
+                for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
+                    sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
+                }
                 writer.write(s);
             }
             writer.write("*END*SECTION*\n");
@@ -2208,6 +2394,7 @@ public class GUIForm extends javax.swing.JFrame {
             ArrayList<String> profPref = new ArrayList<>();
             for (String pr : profList.keySet()) {
                 Professor p = profList.get(pr);
+                profLookup.put(p.getProfID(), pr);
                 profPref.add(p.getProfID() + ", " + p.getPreferenceString() + "\n");
                 String currLine = String.format("%02d", p.getProfID()) + ", " + df.format(p.getCredits());
                 for (Object cTaught : p.getCoursesTaught()) {
@@ -2227,6 +2414,7 @@ public class GUIForm extends javax.swing.JFrame {
             TreeSet<String> timeSet = new TreeSet<>();
             for (String s : timeslotList.keySet()) {
                 TimeSlot t = timeslotList.get(s);
+                timeslotLookup.put(t.getID(), s);
                 String currLine = String.format("%02d", t.getID()) + ", " + df.format(t.getCredits());
                 for (int i = 0; i < 6; i++) {
                     currLine += ", " + t.GetTimeOnDay(i);
@@ -2241,8 +2429,8 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("*END*TIMESLOT*\n");
             writer.write("//*START*COURSEPREF*\n");
             writer.write("//course, pref(m-a-e)\n");
-            for (int i = 0; i < coursePref.size(); i++) {
-                writer.write(coursePref.get(i));
+            for (String coursePref1 : coursePref) {
+                writer.write(coursePref1);
             }
             writer.write("*END*COURSEPREF*\n");
             writer.write("//START*PROFPREF*\n");
@@ -2255,7 +2443,7 @@ public class GUIForm extends javax.swing.JFrame {
             TreeSet<String> schedules = new TreeSet<>();
             for (String s : scheduledCoursesList.keySet()) {
                 Schedule sc = scheduledCoursesList.get(s);
-                System.out.println(sc.course + " " + sc.prof + " " + sc.time);
+                //System.out.println(sc.course + " " + sc.prof + " " + sc.time);
                 int profID = profList.get(sc.prof).getProfID();
                 int tsID = timeslotList.get(sc.time).getID();
                 schedules.add(sc.course + "$" + sc.course.substring(0, sc.course.indexOf('(')) + ", " + String.valueOf(profID) + ", " + String.valueOf(tsID) + "\n");
@@ -2265,6 +2453,7 @@ public class GUIForm extends javax.swing.JFrame {
             }
             writer.write("*END*INITIAL*\n");
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtGeneratedFileName.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
+            tabbedPanels.setEnabledAt(5, true);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -2302,7 +2491,13 @@ public class GUIForm extends javax.swing.JFrame {
     }//GEN-LAST:event_listUnscheduledCoursesValueChanged
 
     private void btnDeleteScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteScheduleActionPerformed
-        // TODO add your handling code here:
+        if (currentSchedule != null) {
+            unscheduledCourses.add(currentSchedule.course);
+            dtm.removeRow(dtmSelectedRow);
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
+        }
     }//GEN-LAST:event_btnDeleteScheduleActionPerformed
 
     private void btnSaveScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveScheduleActionPerformed
@@ -2477,13 +2672,11 @@ public class GUIForm extends javax.swing.JFrame {
         try {
             id = Integer.parseInt(txtTSGeneratedID.getText());
             creds = Double.parseDouble(txtTimeSlotCreditValue.getText());
-
         } catch (NumberFormatException n) {
             System.err.println(n.getMessage());
             return;
         }
         if (currentTimeslot == null) {
-
             currentTimeslot = new TimeSlot(id, creds);
             fresh = true;
         }
@@ -2561,6 +2754,9 @@ public class GUIForm extends javax.swing.JFrame {
             listTimeslots.setListData(timeslotListData);
             spTimeslotList.revalidate();
             spTimeslotList.repaint();
+        }
+        if (timeslotList.containsKey(currentTimeslot.toString())) {
+            timeslotList.remove(currentTimeslot.toString());
         }
         timeslotList.put(currentTimeslot.toString(), currentTimeslot);
         updateTimeSlotIDs();
@@ -3125,6 +3321,141 @@ public class GUIForm extends javax.swing.JFrame {
 
     }//GEN-LAST:event_pnlScheduleComponentResized
 
+    private void btnBrowseResultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseResultActionPerformed
+        JFileChooser fc = new JFileChooser();
+        if (!txtResultPath.getText().isEmpty()) {
+            fc = new JFileChooser(new File(txtResultPath.getText()));
+        }
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Result File", new String[]{"rlt"}));
+        int returnVal = fc.showOpenDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".rlt")) {
+                fileName += ".rlt";
+            }
+            txtResultPath.setText(fileName);
+            btnOpenResult.setEnabled(true);
+        }
+    }//GEN-LAST:event_btnBrowseResultActionPerformed
+
+    private void rdoProfessorItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_rdoProfessorItemStateChanged
+        if (rdoProfessor.isSelected()) {
+            listViewBySelection.setListData(profListData);
+        } else {
+            listViewBySelection.setListData(courseSectionListData);
+        }
+
+        spViewBySelection.revalidate();
+        spViewBySelection.repaint();
+    }//GEN-LAST:event_rdoProfessorItemStateChanged
+
+    private void btnOpenResultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenResultActionPerformed
+
+        BufferedReader br = null;
+
+        try {
+            br = new BufferedReader(new FileReader(txtResultPath.getText()));
+            String currentLine;
+            boolean startReading = false;
+            while ((currentLine = br.readLine()) != null) {
+                if (currentLine.equals("**BEGINRESULT**")) {
+                    startReading = true;
+                } else if (currentLine.equals("**ENDRESULT**")) {
+                    break;
+                } else if (startReading) {
+                    String[] tuple = currentLine.split(",");
+                    int section = Integer.parseInt(tuple[0].trim());
+                    int profID = Integer.parseInt(tuple[1].trim());
+                    int timeID = Integer.parseInt(tuple[2].trim());
+                    Schedule sc = new Schedule();
+                    sc.course = sectionLookup.get(section);
+                    sc.prof = profLookup.get(profID);
+                    sc.time = timeslotLookup.get(timeID);
+                    resultListByCourses.put(sc.course, sc);
+                    if (resultListByProfessor.containsKey(sc.prof)) {
+                        ArrayList<Schedule> ass = resultListByProfessor.get(sc.prof);
+                        ass.add(sc);
+                        resultListByProfessor.put(sc.prof, ass);
+                    } else {
+                        ArrayList<Schedule> ass = new ArrayList<>();
+                        ass.add(sc);
+                        resultListByProfessor.put(sc.prof, ass);
+                    }
+                }
+            }
+            rdoCourse.setEnabled(true);
+            rdoProfessor.setEnabled(true);
+            listViewBySelection.setEnabled(true);
+            cbScheduleSection.setEnabled(true);
+            cbProfessorSelection.setEnabled(true);
+            cbTimeSelection.setEnabled(true);
+            btnStatistics.setEnabled(true);
+            btnResultChangeRedo.setEnabled(true);
+            btnResultChangeUndo.setEnabled(true);
+            btnGenerateResult.setEnabled(true);
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }//GEN-LAST:event_btnOpenResultActionPerformed
+
+    private void listViewBySelectionValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listViewBySelectionValueChanged
+        if (listViewBySelection.getSelectedIndex() >= 0) {
+            if (rdoCourse.isSelected()) {
+                cbScheduleSection.removeAllItems();
+                for (Object s : courseSectionListData) {
+                    cbScheduleSection.addItem(s);
+                }
+                String course = listViewBySelection.getSelectedValue().toString();
+                cbScheduleSection.setSelectedItem(course);
+                cbProfessorSelection.setSelectedItem(resultListByCourses.get(course).prof);
+                cbTimeSelection.setSelectedItem(resultListByCourses.get(course).time);
+                
+            } else {
+                cbProfessorSelection.removeAllItems();
+                cbProfessorSelection.addItem(listViewBySelection.getSelectedValue());
+                cbProfessorSelection.setSelectedItem(listViewBySelection.getSelectedValue().toString());
+                ArrayList<Schedule> coursesTaught = resultListByProfessor.get(listViewBySelection.getSelectedValue());
+                cbScheduleSection.removeAllItems();
+                cbTimeSelection.removeAllItems();
+                for(Schedule s : coursesTaught){
+                    cbScheduleSection.addItem(s.course);
+                }
+            }
+        }
+    }//GEN-LAST:event_listViewBySelectionValueChanged
+
+    private void cbScheduleSectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbScheduleSectionActionPerformed
+        if (cbScheduleSection.getSelectedIndex() >= 0) {
+            String course = cbScheduleSection.getSelectedItem().toString();
+            course = course.substring(0, course.indexOf("("));
+            if (courseList.get(course) != null) {
+                cbProfessorSelection.removeAllItems();
+                for (Object s : profListData) {
+                    if (profList.get(s.toString()).hasCourse(course)) {
+                        cbProfessorSelection.addItem(s.toString());
+                    }
+                }
+
+                double credvalue = courseList.get(course).getCreditValue();
+                cbTimeSelection.removeAllItems();
+                for (Iterator it = timeslotListData.iterator(); it.hasNext();) {
+                    Object s = it.next();
+                    if (timeslotList.get(s.toString()).getCredits() == credvalue) {
+                        cbTimeSelection.addItem(s.toString());
+                    }
+                }
+            }
+        }
+    }//GEN-LAST:event_cbScheduleSectionActionPerformed
+
     private void updateCourseGeneratedIDs() {
         int arraySize = courseList.size();
         int leftID = 0, rightID = 0;
@@ -3151,58 +3482,58 @@ public class GUIForm extends javax.swing.JFrame {
     }
 
     private void updateProfessorIDs() {
-        int arraySize = profList.size();
-        int leftID = 0, rightID = 0;
-        HashMap<Integer, Professor> updateList = new HashMap<>();
-        TreeSet<Integer> ids = new TreeSet<>();
+        int id = 0;
+        HashMap<String, Professor> redoneList = new HashMap<>();
         for (String s : profList.keySet()) {
-            if (profList.get(s).getProfID() > rightID) {
-                rightID = profList.get(s).getProfID();
-                updateList.put(rightID, profList.get(s));
-            }
+            Professor p = profList.get(s);
+            p.setProfID(id++);
+            redoneList.put(p.getProfName(), p);
         }
-
-        profIDs.clear();
         profList.clear();
-        for (int i = 0; i < ids.size(); i++) {
-            if (!ids.contains(i)) {
-                Professor c = updateList.get(ids.last());
-                c.setProfID(i);
-                profIDs.add(i);
-                profList.put(c.getProfName(), c);
-                ids.remove(ids.last());
-            }
+        profList.putAll(redoneList);
+        id = 0;
+        for (String s : profList.keySet()) {
+            Professor p = profList.get(s);
+            p.setProfID(id++);
+            redoneList.put(p.getProfName(), p);
         }
+        profList.clear();
+        profList.putAll(redoneList);
     }
 
     private void updateTimeSlotIDs() {
-        int arraySize = timeslotList.size();
-        int rightID = 0;
-        HashMap<Integer, TimeSlot> updateList = new HashMap<>();
-        TreeSet<Integer> ids = new TreeSet<>();
+        int id = 0;
+        HashMap<String, TimeSlot> redoneList = new HashMap<>();
         for (String s : timeslotList.keySet()) {
-            if (timeslotList.get(s).getID() > rightID) {
-                rightID = timeslotList.get(s).getID();
-                updateList.put(rightID, timeslotList.get(s));
-            }
+            TimeSlot p = timeslotList.get(s);
+            p.setID(id++);
+            redoneList.put(p.toString(), p);
         }
-
-        timeslotIDs.clear();
         timeslotList.clear();
-        for (int i = 0; i < ids.size(); i++) {
-            if (!ids.contains(i)) {
-                TimeSlot c = updateList.get(ids.last());
-                c.setID(i);
-                timeslotIDs.add(i);
-                timeslotList.put(c.toString(), c);
-                ids.remove(ids.last());
-            }
+        timeslotList.putAll(redoneList);
+        id = 0;
+        for (String s : timeslotList.keySet()) {
+            TimeSlot p = timeslotList.get(s);
+            p.setID(id++);
+            redoneList.put(p.toString(), p);
         }
+        timeslotList.clear();
+        timeslotList.putAll(redoneList);
     }
 
     private boolean validateInitialSchedule() {
 
         return false;
+    }
+
+    private String ConvertToRegularTime(int hour, int minute) {
+        if (hour > 12) {
+            return String.valueOf(hour - 12) + ":" + (minute < 10 ? "0" + String.valueOf(minute) : String.valueOf(minute)) + " PM";
+        } else if (hour < 12) {
+            return String.valueOf(hour) + ":" + (minute < 10 ? "0" + String.valueOf(minute) : String.valueOf(minute)) + " AM";
+        } else {
+            return String.valueOf(hour) + ":" + (minute < 10 ? "0" + String.valueOf(minute) : String.valueOf(minute)) + " PM";
+        }
     }
 
     /**
@@ -3219,10 +3550,12 @@ public class GUIForm extends javax.swing.JFrame {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
+
                 }
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(GUIForm.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(GUIForm.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -3236,7 +3569,6 @@ public class GUIForm extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAddCourseTaught;
-    private javax.swing.JButton btnBack;
     private javax.swing.JButton btnBrowseGeneratedFileName;
     private javax.swing.JButton btnBrowseResult;
     private javax.swing.JButton btnBrowseSetupFileName;
@@ -3250,7 +3582,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JButton btnNewCourse;
     private javax.swing.JButton btnNewProf;
     private javax.swing.JButton btnNewTimeslot;
-    private javax.swing.JButton btnNext;
+    private javax.swing.JButton btnOpenResult;
     private javax.swing.JButton btnResultChangeRedo;
     private javax.swing.JButton btnResultChangeUndo;
     private javax.swing.JButton btnSaveCourse;
@@ -3262,32 +3594,33 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JComboBox cbCoursePrefHighest;
     private javax.swing.JComboBox cbCoursePrefLeast;
     private javax.swing.JComboBox cbCoursePrefNormal;
-    private javax.swing.JComboBox cbEntitySelection;
     private javax.swing.JComboBox cbProfCourseTaught;
     private javax.swing.JComboBox cbProfPrefHighest;
     private javax.swing.JComboBox cbProfPrefLeast;
     private javax.swing.JComboBox cbProfPrefNormal;
+    private javax.swing.JComboBox cbProfessorSelection;
     private javax.swing.JComboBox cbScheduleCourse;
     private javax.swing.JComboBox cbScheduleProfessor;
+    private javax.swing.JComboBox cbScheduleSection;
     private javax.swing.JComboBox cbScheduleTimeslot;
     private javax.swing.JComboBox cbTimeSelection;
     private javax.swing.JPanel courseData;
     private javax.swing.JComboBox dropIncompCourses;
     private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JLabel lbFridayStart;
     private javax.swing.JLabel lbSaturdayStart;
     private javax.swing.JLabel lbSetupFileName;
     private javax.swing.JLabel lbThursdayStart;
-    private javax.swing.JLabel lblChangeEntitiyTo;
+    private javax.swing.JLabel lblChangeProfessorTo;
     private javax.swing.JLabel lblChangeTimeTo;
     private javax.swing.JLabel lblCourseCreditValue;
     private javax.swing.JLabel lblCourseGeneratedID;
@@ -3296,11 +3629,13 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblCoursePrefLeast;
     private javax.swing.JLabel lblCoursePrefNormal;
     private javax.swing.JLabel lblCourseSectionCount;
+    private javax.swing.JLabel lblFridayColumn;
     private javax.swing.JLabel lblFridayEnd;
     private javax.swing.JLabel lblGeneratedFileName;
     private javax.swing.JLabel lblGeneratedID;
     private javax.swing.JLabel lblGeneratedTSID;
     private javax.swing.JLabel lblGenerations;
+    private javax.swing.JLabel lblMondayColumn;
     private javax.swing.JLabel lblMondayEnd;
     private javax.swing.JLabel lblMondayStart;
     private javax.swing.JLabel lblMutationProbabilty;
@@ -3312,17 +3647,24 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblProfPreferenceNormal;
     private javax.swing.JLabel lblReplacementWait;
     private javax.swing.JLabel lblResultFile;
+    private javax.swing.JLabel lblSaturdayColumn;
     private javax.swing.JLabel lblSaturdayEnd;
     private javax.swing.JLabel lblScheduleCourse;
     private javax.swing.JLabel lblScheduleProfessor;
+    private javax.swing.JLabel lblScheduleSectionLabel;
     private javax.swing.JLabel lblScheduleTimeslot;
     private javax.swing.JLabel lblScheduledCourses;
+    private javax.swing.JLabel lblSundayColumn1;
+    private javax.swing.JLabel lblThursdayColumn;
     private javax.swing.JLabel lblThursdayEnd;
+    private javax.swing.JLabel lblTimeColumn;
     private javax.swing.JLabel lblTimeSlotCreditValue;
     private javax.swing.JLabel lblTitle;
+    private javax.swing.JLabel lblTuesdayColumn;
     private javax.swing.JLabel lblTuesdayEnd;
     private javax.swing.JLabel lblTuesdayStart;
     private javax.swing.JLabel lblUnscheduledCourses;
+    private javax.swing.JLabel lblWednesdayColumn;
     private javax.swing.JLabel lblWednesdayEnd;
     private javax.swing.JLabel lblWednesdayStart;
     private javax.swing.JList listCourseTaught;
@@ -3365,6 +3707,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JPanel pnlWednesdayColumn;
     private javax.swing.JRadioButton rdoCourse;
     private javax.swing.JRadioButton rdoProfessor;
+    private javax.swing.JScrollPane scrollSchedule;
     private javax.swing.JScrollPane spCourseIncomp;
     private javax.swing.JScrollPane spCourseList;
     private javax.swing.JScrollPane spCourseTaughtList;
