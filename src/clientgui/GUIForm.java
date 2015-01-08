@@ -6,8 +6,11 @@
 package clientgui;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedInputStream;
@@ -33,8 +36,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
 import java.util.TreeSet;
 import java.util.Vector;
 import javax.swing.InputVerifier;
@@ -69,16 +72,18 @@ public class GUIForm extends javax.swing.JFrame {
     private HashMap<String, Professor> profList;
     private HashMap<String, TimeSlot> timeslotList;
     private HashMap<String, Schedule> scheduledCoursesList;
-    private HashMap<String, Schedule> resultListByCourses;
+    private HashMap<String, Schedule> resultListBySections;
     private HashMap<String, ArrayList<Schedule>> resultListByProfessor;
+    private HashMap<String, ArrayList<Schedule>> resultListByCourses;
     private HashMap<Integer, String> timeslotLookup;
     private HashMap<Integer, String> profLookup;
     private HashMap<Integer, String> sectionLookup;
-    protected Vector courseListData;
-    protected Vector courseSectionListData;
-    protected Vector unscheduledCourses;
-    protected Vector profListData;
-    protected Vector timeslotListData;
+    private LinkedList<ScheduleReplace> undoList;
+    protected Vector<String> courseListData;
+    protected Vector<String> courseSectionListData;
+    protected Vector<String> unscheduledCourses;
+    protected Vector<String> profListData;
+    protected Vector<String> timeslotListData;
     private Course currentCourse;
     private Professor currentProfessor;
     private TimeSlot currentTimeslot;
@@ -92,10 +97,14 @@ public class GUIForm extends javax.swing.JFrame {
     private DefaultTableModel dtm;
     private int dtmSelectedRow;
     private JPanel[][] timeblocks;
+    private String resultKey;
+    private boolean resultCourse;
+    private ArrayList<ArrayList<Integer>> incompatibleSectionList;
 
     /**
      * Creates new form GUIForm
      */
+    @SuppressWarnings("unchecked")
     public GUIForm() {
         this.addWindowListener(
                 new WindowAdapter() {
@@ -121,6 +130,7 @@ public class GUIForm extends javax.swing.JFrame {
                 }
         );
 
+        undoList = new LinkedList<>();
         courseIDs = new HashSet<>();
         profIDs = new HashSet<>();
         timeslotIDs = new HashSet<>();
@@ -128,13 +138,15 @@ public class GUIForm extends javax.swing.JFrame {
         profList = new HashMap<>();
         timeslotList = new HashMap<>();
         scheduledCoursesList = new HashMap<>();
-        resultListByCourses = new HashMap<>();
+        resultListBySections = new HashMap<>();
         resultListByProfessor = new HashMap<>();
+        resultListByCourses = new HashMap<>();
         courseListData = new Vector();
         profListData = new Vector();
         timeslotListData = new Vector();
         courseSectionListData = new Vector();
         unscheduledCourses = new Vector();
+        incompatibleSectionList = new ArrayList<>();
         initComponents();
         timeslotLookup = new HashMap<>();
         profLookup = new HashMap<>();
@@ -153,8 +165,6 @@ public class GUIForm extends javax.swing.JFrame {
         String[] days = {"", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
         for (int day = 0; day < 8; day++) {
             int hour = 8;
-            //Random rand = new Random();
-            //Color today = new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
             Color today = Color.WHITE;
             for (int time = 0; time < 56; time++) {
                 timeblocks[day][time] = new JPanel();
@@ -169,10 +179,7 @@ public class GUIForm extends javax.swing.JFrame {
                     timeblocks[day][time].setPreferredSize(new Dimension(pnlMondayColumn.getWidth() - 2, 25));
                     timeblocks[day][time].setToolTipText(days[day] + " " + ConvertToRegularTime(hour, 15 * (time % 4)));
                 }
-//                else{
-
                 timeblocks[day][time].setBackground(today);
-//                }
                 switch (day) {
                     case 0:
                         pnlTimeColumn.add(timeblocks[day][time]);
@@ -386,6 +393,7 @@ public class GUIForm extends javax.swing.JFrame {
         }
 
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+        sorter.setSortsOnUpdates(true);
         tableSchedule.setRowSorter(sorter);
 
         List<RowSorter.SortKey> sortKeys = new ArrayList<>();
@@ -393,6 +401,7 @@ public class GUIForm extends javax.swing.JFrame {
         sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
         sorter.setSortKeys(sortKeys);
         sorter.sort();
+        //resultSelectedSection = null;
     }
 
     private void fixIDs() {
@@ -400,6 +409,305 @@ public class GUIForm extends javax.swing.JFrame {
         updateProfessorIDs();
         //Fix all the timeslot IDs
         updateTimeSlotIDs();
+    }
+
+    private void UpdateResultsView(String key, boolean isCourse) {
+        resultCourse = isCourse;
+        resultKey = key;
+        for (int i = 1; i < 8; i++) {
+            for (int j = 0; j < 56; j++) {
+                timeblocks[i][j].setLayout(new GridLayout(0, 1, 0, 2));
+                timeblocks[i][j].removeAll();
+                timeblocks[i][j].setBackground(Color.white);
+                timeblocks[i][j].revalidate();
+                timeblocks[i][j].repaint();
+            }
+        }
+        /*
+         1. Get all schedules for the course's sections.
+         2. Iterate over schedules 
+         3. add their color coded label to the start cell
+         4. color their remaining cells with the same color.
+         5. update the tooltip on all related cells
+         */
+        ArrayList<Schedule> schedulesToDisplay;
+        if (isCourse) {
+            schedulesToDisplay = resultListByCourses.get(key);
+        } else {
+            schedulesToDisplay = resultListByProfessor.get(key);
+        }
+
+        for (Schedule s : schedulesToDisplay) {
+            //Pick color for schedule.
+            Color thisSchedule = new Color(Color.HSBtoRGB((float) Math.random(), (float) Math.random(), 0.5F + ((float) Math.random()) / 2F));
+            ArrayList<Integer[]> toMark = getCellsToColor(timeslotList.get(s.time));
+            for (int i = 0; i < toMark.size(); i++) {
+                if (timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].getBackground().equals(Color.white)) {
+                    timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].setBackground(thisSchedule);
+                }
+            }
+            toMark = getCellsToLabel(timeslotList.get(s.time));
+
+            for (int i = 0; i < toMark.size(); i++) {
+                JLabel course = new JLabel(CleanCourse(s.course));
+                course.addMouseListener(new MouseListener() {
+
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        //Update the combo box with the details of this course.
+                        JLabel source = (JLabel) e.getSource();
+                        cbScheduleSection.setSelectedItem(source.getClientProperty("courseID").toString());
+                        cbProfessorSelection.setSelectedItem(s.prof);
+                        cbTimeSelection.setSelectedItem(s.time);
+
+                    }
+
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+
+                    }
+
+                    @Override
+                    public void mouseReleased(MouseEvent e) {
+
+                    }
+
+                    @Override
+                    public void mouseEntered(MouseEvent e) {
+
+                    }
+
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+
+                    }
+                });
+                course.setToolTipText("<html><u>" + CleanCourse(s.course) + "</u><br/>" + timeslotList.get(s.time).GetPrettyTime());
+                course.putClientProperty("courseID", s.course);
+                timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].add(course);
+                //}
+                if (timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].getComponentCount() > 1) {
+                    //Label already exists
+                    Component[] allComps = timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].getComponents();
+                    timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].setLayout(new GridLayout(allComps.length, 1, 0, 2));
+                    int totalHeight = 0;
+                    for (Component c : allComps) {
+                        totalHeight += c.getPreferredSize().height + 2;
+                    }
+                    if (timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].getHeight() < totalHeight) {
+                        Dimension newDimension = new Dimension();
+                        newDimension.width = timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].getWidth();
+                        newDimension.height = totalHeight;
+                        for (int col = 0; col < 8; col++) {
+                            timeblocks[col][toMark.get(i)[1]].setPreferredSize(newDimension);
+                        }
+                    }
+                }
+
+                timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].revalidate();
+                timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].repaint();
+            }
+        }
+    }
+
+    private ArrayList<Integer[]> getCellsToColor(TimeSlot t) {
+        ArrayList<Integer[]> rtnVal = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            int startTime = Integer.parseInt(t.GetTimeOnDay(i).replace("(", "").replace(")", "").split(":")[0]);
+            if (startTime == -1) {
+                continue;
+            }
+            int hour = startTime / 100 - 8;
+            int minute = startTime % 100;
+            if (minute >= 0 && minute < 15) {
+                minute = 0;
+            } else if (minute >= 15 && minute < 30) {
+                minute = 1;
+            } else if (minute >= 30 && minute < 45) {
+                minute = 2;
+            } else {
+                minute = 3;
+            }
+            int startCell = hour * 4 + minute;
+            rtnVal.add(new Integer[]{i + 1, hour * 4 + minute});
+
+            int time = Integer.parseInt(t.GetTimeOnDay(i).replace("(", "").replace(")", "").split(":")[1]);
+            hour = time / 100 - 8;
+            minute = time % 100;
+            if (minute >= 0 && minute < 15) {
+                minute = 0;
+            } else if (minute >= 15 && minute < 30) {
+                minute = 1;
+            } else if (minute >= 30 && minute < 45) {
+                minute = 2;
+            } else {
+                minute = 3;
+            }
+            int endCell = hour * 4 + minute;
+            if (minute > 0) {
+                endCell++;
+            }
+            while (startCell < endCell) {
+                rtnVal.add(new Integer[]{i + 1, startCell++});
+            }
+
+        }
+        return rtnVal;
+    }
+
+    private ArrayList<Integer[]> getCellsToLabel(TimeSlot t) {
+        ArrayList<Integer[]> rtnVal = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            int time = Integer.parseInt(t.GetTimeOnDay(i).replace("(", "").replace(")", "").split(":")[0]);
+            if (time == -1) {
+                continue;
+            }
+            int hour = time / 100 - 8;
+            int minute = time % 100;
+            if (minute >= 0 && minute < 15) {
+                minute = 0;
+            } else if (minute >= 15 && minute < 30) {
+                minute = 1;
+            } else if (minute >= 30 && minute < 45) {
+                minute = 2;
+            } else {
+                minute = 3;
+            }
+            rtnVal.add(new Integer[]{i + 1, hour * 4 + minute});
+        }
+        return rtnVal;
+    }
+
+    private String CleanCourse(String course) {
+        course = course.toUpperCase();
+        for (int i = 0; i < course.length(); i++) {
+            if (!Character.isAlphabetic(course.charAt(i))) {
+                course = course.substring(0, i) + " " + course.substring(i);
+                break;
+            }
+        }
+        course = course.replace("(", ".").replace(")", "");
+        return course;
+    }
+
+    private ArrayList<ArrayList<Integer>> GenerateIncompatibleSectionArray() {
+        ArrayList<ArrayList<Integer>> rtnVal = new ArrayList<>();
+        //Use courseSectionListData(Vector<String>), it is already a sorted section list.
+        for (int i = 0; i < courseSectionListData.size(); i++) {
+            rtnVal.add(new ArrayList<>());
+        }
+        //For each course, get a list of incompatible courses.
+        for (String c : courseList.keySet()) {
+            Course co = courseList.get(c);
+            int sectionsToAddIncompTo = (co.getSectionCount() > 1 ? co.getSectionCount() / 2 : 1);
+            ArrayList<Integer> sections = new ArrayList<>();
+            for (int z = 0; z < sectionsToAddIncompTo; z++) {
+                String coSectionID = co.getID() + "(" + (z + 1) + ")";
+                sections.add(courseSectionListData.indexOf(coSectionID));
+            }
+            for (String incompatible : co.getIncompCourses()) {
+                //Get ID of half of it's sections
+                Course incomp = courseList.get(incompatible);
+                int incompSectionsToAdd = (incomp.getSectionCount() > 1 ? incomp.getSectionCount() / 2 : 1);
+                for (int i = 0; i < incompSectionsToAdd; i++) {
+                    String incompSectionID = incomp.getID() + "(" + (i + 1) + ")";
+                    //Get index of this section.
+                    int incompSectionIndex = courseSectionListData.indexOf(incompSectionID);
+                    for (int a = 0; a < sections.size(); a++) {
+                        //rtnVal.set(i, sections)
+                        if (!rtnVal.get(sections.get(a)).contains(incompSectionIndex)) {
+                            rtnVal.get(sections.get(a)).add(incompSectionIndex);
+                        }
+                        if (!rtnVal.get(incompSectionIndex).contains(sections.get(a))) {
+                            rtnVal.get(incompSectionIndex).add(sections.get(a));
+                        }
+                    }
+                }
+            }
+        }
+        return rtnVal;
+    }
+
+    private ArrayList<Double> GenerateSectionCreditArray() {
+        ArrayList<Double> rtnVal = new ArrayList<>();
+        for (int i = 0; i < courseSectionListData.size(); i++) {
+            String course = courseSectionListData.get(i);
+            course = course.substring(0, course.indexOf("("));
+            rtnVal.add(i, courseList.get(course).getCreditValue());
+        }
+
+        return rtnVal;
+    }
+
+    private ArrayList<ArrayList<Integer>> GenerateSectionProfArray(ArrayList<ArrayList<Integer>> profSectionList) {
+        ArrayList<ArrayList<Integer>> rtnVal = new ArrayList<>();
+        for (int i = 0; i < courseSectionListData.size(); i++) {
+            rtnVal.add(new ArrayList<>());
+        }
+        for (int i = 0; i < profSectionList.size(); i++) {
+            ArrayList<Integer> sections = profSectionList.get(i);
+            for (Integer sec : sections) {
+                if (!rtnVal.get(sec).contains(i)) {
+                    rtnVal.get(sec).add(i);
+                }
+            }
+        }
+
+        return rtnVal;
+    }
+
+    private ArrayList<ArrayList<Integer>> GenerateProfessorSectionArray() {
+        ArrayList<ArrayList<Integer>> rtnVal = new ArrayList<>();
+        for (int i = 0; i < profListData.size(); i++) {
+            rtnVal.add(new ArrayList<>());
+        }
+        for (Professor p : profList.values()) {
+            Object[] ct = p.getCoursesTaught();
+            for (Object course : ct) {
+                Course c = courseList.get(course.toString());
+                int sectionCount = c.getSectionCount();
+                for (int i = 0; i < sectionCount; i++) {
+                    String sectionID = c.getID() + "(" + (i + 1) + ")";
+                    if (!rtnVal.get(p.getProfID()).contains(courseSectionListData.indexOf(sectionID))) {
+                        rtnVal.get(p.getProfID()).add(courseSectionListData.indexOf(sectionID));
+                    }
+                }
+            }
+        }
+
+        return rtnVal;
+    }
+
+    private void GenerateValidationData() {
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private int GetUniqueCreditValues() {
+        int rtnVal = 0;
+        //HashSet<Double> creditValues
+
+        return rtnVal;
+    }
+
+    private HashMap<Double, ArrayList<Integer>> GenerateCreditTimeslotArray() {
+        HashMap<Double, ArrayList<Integer>> rtnVal = new HashMap<>();
+        for (TimeSlot t : timeslotList.values()) {
+            if (!rtnVal.containsKey(t.getCredits())) {
+                rtnVal.put(t.getCredits(), new ArrayList<>());
+            }
+            rtnVal.get(t.getCredits()).add(t.getID());
+        }
+
+        return rtnVal;
+    }
+
+    private static class ScheduleReplace {
+
+        Schedule original;
+        Schedule updated;
+
+        public ScheduleReplace() {
+        }
     }
 
     public class DoubleValueInputVerifier extends InputVerifier {
@@ -472,7 +780,7 @@ public class GUIForm extends javax.swing.JFrame {
         pnlIncompatibleCourses = new javax.swing.JPanel();
         spCourseIncomp = new javax.swing.JScrollPane();
         listIncompCourses = new JList(new Vector());
-        dropIncompCourses = new javax.swing.JComboBox();
+        dropIncompCourses = new javax.swing.JComboBox<String>();
         btnModifyIncomp = new javax.swing.JButton();
         lblCourseSectionCount = new javax.swing.JLabel();
         spinnerSections = new javax.swing.JSpinner();
@@ -484,7 +792,7 @@ public class GUIForm extends javax.swing.JFrame {
         btnNewCourse = new javax.swing.JButton();
         pnlProfessor = new javax.swing.JPanel();
         spProfList = new javax.swing.JScrollPane();
-        listProfs = new javax.swing.JList();
+        listProfs = new javax.swing.JList<String>();
         pnlProfData = new javax.swing.JPanel();
         lblGeneratedID = new javax.swing.JLabel();
         lblProfName = new javax.swing.JLabel();
@@ -501,16 +809,16 @@ public class GUIForm extends javax.swing.JFrame {
         cbProfPrefLeast = new javax.swing.JComboBox();
         pnlProfCourseTaught = new javax.swing.JPanel();
         btnAddCourseTaught = new javax.swing.JButton();
-        cbProfCourseTaught = new javax.swing.JComboBox();
+        cbProfCourseTaught = new javax.swing.JComboBox<String>();
         spCourseTaughtList = new javax.swing.JScrollPane();
-        listCourseTaught = new javax.swing.JList();
+        listCourseTaught = new javax.swing.JList<Object>();
         btnDeleteProf = new javax.swing.JButton();
         btnSaveProf = new javax.swing.JButton();
         btnNewProf = new javax.swing.JButton();
         pnlTimeSlots = new javax.swing.JPanel();
         btnNewTimeslot = new javax.swing.JButton();
         spTimeslotList = new javax.swing.JScrollPane();
-        listTimeslots = new javax.swing.JList();
+        listTimeslots = new javax.swing.JList<String>();
         lblGeneratedTSID = new javax.swing.JLabel();
         txtTSGeneratedID = new javax.swing.JTextField();
         lblTimeSlotCreditValue = new javax.swing.JLabel();
@@ -552,17 +860,18 @@ public class GUIForm extends javax.swing.JFrame {
         spTableSchedule = new javax.swing.JScrollPane();
         tableSchedule = new javax.swing.JTable();
         lblScheduleCourse = new javax.swing.JLabel();
-        cbScheduleCourse = new javax.swing.JComboBox();
+        cbScheduleCourse = new javax.swing.JComboBox<String>();
         lblScheduleProfessor = new javax.swing.JLabel();
-        cbScheduleProfessor = new javax.swing.JComboBox();
+        cbScheduleProfessor = new javax.swing.JComboBox<String>();
         lblScheduleTimeslot = new javax.swing.JLabel();
-        cbScheduleTimeslot = new javax.swing.JComboBox();
+        cbScheduleTimeslot = new javax.swing.JComboBox<String>();
         btnSaveSchedule = new javax.swing.JButton();
         btnDeleteSchedule = new javax.swing.JButton();
         spUnscheduledCourses = new javax.swing.JScrollPane();
-        listUnscheduledCourses = new javax.swing.JList();
+        listUnscheduledCourses = new javax.swing.JList<String>();
         lblUnscheduledCourses = new javax.swing.JLabel();
         lblScheduledCourses = new javax.swing.JLabel();
+        btnValidateInitialSchedule = new javax.swing.JButton();
         pnlConfiguration = new javax.swing.JPanel();
         pnlAdvancedConfig = new javax.swing.JPanel();
         lblGenerations = new javax.swing.JLabel();
@@ -581,7 +890,6 @@ public class GUIForm extends javax.swing.JFrame {
         lblGeneratedFileName = new javax.swing.JLabel();
         btnBrowseGeneratedFileName = new javax.swing.JButton();
         txtGeneratedFileName = new javax.swing.JTextField();
-        jButton2 = new javax.swing.JButton();
         pnlResults = new javax.swing.JPanel();
         pnlResultContainer = new javax.swing.JPanel();
         lblResultFile = new javax.swing.JLabel();
@@ -591,15 +899,15 @@ public class GUIForm extends javax.swing.JFrame {
         rdoCourse = new javax.swing.JRadioButton();
         rdoProfessor = new javax.swing.JRadioButton();
         spViewBySelection = new javax.swing.JScrollPane();
-        listViewBySelection = new javax.swing.JList();
+        listViewBySelection = new javax.swing.JList<String>();
         btnResultChangeUndo = new javax.swing.JButton();
-        btnResultChangeRedo = new javax.swing.JButton();
+        btnResultChangeUpdate = new javax.swing.JButton();
         lblChangeProfessorTo = new javax.swing.JLabel();
         lblChangeTimeTo = new javax.swing.JLabel();
-        cbProfessorSelection = new javax.swing.JComboBox();
-        cbTimeSelection = new javax.swing.JComboBox();
+        cbProfessorSelection = new javax.swing.JComboBox<String>();
+        cbTimeSelection = new javax.swing.JComboBox<String>();
         lblScheduleSectionLabel = new javax.swing.JLabel();
-        cbScheduleSection = new javax.swing.JComboBox();
+        cbScheduleSection = new javax.swing.JComboBox<String>();
         btnStatistics = new javax.swing.JButton();
         btnGenerateResult = new javax.swing.JButton();
         scrollSchedule = new javax.swing.JScrollPane();
@@ -612,24 +920,24 @@ public class GUIForm extends javax.swing.JFrame {
         pnlFridayColumn = new javax.swing.JPanel();
         pnlSaturdayColumn = new javax.swing.JPanel();
         pnlSundayColumn = new javax.swing.JPanel();
-        jPanel1 = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
+        pnlResultScheduleLabels = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Time = new javax.swing.JPanel();
         lblTimeColumn = new javax.swing.JLabel();
-        jPanel3 = new javax.swing.JPanel();
-        lblSundayColumn1 = new javax.swing.JLabel();
-        jPanel4 = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Sunday = new javax.swing.JPanel();
+        lblSundayColumn = new javax.swing.JLabel();
+        pnlResultScheduleLabel_Saturday = new javax.swing.JPanel();
         lblSaturdayColumn = new javax.swing.JLabel();
-        jPanel5 = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Friday = new javax.swing.JPanel();
         lblFridayColumn = new javax.swing.JLabel();
-        jPanel6 = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Thursday = new javax.swing.JPanel();
         lblThursdayColumn = new javax.swing.JLabel();
-        jPanel7 = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Wednesday = new javax.swing.JPanel();
         lblWednesdayColumn = new javax.swing.JLabel();
-        jPanel8 = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Tuesday = new javax.swing.JPanel();
         lblTuesdayColumn = new javax.swing.JLabel();
-        jPanel9 = new javax.swing.JPanel();
+        pnlResultScheduleLabel_Monday = new javax.swing.JPanel();
         lblMondayColumn = new javax.swing.JLabel();
-        btnOpenResult = new javax.swing.JButton();
+        txtResultStatus = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(800, 800));
@@ -1482,6 +1790,13 @@ public class GUIForm extends javax.swing.JFrame {
 
         lblScheduledCourses.setText("Scheduled Courses");
 
+        btnValidateInitialSchedule.setText("Validate Schedule");
+        btnValidateInitialSchedule.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnValidateInitialScheduleActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout pnlInitScheduleLayout = new javax.swing.GroupLayout(pnlInitSchedule);
         pnlInitSchedule.setLayout(pnlInitScheduleLayout);
         pnlInitScheduleLayout.setHorizontalGroup(
@@ -1491,18 +1806,20 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                         .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblUnscheduledCourses, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
-                            .addComponent(spUnscheduledCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(lblUnscheduledCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(spUnscheduledCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
                         .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                                 .addComponent(lblScheduledCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGap(2, 2, 2))
-                            .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 732, Short.MAX_VALUE)))
+                            .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 720, Short.MAX_VALUE)))
                     .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                         .addComponent(btnSaveSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnDeleteSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnDeleteSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnValidateInitialSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(pnlInitScheduleLayout.createSequentialGroup()
                         .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblScheduleProfessor)
@@ -1530,18 +1847,20 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblScheduleTimeslot)
                     .addComponent(cbScheduleTimeslot, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(11, 11, 11)
-                .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnSaveSchedule, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnDeleteSchedule, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(btnSaveSchedule, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(btnDeleteSchedule, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btnValidateInitialSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblUnscheduledCourses)
                     .addComponent(lblScheduledCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(spUnscheduledCourses)
-                    .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 567, Short.MAX_VALUE))
+                    .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 572, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1643,8 +1962,6 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
-        jButton2.setText("Inspect Result");
-
         javax.swing.GroupLayout pnlConfigurationLayout = new javax.swing.GroupLayout(pnlConfiguration);
         pnlConfiguration.setLayout(pnlConfigurationLayout);
         pnlConfigurationLayout.setHorizontalGroup(
@@ -1666,8 +1983,7 @@ public class GUIForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(txtGeneratedFileName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnBrowseGeneratedFileName))
-                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(btnBrowseGeneratedFileName)))
                 .addContainerGap())
         );
         pnlConfigurationLayout.setVerticalGroup(
@@ -1689,12 +2005,10 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(txtSetupFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnSaveSetup, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(130, 130, 130)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(164, Short.MAX_VALUE))
+                .addContainerGap(354, Short.MAX_VALUE))
         );
 
-        tabbedPanels.addTab("Configuration", pnlConfiguration);
+        tabbedPanels.addTab("Generate Input", pnlConfiguration);
 
         lblResultFile.setLabelFor(txtResultPath);
         lblResultFile.setText("Result File");
@@ -1717,7 +2031,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         viewByGroup.add(rdoCourse);
         rdoCourse.setSelected(true);
-        rdoCourse.setText("Section");
+        rdoCourse.setText("Course");
         rdoCourse.setEnabled(false);
 
         viewByGroup.add(rdoProfessor);
@@ -1739,9 +2053,19 @@ public class GUIForm extends javax.swing.JFrame {
 
         btnResultChangeUndo.setText("Undo");
         btnResultChangeUndo.setEnabled(false);
+        btnResultChangeUndo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnResultChangeUndoActionPerformed(evt);
+            }
+        });
 
-        btnResultChangeRedo.setText("Redo");
-        btnResultChangeRedo.setEnabled(false);
+        btnResultChangeUpdate.setText("<html><center>Validate<br />And<br />Update</center></html>");
+        btnResultChangeUpdate.setEnabled(false);
+        btnResultChangeUpdate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnResultChangeUpdateActionPerformed(evt);
+            }
+        });
 
         lblChangeProfessorTo.setLabelFor(cbProfessorSelection);
         lblChangeProfessorTo.setText("Professor");
@@ -1784,9 +2108,9 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(cbScheduleSection, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(cbTimeSelection, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(btnResultChangeUndo)
-                    .addComponent(btnResultChangeRedo))
+                    .addComponent(btnResultChangeUpdate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
         pnlViewByControlsLayout.setVerticalGroup(
@@ -1815,8 +2139,8 @@ public class GUIForm extends javax.swing.JFrame {
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                             .addGroup(pnlViewByControlsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(lblChangeTimeTo)
-                                .addComponent(cbTimeSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(btnResultChangeRedo)))))
+                                .addComponent(cbTimeSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(btnResultChangeUpdate, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
@@ -1986,183 +2310,178 @@ public class GUIForm extends javax.swing.JFrame {
 
         scrollSchedule.setViewportView(pnlSchedule);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 2, 0, new java.awt.Color(0, 0, 0)));
+        pnlResultScheduleLabels.setBorder(javax.swing.BorderFactory.createMatteBorder(0, 0, 2, 0, new java.awt.Color(0, 0, 0)));
 
-        jPanel2.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Time.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblTimeColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblTimeColumn.setText("Time");
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_TimeLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Time);
+        pnlResultScheduleLabel_Time.setLayout(pnlResultScheduleLabel_TimeLayout);
+        pnlResultScheduleLabel_TimeLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_TimeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblTimeColumn, javax.swing.GroupLayout.DEFAULT_SIZE, 152, Short.MAX_VALUE)
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_TimeLayout.setVerticalGroup(
+            pnlResultScheduleLabel_TimeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblTimeColumn)
         );
 
-        jPanel3.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel3.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Sunday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Sunday.setPreferredSize(new java.awt.Dimension(104, 100));
 
-        lblSundayColumn1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblSundayColumn1.setText("Sunday");
+        lblSundayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblSundayColumn.setText("Sunday");
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblSundayColumn1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        javax.swing.GroupLayout pnlResultScheduleLabel_SundayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Sunday);
+        pnlResultScheduleLabel_Sunday.setLayout(pnlResultScheduleLabel_SundayLayout);
+        pnlResultScheduleLabel_SundayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_SundayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblSundayColumn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(lblSundayColumn1)
+        pnlResultScheduleLabel_SundayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_SundayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblSundayColumn)
         );
 
-        jPanel4.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel4.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Saturday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Saturday.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblSaturdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblSaturdayColumn.setText("Saturday");
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_SaturdayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Saturday);
+        pnlResultScheduleLabel_Saturday.setLayout(pnlResultScheduleLabel_SaturdayLayout);
+        pnlResultScheduleLabel_SaturdayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_SaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblSaturdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_SaturdayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_SaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblSaturdayColumn)
         );
 
-        jPanel5.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel5.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Friday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Friday.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblFridayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblFridayColumn.setText("Friday");
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_FridayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Friday);
+        pnlResultScheduleLabel_Friday.setLayout(pnlResultScheduleLabel_FridayLayout);
+        pnlResultScheduleLabel_FridayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_FridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblFridayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_FridayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_FridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblFridayColumn)
         );
 
-        jPanel6.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel6.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Thursday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Thursday.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblThursdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblThursdayColumn.setText("Thursday");
 
-        javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_ThursdayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Thursday);
+        pnlResultScheduleLabel_Thursday.setLayout(pnlResultScheduleLabel_ThursdayLayout);
+        pnlResultScheduleLabel_ThursdayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_ThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblThursdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_ThursdayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_ThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblThursdayColumn)
         );
 
-        jPanel7.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel7.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Wednesday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Wednesday.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblWednesdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblWednesdayColumn.setText("Wednesday");
 
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_WednesdayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Wednesday);
+        pnlResultScheduleLabel_Wednesday.setLayout(pnlResultScheduleLabel_WednesdayLayout);
+        pnlResultScheduleLabel_WednesdayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_WednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblWednesdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_WednesdayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_WednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblWednesdayColumn)
         );
 
-        jPanel8.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel8.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Tuesday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Tuesday.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblTuesdayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblTuesdayColumn.setText("Tuesday");
 
-        javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
-        jPanel8.setLayout(jPanel8Layout);
-        jPanel8Layout.setHorizontalGroup(
-            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_TuesdayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Tuesday);
+        pnlResultScheduleLabel_Tuesday.setLayout(pnlResultScheduleLabel_TuesdayLayout);
+        pnlResultScheduleLabel_TuesdayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_TuesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblTuesdayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel8Layout.setVerticalGroup(
-            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_TuesdayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_TuesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblTuesdayColumn)
         );
 
-        jPanel9.setMinimumSize(new java.awt.Dimension(104, 0));
-        jPanel9.setPreferredSize(new java.awt.Dimension(104, 100));
+        pnlResultScheduleLabel_Monday.setMinimumSize(new java.awt.Dimension(104, 0));
+        pnlResultScheduleLabel_Monday.setPreferredSize(new java.awt.Dimension(104, 100));
 
         lblMondayColumn.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblMondayColumn.setText("Monday");
 
-        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
-        jPanel9.setLayout(jPanel9Layout);
-        jPanel9Layout.setHorizontalGroup(
-            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout pnlResultScheduleLabel_MondayLayout = new javax.swing.GroupLayout(pnlResultScheduleLabel_Monday);
+        pnlResultScheduleLabel_Monday.setLayout(pnlResultScheduleLabel_MondayLayout);
+        pnlResultScheduleLabel_MondayLayout.setHorizontalGroup(
+            pnlResultScheduleLabel_MondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblMondayColumn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-        jPanel9Layout.setVerticalGroup(
-            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        pnlResultScheduleLabel_MondayLayout.setVerticalGroup(
+            pnlResultScheduleLabel_MondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblMondayColumn)
         );
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+        javax.swing.GroupLayout pnlResultScheduleLabelsLayout = new javax.swing.GroupLayout(pnlResultScheduleLabels);
+        pnlResultScheduleLabels.setLayout(pnlResultScheduleLabelsLayout);
+        pnlResultScheduleLabelsLayout.setHorizontalGroup(
+            pnlResultScheduleLabelsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlResultScheduleLabelsLayout.createSequentialGroup()
+                .addComponent(pnlResultScheduleLabel_Time, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addComponent(pnlResultScheduleLabel_Monday, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addComponent(pnlResultScheduleLabel_Tuesday, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addComponent(pnlResultScheduleLabel_Wednesday, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addComponent(pnlResultScheduleLabel_Thursday, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addComponent(pnlResultScheduleLabel_Friday, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                .addComponent(pnlResultScheduleLabel_Saturday, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE))
+                .addComponent(pnlResultScheduleLabel_Sunday, javax.swing.GroupLayout.DEFAULT_SIZE, 116, Short.MAX_VALUE))
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
-            .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+        pnlResultScheduleLabelsLayout.setVerticalGroup(
+            pnlResultScheduleLabelsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(pnlResultScheduleLabel_Saturday, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Friday, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Thursday, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Wednesday, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Tuesday, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Monday, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Time, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
+            .addComponent(pnlResultScheduleLabel_Sunday, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 14, Short.MAX_VALUE)
         );
 
-        btnOpenResult.setText("Open");
-        btnOpenResult.setEnabled(false);
-        btnOpenResult.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOpenResultActionPerformed(evt);
-            }
-        });
+        txtResultStatus.setEditable(false);
+        txtResultStatus.setText("Schedule: ");
 
         javax.swing.GroupLayout pnlResultContainerLayout = new javax.swing.GroupLayout(pnlResultContainer);
         pnlResultContainer.setLayout(pnlResultContainerLayout);
@@ -2177,14 +2496,14 @@ public class GUIForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtResultPath)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnBrowseResult)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnOpenResult))
+                        .addComponent(btnBrowseResult))
                     .addComponent(scrollSchedule)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlResultScheduleLabels, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnlResultContainerLayout.createSequentialGroup()
                         .addComponent(btnStatistics, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtResultStatus)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnGenerateResult, javax.swing.GroupLayout.PREFERRED_SIZE, 262, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -2195,18 +2514,18 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblResultFile)
                     .addComponent(btnBrowseResult)
-                    .addComponent(txtResultPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnOpenResult))
+                    .addComponent(txtResultPath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlViewByControls, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnlResultScheduleLabels, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(scrollSchedule)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnStatistics)
-                    .addComponent(btnGenerateResult))
+                    .addComponent(btnGenerateResult)
+                    .addComponent(txtResultStatus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -2221,7 +2540,7 @@ public class GUIForm extends javax.swing.JFrame {
             .addComponent(pnlResultContainer, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
-        tabbedPanels.addTab("Result", pnlResults);
+        tabbedPanels.addTab("View Result", pnlResults);
 
         javax.swing.GroupLayout pnlContainerLayout = new javax.swing.GroupLayout(pnlContainer);
         pnlContainer.setLayout(pnlContainerLayout);
@@ -2260,12 +2579,12 @@ public class GUIForm extends javax.swing.JFrame {
             for (Object s : courseSectionListData) {
                 cbScheduleCourse.addItem(s.toString());
             }
-
             listUnscheduledCourses.setListData(unscheduledCourses);
             spUnscheduledCourses.revalidate();
             spUnscheduledCourses.repaint();
+            incompatibleSectionList = GenerateIncompatibleSectionArray();
         } else if (tabbedPanels.getSelectedIndex() == 5) {
-            listViewBySelection.setListData(courseSectionListData);
+            listViewBySelection.setListData(courseListData);
             if (sectionLookup.isEmpty()) {
                 TreeSet<String> courses = new TreeSet<>();
                 for (String c : courseList.keySet()) {
@@ -2333,6 +2652,7 @@ public class GUIForm extends javax.swing.JFrame {
             output.writeObject(profIDs);
             output.writeObject(timeslotIDs);
             output.writeObject(txtGeneratedFileName.getText());
+
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Setup Saved to<br />" + txtSetupFileName.getText() + "</p></html>", "Save Successful", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {
             e.printStackTrace();
@@ -2346,22 +2666,32 @@ public class GUIForm extends javax.swing.JFrame {
         while (txtGeneratedFileName.getText().isEmpty()) {
             btnBrowseGeneratedFileNameActionPerformed(null);
         }
+        double courseCredits = 0, profCredits = 0;
+        for (Course c : courseList.values()) {
+            courseCredits += (c.getCreditValue() * c.getSectionCount());
+        }
+
+        for (Professor p : profList.values()) {
+            profCredits += p.getCredits();
+        }
+        DecimalFormat df = new DecimalFormat("#.#");
+        if (profCredits < courseCredits) {
+            JOptionPane.showMessageDialog(pnlContainer, "<html>You have scheduled " + df.format(courseCredits) + "worth of classes,<br/>while only " + df.format(profCredits) + " worth of professor credits is available.<br />Please increase the number of credits for professors.</html>", "Insufficient Credits Available", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String validation = validateSchedule(false);
+        if (!validation.isEmpty()) {
+            String[] options = {"Yes", "No"};
+            String message = "<html>The initial schedule is not valid due to:<br />" + validation + "<br />Continue?</html>";
+            int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Invalid Schedule", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, options, "No");
+            if (choice == 1) {
+                return;
+            }
+        }
+
         BufferedWriter writer = null;
         try {
             fixIDs();
-            String inputFile = txtGeneratedFileName.getText();
-            File outFile = new File(inputFile);
-            writer = new BufferedWriter(new FileWriter(outFile));
-            //Write Parameters
-            writer.write("//START*PARAMETERS*\n");
-            writer.write(spinnerGenerations.getValue().toString() + "\n");
-            writer.write(spinnerPopulationSize.getValue().toString() + "\n");
-            writer.write(spinnerReplacementWait.getValue().toString() + "\n");
-            writer.write(spinnerMutationProbabilty.getValue().toString() + "\n");
-            writer.write("*END*PARAMETERS\n");
-            //Write Sections
-            writer.write("//*START*SECTION*\n");
-            writer.write("//courseID, sections\n");
             TreeSet<String> courses = new TreeSet<>();
             for (String c : courseList.keySet()) {
                 courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
@@ -2371,86 +2701,131 @@ public class GUIForm extends javax.swing.JFrame {
                 for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
                     sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
                 }
-                writer.write(s);
+            }
+            incompatibleSectionList = GenerateIncompatibleSectionArray();
+            ArrayList<Double> sectionCredit = GenerateSectionCreditArray();
+
+            ArrayList<ArrayList<Integer>> profSection = GenerateProfessorSectionArray();
+            ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
+            HashMap<Double, ArrayList<Integer>> creditTimeslot = GenerateCreditTimeslotArray();
+
+            String inputFile = txtGeneratedFileName.getText();
+            File outFile = new File(inputFile);
+            writer = new BufferedWriter(new FileWriter(outFile));
+
+            //Write Parameters
+            writer.write("//START*PARAMETERS*\n");
+            writer.write(spinnerGenerations.getValue().toString() + "\n");//generation_count
+            writer.write(spinnerPopulationSize.getValue().toString() + "\n"); //population_size
+            writer.write(spinnerReplacementWait.getValue().toString() + "\n"); //replacement_wait
+            writer.write(spinnerMutationProbabilty.getValue().toString() + "\n"); //mutation_probability
+            writer.write(courseSectionListData.size() + "\n"); //section_count
+            writer.write(profList.size() + "\n"); //professor_count
+            writer.write(timeslotList.size() + "\n"); //timeslot_count
+            writer.write(creditTimeslot.size() + "\n"); //credit_count
+            writer.write("*END*PARAMETERS\n");
+            //Write arrays literally as they need to look like
+            //sectionID, incompSize, incompSections
+            writer.write("//*START*SECTION*\n");
+            writer.write("//sectionID, incompSize[, incompSections]\n");
+            for (int i = 0; i < incompatibleSectionList.size(); i++) {
+                writer.write(i + "," + incompatibleSectionList.get(i).size());
+                if (incompatibleSectionList.get(i).size() > 0) {
+                    for (int z = 0; z < incompatibleSectionList.get(i).size(); z++) {
+                        writer.write("," + incompatibleSectionList.get(i).get(z));
+                    }
+                }
+                writer.write(("\n"));
             }
             writer.write("*END*SECTION*\n");
-            writer.write("//*START*COURSE*\n");
-            writer.write("//depttcourse, credits[,deptt:course[,incompatible list]]\n");
-            DecimalFormat df = new DecimalFormat("#.#");
-            ArrayList<String> coursePref = new ArrayList<>();
-            for (String c : courseList.keySet()) {
-                Course cr = courseList.get(c);
-                coursePref.add(cr.getID() + ", " + cr.getPreferenceString() + "\n");
-                writer.write(c + ", " + df.format(cr.getCreditValue()) + ", ");
-                for (String incomp : cr.getIncompCourses()) {
-                    writer.write(incomp + ", ");
+
+            writer.write("//*START*SECTIONCREDIT*\n");
+            for (int i = 0; i < sectionCredit.size(); i++) {
+                writer.write(i + "," + df.format(sectionCredit.get(i)) + "\n");
+            }
+            writer.write("*END*SECTIONCREDIT*\n");
+
+            writer.write("//*START*PROFCREDIT*\n");
+            for (Professor p : profList.values()) {
+                writer.write(p.getProfID() + "," + df.format(p.getCredits()) + "\n");
+            }
+            writer.write("*END*PROFCREDIT*\n");
+
+            writer.write("//*START*SECTION*PROF*\n");
+            writer.write("//sectionID, profSize, profs\n");
+            for (int i = 0; i < sectionProf.size(); i++) {
+                writer.write(i + "," + sectionProf.get(i).size());
+                for (int z = 0; z < sectionProf.get(i).size(); z++) {
+                    writer.write("," + sectionProf.get(i).get(z));
+                }
+                writer.write(("\n"));
+            }
+            writer.write("*END*SECTION*PROF*\n");
+
+            writer.write("//*START*PROF*SECTION*\n");
+            writer.write("//profID, sectionSize, sections\n");
+            for (int i = 0; i < profSection.size(); i++) {
+                writer.write(i + "," + profSection.get(i).size());
+                for (int z = 0; z < profSection.get(i).size(); z++) {
+                    writer.write("," + profSection.get(i).get(z));
+                }
+                writer.write(("\n"));
+            }
+            writer.write("*END*PROF*SECTION*\n");
+
+            writer.write("//*START*COURSEPREF*\n");
+            writer.write("//sectionID, m, a, e\n");
+            for (int i = 0; i < courseSectionListData.size(); i++) {
+                writer.write(i + ",");
+                String course = sectionLookup.get(i);
+                course = course.substring(0, course.indexOf("("));
+                Course c = courseList.get(course);
+                writer.write(c.getPreferences()[0] + "," + c.getPreferences()[1] + "," + c.getPreferences()[2] + "\n");
+            }
+            writer.write("*END*COURSEPREF*\n");
+
+            writer.write("//START*PROFPREF*\n");
+            writer.write("//profID, pref(m-a-e)\n");
+            for (Professor p : profList.values()) {
+                writer.write(p.getProfID() + "," + p.getPreference()[0] + "," + p.getPreference()[1] + "," + p.getPreference()[2] + "\n");
+            }
+            writer.write("*END*PROFPREF*\n");
+
+            writer.write("//*START*TIME*CREDIT*LEGEND*\n");
+            StringBuilder cts = new StringBuilder();
+            int creditCounter = 0;
+            for (Double d : creditTimeslot.keySet()) {
+                writer.write(creditCounter + "," + df.format(d) + "\n");
+                cts.append(creditCounter++);
+                for (int i = 0; i < creditTimeslot.get(d).size(); i++) {
+                    cts.append(",").append(creditTimeslot.get(d).get(i));
+                }
+                cts.append("\n");
+            }
+            writer.write("*END*TIME*CREDIT*LEGEND*\n");
+
+            writer.write("//*START*CREDIT*TIMESLOT*\n");
+            writer.write(cts.toString());
+            writer.write("*END*CREDIT*TIMESLOT*\n");
+
+            writer.write("//*START*TIMESLOT*\n");
+            writer.write("//timeslot_id	, credit rating, monday		, tuesday		, wednesday		, thursday		, friday		, saturday\n");
+            for (TimeSlot t : timeslotList.values()) {
+                writer.write(t.getID() + "," + df.format(t.getCredits()));
+                for (int i = 0; i < 6; i++) {
+                    writer.write(", " + t.GetTimeOnDay(i));
                 }
                 writer.write("\n");
             }
-            writer.write("*END*COURSE*\n");
-            writer.write("//*START*PROFESSOR*\n");
-            writer.write("//profid, maxcredit, courses[, courses]\n");
-            TreeSet<String> profSet = new TreeSet<>();
-            ArrayList<String> profPref = new ArrayList<>();
-            for (String pr : profList.keySet()) {
-                Professor p = profList.get(pr);
-                profLookup.put(p.getProfID(), pr);
-                profPref.add(p.getProfID() + ", " + p.getPreferenceString() + "\n");
-                String currLine = String.format("%02d", p.getProfID()) + ", " + df.format(p.getCredits());
-                for (Object cTaught : p.getCoursesTaught()) {
-                    currLine += ", " + cTaught.toString();
-                }
-                profSet.add(currLine);
-            }
-            for (String prof : profSet) {
-                if (prof.startsWith("0")) {
-                    prof = prof.substring(1);
-                }
-                writer.write(prof + "\n");
-            }
-            writer.write("*END*PROFESSOR*\n");
-            writer.write("//*START*TIMESLOT*\n");
-            writer.write("//timeslot_id	, credit rating, monday		, tuesday		, wednesday		, thursday		, friday		, saturday\n");
-            TreeSet<String> timeSet = new TreeSet<>();
-            for (String s : timeslotList.keySet()) {
-                TimeSlot t = timeslotList.get(s);
-                timeslotLookup.put(t.getID(), s);
-                String currLine = String.format("%02d", t.getID()) + ", " + df.format(t.getCredits());
-                for (int i = 0; i < 6; i++) {
-                    currLine += ", " + t.GetTimeOnDay(i);
-                }
-                currLine += "\n";
-                timeSet.add(currLine);
+            writer.write("*END*TIMESLOT*\n");
+
+            writer.write("//*START*INITIAL*\n");
+            for (Schedule s : scheduledCoursesList.values()) {
+                writer.write(courseSectionListData.indexOf(s.course) + ",");
+                writer.write(profList.get(s.prof).getProfID() + ",");
+                writer.write(timeslotList.get(s.time).getID() + "\n");
             }
 
-            for (String time : timeSet) {
-                writer.write(time);
-            }
-            writer.write("*END*TIMESLOT*\n");
-            writer.write("//*START*COURSEPREF*\n");
-            writer.write("//course, pref(m-a-e)\n");
-            for (String coursePref1 : coursePref) {
-                writer.write(coursePref1);
-            }
-            writer.write("*END*COURSEPREF*\n");
-            writer.write("//START*PROFPREF*\n");
-            writer.write("//profID, pref(m-a-e)\n");
-            for (int i = 0; i < profPref.size(); i++) {
-                writer.write(profPref.get(i));
-            }
-            writer.write("*END*PROFPREF*\n");
-            writer.write("//*START*INITIAL*\n");
-            TreeSet<String> schedules = new TreeSet<>();
-            for (String s : scheduledCoursesList.keySet()) {
-                Schedule sc = scheduledCoursesList.get(s);
-                //System.out.println(sc.course + " " + sc.prof + " " + sc.time);
-                int profID = profList.get(sc.prof).getProfID();
-                int tsID = timeslotList.get(sc.time).getID();
-                schedules.add(sc.course + "$" + sc.course.substring(0, sc.course.indexOf('(')) + ", " + String.valueOf(profID) + ", " + String.valueOf(tsID) + "\n");
-            }
-            for (String s : schedules) {
-                writer.write(s.substring(s.indexOf('$') + 1));
-            }
             writer.write("*END*INITIAL*\n");
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtGeneratedFileName.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
             tabbedPanels.setEnabledAt(5, true);
@@ -2507,6 +2882,7 @@ public class GUIForm extends javax.swing.JFrame {
             newRow = true;
             currentSchedule = new Schedule();
         }
+
         tableSchedule.clearSelection();
         currentSchedule.course = cbScheduleCourse.getSelectedItem().toString();
         currentSchedule.prof = cbScheduleProfessor.getSelectedItem().toString();
@@ -2515,6 +2891,7 @@ public class GUIForm extends javax.swing.JFrame {
         if (newRow) {
             dtm.addRow(new String[]{currentSchedule.course, currentSchedule.prof, currentSchedule.time});
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+            sorter.setSortsOnUpdates(true);
             tableSchedule.setRowSorter(sorter);
 
             List<RowSorter.SortKey> sortKeys = new ArrayList<>();
@@ -2536,6 +2913,7 @@ public class GUIForm extends javax.swing.JFrame {
             dtm.insertRow(rowIndex, new String[]{currentSchedule.course, currentSchedule.prof, currentSchedule.time});
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+        sorter.setSortsOnUpdates(true);
         tableSchedule.setRowSorter(sorter);
 
         List<RowSorter.SortKey> sortKeys = new ArrayList<>();
@@ -2764,7 +3142,7 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void listTimeslotsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listTimeslotsValueChanged
         if (listTimeslots.getSelectedIndex() >= 0) {
-            currentTimeslot = timeslotList.get(listTimeslots.getSelectedValue().toString());
+            currentTimeslot = timeslotList.get(listTimeslots.getSelectedValue());
             if (currentTimeslot != null) {
                 txtTSGeneratedID.setText(String.valueOf(currentTimeslot.getID()));
                 txtTimeSlotCreditValue.setText(String.valueOf(currentTimeslot.getCredits()));
@@ -2857,9 +3235,9 @@ public class GUIForm extends javax.swing.JFrame {
         spinnerCreditsAssigned.setValue(0);
         Iterator it = courseList.keySet().iterator();
         while (it.hasNext()) {
-            cbProfCourseTaught.addItem(it.next());
+            cbProfCourseTaught.addItem(it.next().toString());
         }
-        listCourseTaught.setListData(new Vector());
+        listCourseTaught.setListData(new Vector<>());
         cbProfPrefHighest.setSelectedIndex(0);
         cbProfPrefNormal.setSelectedIndex(1);
         cbProfPrefLeast.setSelectedIndex(2);
@@ -2988,7 +3366,7 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void listProfsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listProfsValueChanged
         if (listProfs.getSelectedIndex() >= 0) {
-            currentProfessor = profList.get(listProfs.getSelectedValue().toString());
+            currentProfessor = profList.get(listProfs.getSelectedValue());
             txtProfGeneratedID.setText(String.valueOf(currentProfessor.getProfID()));
             txtProfName.setText(currentProfessor.getProfName());
             spinnerCreditsAssigned.setValue(currentProfessor.getCredits());
@@ -3067,14 +3445,14 @@ public class GUIForm extends javax.swing.JFrame {
         dropIncompCourses.removeAllItems();
         Iterator it = courseList.keySet().iterator();
         while (it.hasNext()) {
-            dropIncompCourses.addItem(it.next());
+            dropIncompCourses.addItem(it.next().toString());
         }
-        listIncompCourses.setListData(new Vector());
+        listIncompCourses.setListData(new Vector<>());
     }//GEN-LAST:event_btnNewCourseActionPerformed
 
     private void listCoursesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listCoursesValueChanged
         if (listCourses.getSelectedIndex() >= 0) {
-            currentCourse = courseList.get(listCourses.getSelectedValue().toString());
+            currentCourse = courseList.get(listCourses.getSelectedValue());
             txtCourseGeneratedID.setText(String.valueOf(currentCourse.getGeneratedID()));
             txtCourseTitle.setText(currentCourse.getTitle());
             txtCourseID.setText(currentCourse.getID());
@@ -3110,15 +3488,15 @@ public class GUIForm extends javax.swing.JFrame {
                 case 0:
                     cbCoursePrefLeast.setSelectedIndex(2);
             }
-            Vector temp = currentCourse.getIncompCourses();
+            Vector<String> temp = currentCourse.getIncompCourses();
             Collections.sort(temp);
             listIncompCourses.setListData(temp);
             dropIncompCourses.setEnabled(true);
             btnModifyIncomp.setEnabled(true);
             btnModifyIncomp.setText("Add");
             dropIncompCourses.removeAllItems();
-            courseListData.stream().filter((s) -> (!s.toString().equals(currentCourse.getID()))).forEach((s) -> {
-                dropIncompCourses.addItem(s.toString());
+            courseListData.stream().filter((s) -> (!s.equals(currentCourse.getID()))).forEach((s) -> {
+                dropIncompCourses.addItem(s);
             });
         }
     }//GEN-LAST:event_listCoursesValueChanged
@@ -3155,7 +3533,7 @@ public class GUIForm extends javax.swing.JFrame {
             courseList.get(incompCourse).removeIncompatibleCourse(currentCourse.getID());
             currentCourse.removeIncompatibleCourse(incompCourse);
         }
-        Vector temp = currentCourse.getIncompCourses();
+        Vector<String> temp = currentCourse.getIncompCourses();
         Collections.sort(temp);
         listIncompCourses.setListData(temp);
         spCourseIncomp.revalidate();
@@ -3206,7 +3584,7 @@ public class GUIForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(rootPane, e.getMessage());
         }
 
-        int oldSectionCount = -1;
+        int oldSectionCount;
         if (courseList.containsKey(txtCourseID.getText().toLowerCase())) {
             currentCourse = courseList.get(txtCourseID.getText().toLowerCase());
             oldSectionCount = currentCourse.getSectionCount();
@@ -3335,7 +3713,73 @@ public class GUIForm extends javax.swing.JFrame {
                 fileName += ".rlt";
             }
             txtResultPath.setText(fileName);
-            btnOpenResult.setEnabled(true);
+            //btnOpenResult.setEnabled(true);
+            BufferedReader br = null;
+
+            try {
+                br = new BufferedReader(new FileReader(txtResultPath.getText()));
+                String currentLine;
+                boolean startReading = false;
+                while ((currentLine = br.readLine()) != null) {
+                    if (currentLine.equals("**BEGINRESULT**")) {
+                        startReading = true;
+                    } else if (currentLine.equals("**ENDRESULT**")) {
+                        break;
+                    } else if (startReading) {
+                        String[] tuple = currentLine.split(",");
+                        int section = Integer.parseInt(tuple[0].trim());
+                        int profID = Integer.parseInt(tuple[1].trim());
+                        int timeID = Integer.parseInt(tuple[2].trim());
+                        Schedule sc = new Schedule();
+                        sc.course = sectionLookup.get(section);
+                        sc.prof = profLookup.get(profID);
+                        sc.time = timeslotLookup.get(timeID);
+                        resultListBySections.put(sc.course, sc);
+                        String course = sc.course.substring(0, sc.course.indexOf("("));
+                        ArrayList<Schedule> ass;
+                        if (resultListByCourses.containsKey(course)) {
+                            ass = resultListByCourses.get(course);
+                            ass.add(sc);
+                        } else {
+                            ass = new ArrayList<>();
+                            ass.add(sc);
+                        }
+                        resultListByCourses.put(course, ass);
+
+                        if (resultListByProfessor.containsKey(sc.prof)) {
+                            ass = resultListByProfessor.get(sc.prof);
+                            ass.add(sc);
+                        } else {
+                            ass = new ArrayList<>();
+                            ass.add(sc);
+                        }
+                        resultListByProfessor.put(sc.prof, ass);
+                    }
+                }
+                rdoCourse.setEnabled(true);
+                rdoProfessor.setEnabled(true);
+                listViewBySelection.setEnabled(true);
+                //cbScheduleSection.setEnabled(false);
+                cbProfessorSelection.setEnabled(true);
+                cbTimeSelection.setEnabled(true);
+                btnStatistics.setEnabled(true);
+                btnResultChangeUpdate.setEnabled(true);
+                btnGenerateResult.setEnabled(true);
+                if(incompatibleSectionList.isEmpty()){
+                    incompatibleSectionList = GenerateIncompatibleSectionArray();
+                }
+                String validation = validateSchedule(true);
+                
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println(e.getMessage());
+            } finally {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }//GEN-LAST:event_btnBrowseResultActionPerformed
 
@@ -3343,91 +3787,37 @@ public class GUIForm extends javax.swing.JFrame {
         if (rdoProfessor.isSelected()) {
             listViewBySelection.setListData(profListData);
         } else {
-            listViewBySelection.setListData(courseSectionListData);
+            listViewBySelection.setListData(courseListData);
         }
 
         spViewBySelection.revalidate();
         spViewBySelection.repaint();
     }//GEN-LAST:event_rdoProfessorItemStateChanged
 
-    private void btnOpenResultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOpenResultActionPerformed
-
-        BufferedReader br = null;
-
-        try {
-            br = new BufferedReader(new FileReader(txtResultPath.getText()));
-            String currentLine;
-            boolean startReading = false;
-            while ((currentLine = br.readLine()) != null) {
-                if (currentLine.equals("**BEGINRESULT**")) {
-                    startReading = true;
-                } else if (currentLine.equals("**ENDRESULT**")) {
-                    break;
-                } else if (startReading) {
-                    String[] tuple = currentLine.split(",");
-                    int section = Integer.parseInt(tuple[0].trim());
-                    int profID = Integer.parseInt(tuple[1].trim());
-                    int timeID = Integer.parseInt(tuple[2].trim());
-                    Schedule sc = new Schedule();
-                    sc.course = sectionLookup.get(section);
-                    sc.prof = profLookup.get(profID);
-                    sc.time = timeslotLookup.get(timeID);
-                    resultListByCourses.put(sc.course, sc);
-                    if (resultListByProfessor.containsKey(sc.prof)) {
-                        ArrayList<Schedule> ass = resultListByProfessor.get(sc.prof);
-                        ass.add(sc);
-                        resultListByProfessor.put(sc.prof, ass);
-                    } else {
-                        ArrayList<Schedule> ass = new ArrayList<>();
-                        ass.add(sc);
-                        resultListByProfessor.put(sc.prof, ass);
-                    }
-                }
-            }
-            rdoCourse.setEnabled(true);
-            rdoProfessor.setEnabled(true);
-            listViewBySelection.setEnabled(true);
-            cbScheduleSection.setEnabled(true);
-            cbProfessorSelection.setEnabled(true);
-            cbTimeSelection.setEnabled(true);
-            btnStatistics.setEnabled(true);
-            btnResultChangeRedo.setEnabled(true);
-            btnResultChangeUndo.setEnabled(true);
-            btnGenerateResult.setEnabled(true);
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println(e.getMessage());
-        } finally {
-            try {
-                br.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }//GEN-LAST:event_btnOpenResultActionPerformed
-
     private void listViewBySelectionValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listViewBySelectionValueChanged
         if (listViewBySelection.getSelectedIndex() >= 0) {
             if (rdoCourse.isSelected()) {
                 cbScheduleSection.removeAllItems();
                 for (Object s : courseSectionListData) {
-                    cbScheduleSection.addItem(s);
+                    cbScheduleSection.addItem(s.toString());
                 }
-                String course = listViewBySelection.getSelectedValue().toString();
-                cbScheduleSection.setSelectedItem(course);
-                cbProfessorSelection.setSelectedItem(resultListByCourses.get(course).prof);
-                cbTimeSelection.setSelectedItem(resultListByCourses.get(course).time);
-                
+                String course = listViewBySelection.getSelectedValue();
+                String section = resultListByCourses.get(listViewBySelection.getSelectedValue()).get(0).course;
+                cbScheduleSection.setSelectedItem(section);
+                cbProfessorSelection.setSelectedItem(resultListBySections.get(section).prof);
+                cbTimeSelection.setSelectedItem(resultListBySections.get(section).time);
+                UpdateResultsView(course, true);
             } else {
                 cbProfessorSelection.removeAllItems();
                 cbProfessorSelection.addItem(listViewBySelection.getSelectedValue());
-                cbProfessorSelection.setSelectedItem(listViewBySelection.getSelectedValue().toString());
+                cbProfessorSelection.setSelectedItem(listViewBySelection.getSelectedValue());
                 ArrayList<Schedule> coursesTaught = resultListByProfessor.get(listViewBySelection.getSelectedValue());
                 cbScheduleSection.removeAllItems();
                 cbTimeSelection.removeAllItems();
-                for(Schedule s : coursesTaught){
+                for (Schedule s : coursesTaught) {
                     cbScheduleSection.addItem(s.course);
                 }
+                UpdateResultsView(listViewBySelection.getSelectedValue(), false);
             }
         }
     }//GEN-LAST:event_listViewBySelectionValueChanged
@@ -3455,6 +3845,101 @@ public class GUIForm extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_cbScheduleSectionActionPerformed
+
+    private void btnResultChangeUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResultChangeUpdateActionPerformed
+        if (!btnResultChangeUndo.isEnabled()) {
+            btnResultChangeUndo.setEnabled(true);
+        }
+        ScheduleReplace redo = new ScheduleReplace();
+        Schedule current = resultListBySections.get(cbScheduleSection.getSelectedItem().toString()), updated = new Schedule();
+
+        updated.course = current.course;
+        updated.prof = cbProfessorSelection.getSelectedItem().toString();
+        updated.time = cbTimeSelection.getSelectedItem().toString();
+
+        redo.original = current;
+        redo.updated = updated;
+        undoList.addLast(redo);
+        String course = current.course;
+        course = course.substring(0, course.indexOf("("));
+        ArrayList<Schedule> ass = resultListByCourses.get(course);
+        ass.remove(current);
+        ass.add(updated);
+        resultListByCourses.put(course, ass);
+
+        ass = resultListByProfessor.get(current.prof);
+        ass.remove(current);
+        resultListByProfessor.put(current.prof, ass);
+        ass = resultListByProfessor.get(updated.prof);
+        ass.add(updated);
+        resultListByProfessor.put(updated.prof, ass);
+
+        resultListBySections.put(updated.course, updated);
+
+        String validation = validateSchedule(true);
+
+        if (!validation.isEmpty()) {
+            String[] options = {"Yes", "No"};
+            String message = "<html>The initial schedule is not valid due to:<br />" + validation + "<br />Continue with the change?</html>";
+            int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Invalid Schedule", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, options, "No");
+            if (choice == 1) {
+                btnResultChangeUndoActionPerformed(evt);
+                return;
+            }
+        }
+
+        UpdateResultsView();
+
+
+    }//GEN-LAST:event_btnResultChangeUpdateActionPerformed
+
+    private void UpdateResultsView() {
+        UpdateResultsView(resultKey, resultCourse);
+    }
+
+    private void btnResultChangeUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResultChangeUndoActionPerformed
+        ScheduleReplace undo = undoList.removeLast();
+        if (undoList.isEmpty()) {
+            btnResultChangeUndo.setEnabled(false);
+        }
+
+        resultListBySections.put(undo.original.course, undo.original);
+
+        ArrayList<Schedule> ass = resultListByProfessor.get(undo.updated.prof);
+        ass.remove(undo.updated);
+        resultListByProfessor.put(undo.updated.prof, ass);
+        ass = resultListByProfessor.get(undo.original.prof);
+        if (!ass.contains(undo.original)) {
+            ass.add(undo.original);
+        }
+        resultListByProfessor.put(undo.original.prof, ass);
+
+        String courseID_original = undo.original.course;
+        courseID_original = courseID_original.substring(0, courseID_original.indexOf("("));
+        String courseID_updated = undo.updated.course;
+        courseID_updated = courseID_updated.substring(0, courseID_updated.indexOf("("));
+        ass = resultListByCourses.get(courseID_updated);
+        ass.remove(undo.updated);
+        resultListByCourses.put(courseID_updated, ass);
+        ass = resultListByCourses.get(courseID_original);
+        ass.add(undo.original);
+        resultListByCourses.put(courseID_original, ass);
+
+        UpdateResultsView();
+    }//GEN-LAST:event_btnResultChangeUndoActionPerformed
+
+    private void btnValidateInitialScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnValidateInitialScheduleActionPerformed
+        String validation = validateSchedule(false);
+        if(validation.isEmpty()){
+            String[] options = {"OK"};
+            String message = "<html>The initial schedule is valid.</html>";
+            int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Schedule Validation", JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "OK");
+        } else {
+            String[] options = {"OK"};
+            String message = "<html>The initial schedule is not valid due to:" + validation + "</html>";
+            int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Schedule Validation", JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "OK");
+        }
+    }//GEN-LAST:event_btnValidateInitialScheduleActionPerformed
 
     private void updateCourseGeneratedIDs() {
         int arraySize = courseList.size();
@@ -3521,9 +4006,93 @@ public class GUIForm extends javax.swing.JFrame {
         timeslotList.putAll(redoneList);
     }
 
-    private boolean validateInitialSchedule() {
+    private String validateSchedule(boolean isResult) {
+        StringBuilder errors = new StringBuilder("<ul>");
 
-        return false;
+        boolean invalid = false;
+        int DELTA_MIN = 2, DELTA_MAX = -2;
+        //First ensure that no professor is scheduled at the same time twice
+        //And ensure that the professor is scheduled within +/-DELTA course load
+        HashMap<String, ArrayList<String>> assignmentVerifier = new HashMap<>();
+        HashMap<String, Double> profCreditsAssigned = new HashMap<>();
+        ArrayList<Schedule> schedulesToValidate;
+        
+        if (isResult) {
+            schedulesToValidate = new ArrayList<>(resultListBySections.values());
+        } else {
+            schedulesToValidate = new ArrayList<>(scheduledCoursesList.values());
+        }
+
+        for (Schedule s : schedulesToValidate) {
+            if (assignmentVerifier.containsKey(s.prof) && assignmentVerifier.get(s.prof).contains(s.time)) {
+                invalid = true;
+                errors.append("<li>");
+                errors.append("ERROR! Prof. ").append(s.prof).append(" is assigned at ").append(s.time).append(" twice!");
+                errors.append("</li>");
+            } else {
+                if (!assignmentVerifier.containsKey(s.prof)) {
+                    assignmentVerifier.put(s.prof, new ArrayList<>());
+                }
+                assignmentVerifier.get(s.prof).add(s.time);
+            }
+            if (profCreditsAssigned.containsKey(s.prof)) {
+                String course = s.course;
+                course = course.substring(0, course.indexOf("("));
+                profCreditsAssigned.put(s.prof, profCreditsAssigned.get(s.prof) + courseList.get(course).getCreditValue());
+            }
+        }
+
+        for (String s : profCreditsAssigned.keySet()) {
+            double creditsAvailable = profList.get(s).getCredits();
+            creditsAvailable -= profCreditsAssigned.get(s);
+            if (creditsAvailable < DELTA_MAX || creditsAvailable > DELTA_MIN) {
+                invalid = true;
+                errors.append("<li>");
+                errors.append("WARNING! Prof. ").append(s).append(" is scheduled for about ");
+                if (creditsAvailable < DELTA_MAX) {
+                    errors.append(String.valueOf(Math.ceil(Math.abs(creditsAvailable))));
+                    errors.append(" more credits than allocated.");
+                } else {
+                    errors.append(String.valueOf(Math.ceil(Math.abs(creditsAvailable))));
+                    errors.append(" less credits than allocated.");
+                }
+                errors.append("</li>");
+            }
+        }
+
+        //Ensure that no incompatible sections are scheduled at the same time.
+        if (incompatibleSectionList.isEmpty()) {
+            incompatibleSectionList = GenerateIncompatibleSectionArray();
+        }
+
+        HashMap<String, HashSet<Integer>> incompChecklist = new HashMap<>();
+        for (Schedule s : schedulesToValidate) {
+            int currentSectionIndex = courseSectionListData.indexOf(s.course);
+            if (!incompChecklist.containsKey(s.time)) {
+                incompChecklist.put(s.time, new HashSet<>());
+                incompChecklist.get(s.time).add(currentSectionIndex);
+            } else {
+                for (int i = 0; i < incompatibleSectionList.get(currentSectionIndex).size(); i++) {
+                    if (incompChecklist.get(s.time).contains(incompatibleSectionList.get(currentSectionIndex).get(i))) {
+                        invalid = true;
+                        errors.append("<li>");
+                        errors.append("Error! Incompatible sections ");
+                        errors.append(sectionLookup.get(currentSectionIndex));
+                        errors.append(" and ");
+                        errors.append(sectionLookup.get(incompatibleSectionList.get(currentSectionIndex).get(i)));
+                        errors.append(" are scheduled for the same time!");
+                        errors.append("</li>");
+                    }
+                }
+            }
+        }
+
+        if (invalid) {
+            errors.append("</ul>");
+            return errors.toString();
+        } else {
+            return "";
+        }
     }
 
     private String ConvertToRegularTime(int hour, int minute) {
@@ -3582,40 +4151,30 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JButton btnNewCourse;
     private javax.swing.JButton btnNewProf;
     private javax.swing.JButton btnNewTimeslot;
-    private javax.swing.JButton btnOpenResult;
-    private javax.swing.JButton btnResultChangeRedo;
     private javax.swing.JButton btnResultChangeUndo;
+    private javax.swing.JButton btnResultChangeUpdate;
     private javax.swing.JButton btnSaveCourse;
     private javax.swing.JButton btnSaveProf;
     private javax.swing.JButton btnSaveSchedule;
     private javax.swing.JButton btnSaveSetup;
     private javax.swing.JButton btnSaveTimeSlot;
     private javax.swing.JButton btnStatistics;
+    private javax.swing.JButton btnValidateInitialSchedule;
     private javax.swing.JComboBox cbCoursePrefHighest;
     private javax.swing.JComboBox cbCoursePrefLeast;
     private javax.swing.JComboBox cbCoursePrefNormal;
-    private javax.swing.JComboBox cbProfCourseTaught;
+    private javax.swing.JComboBox<String> cbProfCourseTaught;
     private javax.swing.JComboBox cbProfPrefHighest;
     private javax.swing.JComboBox cbProfPrefLeast;
     private javax.swing.JComboBox cbProfPrefNormal;
-    private javax.swing.JComboBox cbProfessorSelection;
-    private javax.swing.JComboBox cbScheduleCourse;
-    private javax.swing.JComboBox cbScheduleProfessor;
-    private javax.swing.JComboBox cbScheduleSection;
-    private javax.swing.JComboBox cbScheduleTimeslot;
-    private javax.swing.JComboBox cbTimeSelection;
+    private javax.swing.JComboBox<String> cbProfessorSelection;
+    private javax.swing.JComboBox<String> cbScheduleCourse;
+    private javax.swing.JComboBox<String> cbScheduleProfessor;
+    private javax.swing.JComboBox<String> cbScheduleSection;
+    private javax.swing.JComboBox<String> cbScheduleTimeslot;
+    private javax.swing.JComboBox<String> cbTimeSelection;
     private javax.swing.JPanel courseData;
-    private javax.swing.JComboBox dropIncompCourses;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
-    private javax.swing.JPanel jPanel8;
-    private javax.swing.JPanel jPanel9;
+    private javax.swing.JComboBox<String> dropIncompCourses;
     private javax.swing.JLabel lbFridayStart;
     private javax.swing.JLabel lbSaturdayStart;
     private javax.swing.JLabel lbSetupFileName;
@@ -3654,7 +4213,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblScheduleSectionLabel;
     private javax.swing.JLabel lblScheduleTimeslot;
     private javax.swing.JLabel lblScheduledCourses;
-    private javax.swing.JLabel lblSundayColumn1;
+    private javax.swing.JLabel lblSundayColumn;
     private javax.swing.JLabel lblThursdayColumn;
     private javax.swing.JLabel lblThursdayEnd;
     private javax.swing.JLabel lblTimeColumn;
@@ -3667,13 +4226,13 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblWednesdayColumn;
     private javax.swing.JLabel lblWednesdayEnd;
     private javax.swing.JLabel lblWednesdayStart;
-    private javax.swing.JList listCourseTaught;
-    private javax.swing.JList listCourses;
-    private javax.swing.JList listIncompCourses;
-    private javax.swing.JList listProfs;
-    private javax.swing.JList listTimeslots;
-    private javax.swing.JList listUnscheduledCourses;
-    private javax.swing.JList listViewBySelection;
+    private javax.swing.JList<Object> listCourseTaught;
+    private javax.swing.JList<String> listCourses;
+    private javax.swing.JList<String> listIncompCourses;
+    private javax.swing.JList<String> listProfs;
+    private javax.swing.JList<String> listTimeslots;
+    private javax.swing.JList<String> listUnscheduledCourses;
+    private javax.swing.JList<String> listViewBySelection;
     private javax.swing.JPanel pnlAdvancedConfig;
     private javax.swing.JPanel pnlConfiguration;
     private javax.swing.JPanel pnlContainer;
@@ -3690,6 +4249,15 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JPanel pnlProfPreference;
     private javax.swing.JPanel pnlProfessor;
     private javax.swing.JPanel pnlResultContainer;
+    private javax.swing.JPanel pnlResultScheduleLabel_Friday;
+    private javax.swing.JPanel pnlResultScheduleLabel_Monday;
+    private javax.swing.JPanel pnlResultScheduleLabel_Saturday;
+    private javax.swing.JPanel pnlResultScheduleLabel_Sunday;
+    private javax.swing.JPanel pnlResultScheduleLabel_Thursday;
+    private javax.swing.JPanel pnlResultScheduleLabel_Time;
+    private javax.swing.JPanel pnlResultScheduleLabel_Tuesday;
+    private javax.swing.JPanel pnlResultScheduleLabel_Wednesday;
+    private javax.swing.JPanel pnlResultScheduleLabels;
     private javax.swing.JPanel pnlResults;
     private javax.swing.JPanel pnlSaturday;
     private javax.swing.JPanel pnlSaturdayColumn;
@@ -3736,6 +4304,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JTextField txtProfGeneratedID;
     private javax.swing.JTextField txtProfName;
     private javax.swing.JTextField txtResultPath;
+    private javax.swing.JTextField txtResultStatus;
     private javax.swing.JTextField txtSaturdayEnd;
     private javax.swing.JTextField txtSaturdayStart;
     private javax.swing.JTextField txtSetupFileName;

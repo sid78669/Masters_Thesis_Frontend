@@ -437,6 +437,7 @@
                               </Properties>
                               <AuxValues>
                                 <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JList(new Vector())"/>
+                                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                               </AuxValues>
                             </Component>
                           </SubComponents>
@@ -451,6 +452,9 @@
                           <Events>
                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="dropIncompCoursesActionPerformed"/>
                           </Events>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                          </AuxValues>
                         </Component>
                         <Component class="javax.swing.JButton" name="btnModifyIncomp">
                           <Properties>
@@ -523,7 +527,7 @@
                       </Events>
                       <AuxValues>
                         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JList(courseListData)"/>
-                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value=""/>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                       </AuxValues>
                     </Component>
                   </SubComponents>
@@ -597,6 +601,9 @@
                       <Events>
                         <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="listProfsValueChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -871,6 +878,9 @@
                           <Events>
                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfCourseTaughtActionPerformed"/>
                           </Events>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                          </AuxValues>
                         </Component>
                         <Container class="javax.swing.JScrollPane" name="spCourseTaughtList">
                           <AuxValues>
@@ -886,6 +896,9 @@
                                 </Property>
                                 <Property name="enabled" type="boolean" value="false"/>
                               </Properties>
+                              <AuxValues>
+                                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;Object&gt;"/>
+                              </AuxValues>
                             </Component>
                           </SubComponents>
                         </Container>
@@ -1019,6 +1032,9 @@
                       <Events>
                         <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="listTimeslotsValueChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -1481,26 +1497,28 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="lblUnscheduledCourses" pref="244" max="32767" attributes="0"/>
-                                      <Component id="spUnscheduledCourses" pref="0" max="32767" attributes="0"/>
+                                      <Component id="lblUnscheduledCourses" min="-2" pref="244" max="-2" attributes="0"/>
+                                      <Component id="spUnscheduledCourses" min="-2" pref="244" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="102" alignment="0" attributes="0">
+                                      <Group type="102" attributes="0">
                                           <Component id="lblScheduledCourses" max="32767" attributes="0"/>
                                           <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="spTableSchedule" pref="732" max="32767" attributes="0"/>
+                                      <Component id="spTableSchedule" pref="720" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="btnSaveSchedule" max="32767" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                                   <Component id="btnDeleteSchedule" max="32767" attributes="0"/>
+                                  <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
+                                  <Component id="btnValidateInitialSchedule" max="32767" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
@@ -1516,7 +1534,7 @@
                                   </Group>
                               </Group>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1538,20 +1556,23 @@
                               <Component id="lblScheduleTimeslot" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="cbScheduleTimeslot" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace min="-2" pref="11" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="btnSaveSchedule" alignment="3" min="-2" pref="49" max="-2" attributes="0"/>
-                              <Component id="btnDeleteSchedule" alignment="3" min="-2" pref="51" max="-2" attributes="0"/>
-                          </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="1" attributes="0">
-                              <Component id="lblUnscheduledCourses" min="-2" max="-2" attributes="0"/>
-                              <Component id="lblScheduledCourses" min="-2" pref="14" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="btnSaveSchedule" alignment="3" min="-2" pref="49" max="-2" attributes="0"/>
+                                  <Component id="btnDeleteSchedule" alignment="3" min="-2" pref="51" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="btnValidateInitialSchedule" max="32767" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="lblUnscheduledCourses" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblScheduledCourses" alignment="3" min="-2" pref="14" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="spUnscheduledCourses" max="32767" attributes="0"/>
-                              <Component id="spTableSchedule" pref="567" max="32767" attributes="0"/>
+                              <Component id="spTableSchedule" pref="572" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1589,6 +1610,9 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbScheduleCourseActionPerformed"/>
                   </Events>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                  </AuxValues>
                 </Component>
                 <Component class="javax.swing.JLabel" name="lblScheduleProfessor">
                   <Properties>
@@ -1601,6 +1625,9 @@
                       <StringArray count="0"/>
                     </Property>
                   </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                  </AuxValues>
                 </Component>
                 <Component class="javax.swing.JLabel" name="lblScheduleTimeslot">
                   <Properties>
@@ -1613,6 +1640,9 @@
                       <StringArray count="0"/>
                     </Property>
                   </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                  </AuxValues>
                 </Component>
                 <Component class="javax.swing.JButton" name="btnSaveSchedule">
                   <Properties>
@@ -1647,6 +1677,9 @@
                       <Events>
                         <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="listUnscheduledCoursesValueChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -1660,13 +1693,21 @@
                     <Property name="text" type="java.lang.String" value="Scheduled Courses"/>
                   </Properties>
                 </Component>
+                <Component class="javax.swing.JButton" name="btnValidateInitialSchedule">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Validate Schedule"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnValidateInitialScheduleActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="pnlConfiguration">
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-                  <JTabbedPaneConstraints tabName="Configuration">
-                    <Property name="tabTitle" type="java.lang.String" value="Configuration"/>
+                  <JTabbedPaneConstraints tabName="Generate Input">
+                    <Property name="tabTitle" type="java.lang.String" value="Generate Input"/>
                   </JTabbedPaneConstraints>
                 </Constraint>
               </Constraints>
@@ -1694,7 +1735,6 @@
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="btnBrowseGeneratedFileName" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="jButton2" alignment="0" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1721,9 +1761,7 @@
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="btnSaveSetup" min="-2" pref="65" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="130" max="-2" attributes="0"/>
-                          <Component id="jButton2" min="-2" pref="60" max="-2" attributes="0"/>
-                          <EmptySpace pref="164" max="32767" attributes="0"/>
+                          <EmptySpace pref="354" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1900,18 +1938,13 @@
                 </Component>
                 <Component class="javax.swing.JTextField" name="txtGeneratedFileName">
                 </Component>
-                <Component class="javax.swing.JButton" name="jButton2">
-                  <Properties>
-                    <Property name="text" type="java.lang.String" value="Inspect Result"/>
-                  </Properties>
-                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="pnlResults">
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-                  <JTabbedPaneConstraints tabName="Result">
-                    <Property name="tabTitle" type="java.lang.String" value="Result"/>
+                  <JTabbedPaneConstraints tabName="View Result">
+                    <Property name="tabTitle" type="java.lang.String" value="View Result"/>
                   </JTabbedPaneConstraints>
                 </Constraint>
               </Constraints>
@@ -1944,14 +1977,14 @@
                                       <Component id="txtResultPath" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="btnBrowseResult" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="btnOpenResult" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="scrollSchedule" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabels" alignment="0" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="btnStatistics" min="-2" pref="208" max="-2" attributes="0"/>
-                                      <EmptySpace max="32767" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="txtResultStatus" max="32767" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
                                       <Component id="btnGenerateResult" min="-2" pref="262" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -1967,18 +2000,18 @@
                                   <Component id="lblResultFile" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="btnBrowseResult" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="txtResultPath" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="btnOpenResult" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="pnlViewByControls" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                              <Component id="pnlResultScheduleLabels" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="scrollSchedule" max="32767" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="btnStatistics" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="btnGenerateResult" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="txtResultStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -2030,7 +2063,7 @@
                                   </Group>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Component id="spViewBySelection" min="-2" pref="279" max="-2" attributes="0"/>
-                                  <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="lblChangeProfessorTo" alignment="0" min="-2" max="-2" attributes="0"/>
                                       <Component id="lblChangeTimeTo" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -2043,9 +2076,9 @@
                                       <Component id="cbTimeSelection" alignment="1" max="32767" attributes="0"/>
                                   </Group>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="btnResultChangeUndo" min="-2" max="-2" attributes="0"/>
-                                      <Component id="btnResultChangeRedo" min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="btnResultChangeUndo" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="btnResultChangeUpdate" alignment="2" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
@@ -2082,9 +2115,9 @@
                                               <Group type="103" groupAlignment="3" attributes="0">
                                                   <Component id="lblChangeTimeTo" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   <Component id="cbTimeSelection" alignment="3" min="-2" max="-2" attributes="0"/>
-                                                  <Component id="btnResultChangeRedo" alignment="3" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
+                                          <Component id="btnResultChangeUpdate" alignment="1" min="-2" pref="54" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -2099,7 +2132,7 @@
                               <ComponentRef name="viewByGroup"/>
                             </Property>
                             <Property name="selected" type="boolean" value="true"/>
-                            <Property name="text" type="java.lang.String" value="Section"/>
+                            <Property name="text" type="java.lang.String" value="Course"/>
                             <Property name="enabled" type="boolean" value="false"/>
                           </Properties>
                         </Component>
@@ -2132,6 +2165,9 @@
                               <Events>
                                 <EventHandler event="valueChanged" listener="javax.swing.event.ListSelectionListener" parameters="javax.swing.event.ListSelectionEvent" handler="listViewBySelectionValueChanged"/>
                               </Events>
+                              <AuxValues>
+                                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                              </AuxValues>
                             </Component>
                           </SubComponents>
                         </Container>
@@ -2140,12 +2176,18 @@
                             <Property name="text" type="java.lang.String" value="Undo"/>
                             <Property name="enabled" type="boolean" value="false"/>
                           </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnResultChangeUndoActionPerformed"/>
+                          </Events>
                         </Component>
-                        <Component class="javax.swing.JButton" name="btnResultChangeRedo">
+                        <Component class="javax.swing.JButton" name="btnResultChangeUpdate">
                           <Properties>
-                            <Property name="text" type="java.lang.String" value="Redo"/>
+                            <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;Validate&lt;br /&gt;And&lt;br /&gt;Update&lt;/center&gt;&lt;/html&gt;"/>
                             <Property name="enabled" type="boolean" value="false"/>
                           </Properties>
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnResultChangeUpdateActionPerformed"/>
+                          </Events>
                         </Component>
                         <Component class="javax.swing.JLabel" name="lblChangeProfessorTo">
                           <Properties>
@@ -2170,6 +2212,9 @@
                             </Property>
                             <Property name="enabled" type="boolean" value="false"/>
                           </Properties>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                          </AuxValues>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="cbTimeSelection">
                           <Properties>
@@ -2178,6 +2223,9 @@
                             </Property>
                             <Property name="enabled" type="boolean" value="false"/>
                           </Properties>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                          </AuxValues>
                         </Component>
                         <Component class="javax.swing.JLabel" name="lblScheduleSectionLabel">
                           <Properties>
@@ -2194,6 +2242,10 @@
                           <Events>
                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbScheduleSectionActionPerformed"/>
                           </Events>
+                          <AuxValues>
+                            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JComboBox&lt;String&gt;()"/>
+                            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                          </AuxValues>
                         </Component>
                       </SubComponents>
                     </Container>
@@ -2478,7 +2530,7 @@
                         </Container>
                       </SubComponents>
                     </Container>
-                    <Container class="javax.swing.JPanel" name="jPanel1">
+                    <Container class="javax.swing.JPanel" name="pnlResultScheduleLabels">
                       <Properties>
                         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                           <Border info="org.netbeans.modules.form.compat2.border.MatteColorBorderInfo">
@@ -2491,39 +2543,39 @@
                         <DimensionLayout dim="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="jPanel2" min="-2" pref="152" max="-2" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Time" min="-2" pref="152" max="-2" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel9" pref="112" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Monday" pref="112" max="32767" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel8" pref="112" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Tuesday" pref="112" max="32767" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel7" pref="112" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Wednesday" pref="112" max="32767" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel6" pref="112" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Thursday" pref="112" max="32767" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel5" pref="112" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Friday" pref="112" max="32767" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel4" pref="112" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Saturday" pref="112" max="32767" attributes="0"/>
                                   <EmptySpace min="-2" max="-2" attributes="0"/>
-                                  <Component id="jPanel3" pref="116" max="32767" attributes="0"/>
+                                  <Component id="pnlResultScheduleLabel_Sunday" pref="116" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
                         <DimensionLayout dim="1">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="jPanel4" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel5" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel6" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel7" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel8" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel9" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel2" alignment="0" pref="14" max="32767" attributes="0"/>
-                              <Component id="jPanel3" alignment="1" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Saturday" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Friday" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Thursday" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Wednesday" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Tuesday" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Monday" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Time" alignment="0" pref="14" max="32767" attributes="0"/>
+                              <Component id="pnlResultScheduleLabel_Sunday" alignment="1" pref="14" max="32767" attributes="0"/>
                           </Group>
                         </DimensionLayout>
                       </Layout>
                       <SubComponents>
-                        <Container class="javax.swing.JPanel" name="jPanel2">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Time">
                           <Properties>
                             <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 100]"/>
@@ -2551,7 +2603,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel3">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Sunday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2564,17 +2616,17 @@
                           <Layout>
                             <DimensionLayout dim="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="lblSundayColumn1" alignment="0" max="32767" attributes="0"/>
+                                  <Component id="lblSundayColumn" alignment="0" max="32767" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="lblSundayColumn1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblSundayColumn" min="-2" max="-2" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                           </Layout>
                           <SubComponents>
-                            <Component class="javax.swing.JLabel" name="lblSundayColumn1">
+                            <Component class="javax.swing.JLabel" name="lblSundayColumn">
                               <Properties>
                                 <Property name="horizontalAlignment" type="int" value="0"/>
                                 <Property name="text" type="java.lang.String" value="Sunday"/>
@@ -2582,7 +2634,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel4">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Saturday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2613,7 +2665,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel5">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Friday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2644,7 +2696,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel6">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Thursday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2675,7 +2727,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel7">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Wednesday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2706,7 +2758,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel8">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Tuesday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2737,7 +2789,7 @@
                             </Component>
                           </SubComponents>
                         </Container>
-                        <Container class="javax.swing.JPanel" name="jPanel9">
+                        <Container class="javax.swing.JPanel" name="pnlResultScheduleLabel_Monday">
                           <Properties>
                             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                               <Dimension value="[104, 0]"/>
@@ -2770,14 +2822,11 @@
                         </Container>
                       </SubComponents>
                     </Container>
-                    <Component class="javax.swing.JButton" name="btnOpenResult">
+                    <Component class="javax.swing.JTextField" name="txtResultStatus">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="Open"/>
-                        <Property name="enabled" type="boolean" value="false"/>
+                        <Property name="editable" type="boolean" value="false"/>
+                        <Property name="text" type="java.lang.String" value="Schedule: "/>
                       </Properties>
-                      <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnOpenResultActionPerformed"/>
-                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
