@@ -2796,7 +2796,7 @@ public class GUIForm extends javax.swing.JFrame {
             int creditCounter = 0;
             for (Double d : creditTimeslot.keySet()) {
                 writer.write(creditCounter + "," + df.format(d) + "\n");
-                cts.append(creditCounter++ + "," + creditTimeslot.get(d).size());
+                cts.append(creditCounter++).append(",").append(creditTimeslot.get(d).size());
                 for (int i = 0; i < creditTimeslot.get(d).size(); i++) {
                     cts.append(",").append(creditTimeslot.get(d).get(i));
                 }
@@ -3765,11 +3765,21 @@ public class GUIForm extends javax.swing.JFrame {
                 btnStatistics.setEnabled(true);
                 btnResultChangeUpdate.setEnabled(true);
                 btnGenerateResult.setEnabled(true);
-                if(incompatibleSectionList.isEmpty()){
+                if (incompatibleSectionList.isEmpty()) {
                     incompatibleSectionList = GenerateIncompatibleSectionArray();
                 }
                 String validation = validateSchedule(true);
-                
+                if (validation.isEmpty()) {
+                    String[] options = {"OK"};
+                    String message = "<html>The result schedule is valid.</html>";
+                    int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Schedule Validation", JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "OK");
+                    txtResultStatus.setText("Schedule: VALID.");
+                } else {
+                    String[] options = {"OK"};
+                    String message = "<html>The result schedule is not valid due to:" + validation + "</html>";
+                    int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Schedule Validation", JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "OK");
+                    txtResultStatus.setText("Schedule: INVALID.");
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 System.err.println(e.getMessage());
@@ -3930,7 +3940,7 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void btnValidateInitialScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnValidateInitialScheduleActionPerformed
         String validation = validateSchedule(false);
-        if(validation.isEmpty()){
+        if (validation.isEmpty()) {
             String[] options = {"OK"};
             String message = "<html>The initial schedule is valid.</html>";
             int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Schedule Validation", JOptionPane.OK_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "OK");
@@ -4016,7 +4026,7 @@ public class GUIForm extends javax.swing.JFrame {
         HashMap<String, ArrayList<String>> assignmentVerifier = new HashMap<>();
         HashMap<String, Double> profCreditsAssigned = new HashMap<>();
         ArrayList<Schedule> schedulesToValidate;
-        
+
         if (isResult) {
             schedulesToValidate = new ArrayList<>(resultListBySections.values());
         } else {
