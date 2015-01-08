@@ -2796,7 +2796,7 @@ public class GUIForm extends javax.swing.JFrame {
             int creditCounter = 0;
             for (Double d : creditTimeslot.keySet()) {
                 writer.write(creditCounter + "," + df.format(d) + "\n");
-                cts.append(creditCounter++);
+                cts.append(creditCounter++ + "," + creditTimeslot.get(d).size());
                 for (int i = 0; i < creditTimeslot.get(d).size(); i++) {
                     cts.append(",").append(creditTimeslot.get(d).get(i));
                 }
