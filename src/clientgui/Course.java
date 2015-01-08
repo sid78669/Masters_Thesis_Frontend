@@ -54,8 +54,9 @@ public class Course implements Serializable {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Vector<String> getIncompCourses() {
-        Vector v = new Vector(incompCourses);
+        Vector<String> v = new Vector(incompCourses);
         return v;
     }
 

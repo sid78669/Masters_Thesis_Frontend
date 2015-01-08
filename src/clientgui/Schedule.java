@@ -13,11 +13,17 @@ import java.io.Serializable;
  */
 public class Schedule implements Serializable {
 
-        public String course;
-        public String prof;
-        public String time;
+    static final long serialVersionUID = 7214654737023782937L;
+    public String course;
+    public String prof;
+    public String time;
 
-        public String toString() {
-            return course + "," + prof + "," + time;
-        }
+    @Override
+    public String toString() {
+        return course + "," + prof + "," + time;
     }
+
+    public boolean equals(Schedule other) {
+        return (this.course.equals(other.course) && this.prof.equals(other.prof) && this.time.equals(other.time));
+    }
+}
