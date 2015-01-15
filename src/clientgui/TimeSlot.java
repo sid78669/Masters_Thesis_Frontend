@@ -6,6 +6,7 @@
 package clientgui;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -57,6 +58,56 @@ public class TimeSlot implements Serializable {
         this.id = newID;
     }
 
+    public boolean isConflict(TimeSlot other) {
+        for (int i = 0; i < 6; i++) {
+            if (week[i].start == -1 || other.week[i].start == -1) {
+                continue;
+            }
+            if (week[i].start >= other.week[i].start && week[i].start < other.week[i].end) {
+                return true;
+            } else if (week[i].start <= other.week[i].start && week[i].end >= other.week[i].start) {
+                return true;
+            } else if (week[i].end >= other.week[i].start && week[i].end <= other.week[i].end) {
+                return true;
+            } else if (other.week[i].end >= week[i].start && other.week[i].end <= week[i].start) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isConsecutive(TimeSlot other) {
+        for (int i = 0; i < 6; i++) {
+            if (week[i].start == -1) {
+                continue;
+            }
+            Date currentStart = new Date(0, 0, 0, week[i].start / 100, week[i].start % 100, 0);
+            Date currentEnd = new Date(0, 0, 0, week[i].end / 100, week[i].end % 100, 0);
+            Date otherStart = new Date(0, 0, 0, other.week[i].start / 100, other.week[i].start % 100, 0);
+            Date otherEnd = new Date(0, 0, 0, other.week[i].end / 100, other.week[i].end % 100, 0);
+
+            long minutesSE = Math.abs(currentStart.getTime() - otherEnd.getTime()) / 60000;
+            long minutesES = Math.abs(currentEnd.getTime() - otherStart.getTime()) / 60000;
+
+            if (minutesSE <= 16 || minutesES <= 16) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isSpreadOut(TimeSlot other) {
+        for (int i = 0; i < 6; i++) {
+            if (week[i].start != -1 && other.week[i].start != -1) {
+                if((isMorning() && other.isEvening()) || (isEvening() && other.isMorning())){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean SetTime(int day, int start, int end) {
         if (day >= 0 && day <= 5) {
             week[day].start = start;
@@ -65,6 +116,19 @@ public class TimeSlot implements Serializable {
         } else {
             return false;
         }
+    }
+
+    public boolean isMorning() {
+        return week[0].end < 1200 && week[1].end < 1200 && week[2].end < 1200 && week[3].end < 1200 && week[4].end < 1200;
+    }
+
+    public boolean isAfternoon() {
+        return ((week[0].start != -1 && week[0].start >= 1200 && week[0].end < 1800) || week[0].start == -1) && ((week[1].start != -1 && week[1].start >= 1200 && week[1].end < 1800) || week[1].start == -1) && ((week[2].start != -1 && week[2].start >= 1200 && week[2].end < 1800) || week[2].start == -1) &&
+                ((week[3].start != -1 && week[3].start >= 1200 && week[3].end < 1800) || week[3].start == -1) && ((week[4].start != -1 && week[4].start >= 1200 && week[4].end < 1800) || week[4].start == -1); 
+    }
+
+    public boolean isEvening() {
+        return !(isMorning() || isAfternoon());
     }
 
     public String GetTimeOnDay(int day) {
@@ -118,7 +182,7 @@ public class TimeSlot implements Serializable {
             String today = GetTimeOnDay(i);
             if (today.equals("(-1:-1)")) {
                 continue;
-            }else {
+            } else {
                 today = today.replace("(", "").replace(")", "");
                 String start = today.split(":")[0];
                 String end = today.split(":")[1];
@@ -137,9 +201,9 @@ public class TimeSlot implements Serializable {
             output.append(s);
             output.append(" ");
         }
-        
+
         output.append("</html>");
-        
+
         String rtnVal = output.toString().trim();
         rtnVal = rtnVal.replaceAll("G", "M");
         rtnVal = rtnVal.replaceAll("H", "T");
@@ -152,7 +216,7 @@ public class TimeSlot implements Serializable {
     }
 
     private String ConvertToRegularTime(String input) {
-        if(input.length() < 4){
+        if (input.length() < 4) {
             input = "0" + input;
         }
         int hour = Integer.parseInt(input.substring(0, 2));

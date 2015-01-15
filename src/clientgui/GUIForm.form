@@ -127,10 +127,9 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="1" attributes="0">
+                          <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="pnlCoursePreference" max="32767" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="pnlIncompatibleCourses" alignment="0" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -157,6 +156,11 @@
                                           <Component id="txtCourseTitle" max="32767" attributes="0"/>
                                           <Component id="txtCourseID" max="32767" attributes="0"/>
                                       </Group>
+                                  </Group>
+                                  <Group type="102" attributes="0">
+                                      <Component id="chkCourseNoPreference" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="pnlCourseTimePreference" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -191,14 +195,17 @@
                                   <Component id="lblCourseSectionCount" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="spinnerSections" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="pnlCoursePreference" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="chkCourseNoPreference" min="-2" max="-2" attributes="0"/>
+                                  <Component id="pnlCourseTimePreference" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="pnlIncompatibleCourses" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="btnSaveCourse" min="-2" pref="76" max="-2" attributes="0"/>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="btnDeleteCourse" min="-2" pref="75" max="-2" attributes="0"/>
+                              <Component id="btnSaveCourse" min="-2" pref="68" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="btnDeleteCourse" min="-2" pref="68" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -241,127 +248,6 @@
                         <EventHandler event="keyTyped" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtCourseCreditValueKeyTyped"/>
                       </Events>
                     </Component>
-                    <Container class="javax.swing.JPanel" name="pnlCoursePreference">
-                      <Properties>
-                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                            <TitledBorder title="Preference"/>
-                          </Border>
-                        </Property>
-                      </Properties>
-
-                      <Layout>
-                        <DimensionLayout dim="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="lblCoursePrefHighest" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="-2" pref="29" max="-2" attributes="0"/>
-                                          <Component id="cbCoursePrefHighest" pref="683" max="32767" attributes="0"/>
-                                      </Group>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="lblCoursePrefNormal" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Component id="lblCoursePrefLeast" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <EmptySpace min="-2" pref="32" max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="cbCoursePrefNormal" max="32767" attributes="0"/>
-                                              <Component id="cbCoursePrefLeast" max="32767" attributes="0"/>
-                                          </Group>
-                                      </Group>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                        </DimensionLayout>
-                        <DimensionLayout dim="1">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="lblCoursePrefHighest" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="cbCoursePrefHighest" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="lblCoursePrefNormal" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="cbCoursePrefNormal" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="lblCoursePrefLeast" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="cbCoursePrefLeast" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="32767" attributes="0"/>
-                              </Group>
-                          </Group>
-                        </DimensionLayout>
-                      </Layout>
-                      <SubComponents>
-                        <Component class="javax.swing.JLabel" name="lblCoursePrefHighest">
-                          <Properties>
-                            <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                              <ComponentRef name="cbCoursePrefHighest"/>
-                            </Property>
-                            <Property name="text" type="java.lang.String" value="Highest"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JLabel" name="lblCoursePrefNormal">
-                          <Properties>
-                            <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                              <ComponentRef name="cbCoursePrefNormal"/>
-                            </Property>
-                            <Property name="text" type="java.lang.String" value="Normal"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JLabel" name="lblCoursePrefLeast">
-                          <Properties>
-                            <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                              <ComponentRef name="cbCoursePrefLeast"/>
-                            </Property>
-                            <Property name="text" type="java.lang.String" value="Least"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JComboBox" name="cbCoursePrefHighest">
-                          <Properties>
-                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                              <StringArray count="3">
-                                <StringItem index="0" value="Morning"/>
-                                <StringItem index="1" value="Afternoon"/>
-                                <StringItem index="2" value="Evening"/>
-                              </StringArray>
-                            </Property>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JComboBox" name="cbCoursePrefNormal">
-                          <Properties>
-                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                              <StringArray count="3">
-                                <StringItem index="0" value="Morning"/>
-                                <StringItem index="1" value="Afternoon"/>
-                                <StringItem index="2" value="Evening"/>
-                              </StringArray>
-                            </Property>
-                            <Property name="selectedIndex" type="int" value="1"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JComboBox" name="cbCoursePrefLeast">
-                          <Properties>
-                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                              <StringArray count="3">
-                                <StringItem index="0" value="Morning"/>
-                                <StringItem index="1" value="Afternoon"/>
-                                <StringItem index="2" value="Evening"/>
-                              </StringArray>
-                            </Property>
-                            <Property name="selectedIndex" type="int" value="2"/>
-                          </Properties>
-                        </Component>
-                      </SubComponents>
-                    </Container>
                     <Component class="javax.swing.JButton" name="btnSaveCourse">
                       <Properties>
                         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
@@ -413,7 +299,7 @@
                                       <Component id="btnModifyIncomp" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="spCourseIncomp" pref="169" max="32767" attributes="0"/>
+                                  <Component id="spCourseIncomp" pref="213" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -505,6 +391,200 @@
                       <Properties>
                         <Property name="editable" type="boolean" value="false"/>
                       </Properties>
+                    </Component>
+                    <Container class="javax.swing.JPanel" name="pnlCourseTimePreference">
+                      <Properties>
+                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                            <TitledBorder title="Time Preference"/>
+                          </Border>
+                        </Property>
+                      </Properties>
+
+                      <Layout>
+                        <DimensionLayout dim="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Component id="lblCourseTimeEvening" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeMorning" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeAfternoon" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="cbCourseHighestEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseHighestAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseHighestMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeHighest" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblCourseTimeNormal" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNormalMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNormalAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNormalEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblCourseTimeLeast" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseLeastMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseLeastAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseLeastEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblCourseTimeNA" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNA_Morning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNA_Afternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNA_Evening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="32767" attributes="0"/>
+                              </Group>
+                          </Group>
+                        </DimensionLayout>
+                        <DimensionLayout dim="1">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblCourseTimeHighest" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeNormal" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeLeast" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeNA" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="cbCourseNA_Morning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseLeastMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNormalMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseHighestMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblCourseTimeMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblCourseTimeAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseHighestAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNormalAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseLeastAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNA_Afternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblCourseTimeEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseHighestEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNormalEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseLeastEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbCourseNA_Evening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                          </Group>
+                        </DimensionLayout>
+                      </Layout>
+                      <SubComponents>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeHighest">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Highest"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeNormal">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Normal"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeLeast">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Least"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeNA">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;Not&lt;br/&gt;Available"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeMorning">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Morning"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeAfternoon">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Afternoon"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblCourseTimeEvening">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Evening"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseHighestMorning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseHighestMorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseHighestAfternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseHighestAfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseHighestEvening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseHighestEveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseNormalEvening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseNormalEveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseNormalAfternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseNormalAfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseNormalMorning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseNormalMorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseLeastEvening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseLeastEveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseLeastAfternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseLeastAfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseLeastMorning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseLeastMorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseNA_Morning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseNA_MorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseNA_Afternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseNA_AfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbCourseNA_Evening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbCourseNA_EveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                      </SubComponents>
+                    </Container>
+                    <Component class="javax.swing.JCheckBox" name="chkCourseNoPreference">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="No Time Preference"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkCourseNoPreferenceActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
@@ -619,10 +699,9 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="1" attributes="0">
+                          <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Component id="pnlProfPreference" max="32767" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="btnDeleteProf" alignment="1" max="32767" attributes="0"/>
                                   <Component id="pnlProfCourseTaught" alignment="0" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
@@ -639,6 +718,11 @@
                                       </Group>
                                   </Group>
                                   <Component id="btnSaveProf" alignment="0" max="32767" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="chkProfNoPreference" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="pnlProfTimePreference" max="32767" attributes="0"/>
+                                  </Group>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
@@ -662,9 +746,12 @@
                                   <Component id="lblProfCredits" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="spinnerCreditsAssigned" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace type="separate" max="-2" attributes="0"/>
-                              <Component id="pnlProfPreference" min="-2" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="chkProfNoPreference" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="pnlProfTimePreference" alignment="0" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
                               <Component id="pnlProfCourseTaught" max="32767" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="btnSaveProf" min="-2" pref="85" max="-2" attributes="0"/>
@@ -714,111 +801,6 @@
                         </Property>
                       </Properties>
                     </Component>
-                    <Container class="javax.swing.JPanel" name="pnlProfPreference">
-                      <Properties>
-                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-                          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                            <TitledBorder title="Preference"/>
-                          </Border>
-                        </Property>
-                      </Properties>
-
-                      <Layout>
-                        <DimensionLayout dim="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="lblProfPreferenceHighest" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblProfPreferenceLeast" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblProfPreferenceNormal" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="cbProfPrefHighest" max="32767" attributes="0"/>
-                                      <Component id="cbProfPrefNormal" max="32767" attributes="0"/>
-                                      <Component id="cbProfPrefLeast" alignment="0" max="32767" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                        </DimensionLayout>
-                        <DimensionLayout dim="1">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="lblProfPreferenceHighest" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="cbProfPrefHighest" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="lblProfPreferenceNormal" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="cbProfPrefNormal" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="lblProfPreferenceLeast" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="cbProfPrefLeast" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                        </DimensionLayout>
-                      </Layout>
-                      <SubComponents>
-                        <Component class="javax.swing.JLabel" name="lblProfPreferenceHighest">
-                          <Properties>
-                            <Property name="text" type="java.lang.String" value="Highest Preference"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JLabel" name="lblProfPreferenceNormal">
-                          <Properties>
-                            <Property name="text" type="java.lang.String" value="Normal Preference"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JLabel" name="lblProfPreferenceLeast">
-                          <Properties>
-                            <Property name="text" type="java.lang.String" value="Least Preference"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JComboBox" name="cbProfPrefHighest">
-                          <Properties>
-                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                              <StringArray count="3">
-                                <StringItem index="0" value="Morning"/>
-                                <StringItem index="1" value="Afternoon"/>
-                                <StringItem index="2" value="Evening"/>
-                              </StringArray>
-                            </Property>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JComboBox" name="cbProfPrefNormal">
-                          <Properties>
-                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                              <StringArray count="3">
-                                <StringItem index="0" value="Morning"/>
-                                <StringItem index="1" value="Afternoon"/>
-                                <StringItem index="2" value="Evening"/>
-                              </StringArray>
-                            </Property>
-                            <Property name="selectedIndex" type="int" value="1"/>
-                          </Properties>
-                        </Component>
-                        <Component class="javax.swing.JComboBox" name="cbProfPrefLeast">
-                          <Properties>
-                            <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                              <StringArray count="3">
-                                <StringItem index="0" value="Morning"/>
-                                <StringItem index="1" value="Afternoon"/>
-                                <StringItem index="2" value="Evening"/>
-                              </StringArray>
-                            </Property>
-                            <Property name="selectedIndex" type="int" value="2"/>
-                          </Properties>
-                        </Component>
-                      </SubComponents>
-                    </Container>
                     <Container class="javax.swing.JPanel" name="pnlProfCourseTaught">
                       <Properties>
                         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
@@ -854,7 +836,7 @@
                                       <Component id="cbProfCourseTaught" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="spCourseTaughtList" pref="188" max="32767" attributes="0"/>
+                                  <Component id="spCourseTaughtList" pref="210" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                               </Group>
                           </Group>
@@ -920,6 +902,200 @@
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnSaveProfActionPerformed"/>
                       </Events>
                     </Component>
+                    <Component class="javax.swing.JCheckBox" name="chkProfNoPreference">
+                      <Properties>
+                        <Property name="text" type="java.lang.String" value="No Time Preference"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkProfNoPreferenceActionPerformed"/>
+                      </Events>
+                    </Component>
+                    <Container class="javax.swing.JPanel" name="pnlProfTimePreference">
+                      <Properties>
+                        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                          <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
+                            <TitledBorder title="Time Preference"/>
+                          </Border>
+                        </Property>
+                      </Properties>
+
+                      <Layout>
+                        <DimensionLayout dim="0">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Component id="lblProfTimeEvening" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeMorning" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeAfternoon" alignment="1" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="cbProfHighestEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfHighestAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfHighestMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeHighest" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblProfTimeNormal" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNormalMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNormalAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNormalEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblProfTimeLeast" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfLeastMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfLeastAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfLeastEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblProfTimeNA" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNA_Morning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNA_Afternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNA_Evening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="32767" attributes="0"/>
+                              </Group>
+                          </Group>
+                        </DimensionLayout>
+                        <DimensionLayout dim="1">
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" alignment="0" attributes="0">
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblProfTimeHighest" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeNormal" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeLeast" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeNA" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="cbProfNA_Morning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfLeastMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNormalMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfHighestMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblProfTimeMorning" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblProfTimeAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfHighestAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNormalAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfLeastAfternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNA_Afternoon" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="2" attributes="0">
+                                      <Component id="lblProfTimeEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfHighestEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNormalEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfLeastEvening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cbProfNA_Evening" alignment="2" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                          </Group>
+                        </DimensionLayout>
+                      </Layout>
+                      <SubComponents>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeHighest">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Highest"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeNormal">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Normal"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeLeast">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Least"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeNA">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;center&gt;Not&lt;br/&gt;Available"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeMorning">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Morning"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeAfternoon">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Afternoon"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JLabel" name="lblProfTimeEvening">
+                          <Properties>
+                            <Property name="text" type="java.lang.String" value="Evening"/>
+                          </Properties>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfHighestMorning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfHighestMorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfHighestAfternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfHighestAfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfHighestEvening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfHighestEveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfNormalEvening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfNormalEveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfNormalAfternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfNormalAfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfNormalMorning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfNormalMorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfLeastEvening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfLeastEveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfLeastAfternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfLeastAfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfLeastMorning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfLeastMorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfNA_Morning">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfNA_MorningActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfNA_Afternoon">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfNA_AfternoonActionPerformed"/>
+                          </Events>
+                        </Component>
+                        <Component class="javax.swing.JCheckBox" name="cbProfNA_Evening">
+                          <Events>
+                            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbProfNA_EveningActionPerformed"/>
+                          </Events>
+                        </Component>
+                      </SubComponents>
+                    </Container>
                   </SubComponents>
                 </Container>
                 <Component class="javax.swing.JButton" name="btnNewProf">
