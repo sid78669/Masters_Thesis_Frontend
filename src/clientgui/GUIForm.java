@@ -36,8 +36,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
 import javax.swing.InputVerifier;
@@ -678,17 +680,6 @@ public class GUIForm extends javax.swing.JFrame {
         return rtnVal;
     }
 
-    private void GenerateValidationData() {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    private int GetUniqueCreditValues() {
-        int rtnVal = 0;
-        //HashSet<Double> creditValues
-
-        return rtnVal;
-    }
-
     private HashMap<Double, ArrayList<Integer>> GenerateCreditTimeslotArray() {
         HashMap<Double, ArrayList<Integer>> rtnVal = new HashMap<>();
         for (TimeSlot t : timeslotList.values()) {
@@ -699,6 +690,68 @@ public class GUIForm extends javax.swing.JFrame {
         }
 
         return rtnVal;
+    }
+
+    private ArrayList<String> GenerateIncompatibleSectionBitString() {
+        ArrayList<String> rtnVal = new ArrayList<>();
+
+        for (int i = 0; i < incompatibleSectionList.size(); i++) {
+            char[] bitstring = new char[sectionLookup.size()];
+            ArrayList<Integer> incomps = incompatibleSectionList.get(i);
+            for (int x = 0; x < incompatibleSectionList.size(); x++) {
+                if (incomps.contains(x)) {
+                    bitstring[x] = '1';
+                } else {
+                    bitstring[x] = '0';
+                }
+            }
+            rtnVal.add(i, new String(bitstring));
+        }
+
+        return rtnVal;
+    }
+
+    private ArrayList<ArrayList<ArrayList<Integer>>> GenerateAssociatedProfArray(ArrayList<ArrayList<Integer>> sectionProf, ArrayList<ArrayList<Integer>> profSection) {
+        ArrayList<ArrayList<ArrayList<Integer>>> rtnVal = new ArrayList<>();
+        ArrayList<Integer> currentProf = new ArrayList<>();
+        for (Professor p : profList.values()) {
+            for (int section : profSection.get(p.getProfID())) {
+                currentProf.addAll(sectionProf.get(section));
+            }
+            if (currentProf.contains(p.getProfID())) {
+                currentProf.remove(currentProf.indexOf(p.getProfID()));
+            }
+
+            ArrayList<ArrayList<Integer>> sharedCourses = new ArrayList<>();
+            currentProf = new ArrayList<>(new LinkedHashSet<Integer>(currentProf));
+            
+            for (Integer ap : currentProf) {
+                if(ap == p.getProfID())
+                    continue;
+                ArrayList<Integer> sectionsShared = GetIntersection(profSection.get(p.getProfID()), profSection.get(ap));
+                int shareSize = sectionsShared.size();
+                sectionsShared.add(0, ap);
+                sectionsShared.add(1, shareSize);
+                sharedCourses.add(sectionsShared);
+            }
+            rtnVal.add(p.getProfID(), sharedCourses);
+            currentProf.clear();
+        }
+
+        return rtnVal;
+    }
+
+    private ArrayList<Integer> GetIntersection(ArrayList<Integer> first, ArrayList<Integer> second) {
+        Set<Integer> canAdd = new HashSet<>(first);
+        ArrayList<Integer> result = new ArrayList<>();
+        for (int n : second) {
+            if (canAdd.contains(n)) {
+                result.add(n);
+                canAdd.remove(n);
+            }
+        }
+
+        return result;
     }
 
     private static class ScheduleReplace {
@@ -769,13 +822,6 @@ public class GUIForm extends javax.swing.JFrame {
         txtCourseID = new javax.swing.JTextField();
         lblCourseCreditValue = new javax.swing.JLabel();
         txtCourseCreditValue = new javax.swing.JTextField();
-        pnlCoursePreference = new javax.swing.JPanel();
-        lblCoursePrefHighest = new javax.swing.JLabel();
-        lblCoursePrefNormal = new javax.swing.JLabel();
-        lblCoursePrefLeast = new javax.swing.JLabel();
-        cbCoursePrefHighest = new javax.swing.JComboBox();
-        cbCoursePrefNormal = new javax.swing.JComboBox();
-        cbCoursePrefLeast = new javax.swing.JComboBox();
         btnSaveCourse = new javax.swing.JButton();
         pnlIncompatibleCourses = new javax.swing.JPanel();
         spCourseIncomp = new javax.swing.JScrollPane();
@@ -787,6 +833,27 @@ public class GUIForm extends javax.swing.JFrame {
         btnDeleteCourse = new javax.swing.JButton();
         lblCourseGeneratedID = new javax.swing.JLabel();
         txtCourseGeneratedID = new javax.swing.JTextField();
+        pnlCourseTimePreference = new javax.swing.JPanel();
+        lblCourseTimeHighest = new javax.swing.JLabel();
+        lblCourseTimeNormal = new javax.swing.JLabel();
+        lblCourseTimeLeast = new javax.swing.JLabel();
+        lblCourseTimeNA = new javax.swing.JLabel();
+        lblCourseTimeMorning = new javax.swing.JLabel();
+        lblCourseTimeAfternoon = new javax.swing.JLabel();
+        lblCourseTimeEvening = new javax.swing.JLabel();
+        cbCourseHighestMorning = new javax.swing.JCheckBox();
+        cbCourseHighestAfternoon = new javax.swing.JCheckBox();
+        cbCourseHighestEvening = new javax.swing.JCheckBox();
+        cbCourseNormalEvening = new javax.swing.JCheckBox();
+        cbCourseNormalAfternoon = new javax.swing.JCheckBox();
+        cbCourseNormalMorning = new javax.swing.JCheckBox();
+        cbCourseLeastEvening = new javax.swing.JCheckBox();
+        cbCourseLeastAfternoon = new javax.swing.JCheckBox();
+        cbCourseLeastMorning = new javax.swing.JCheckBox();
+        cbCourseNA_Morning = new javax.swing.JCheckBox();
+        cbCourseNA_Afternoon = new javax.swing.JCheckBox();
+        cbCourseNA_Evening = new javax.swing.JCheckBox();
+        chkCourseNoPreference = new javax.swing.JCheckBox();
         spCourseList = new javax.swing.JScrollPane();
         listCourses = new JList(courseListData);
         btnNewCourse = new javax.swing.JButton();
@@ -800,13 +867,6 @@ public class GUIForm extends javax.swing.JFrame {
         txtProfName = new javax.swing.JTextField();
         lblProfCredits = new javax.swing.JLabel();
         spinnerCreditsAssigned = new javax.swing.JSpinner();
-        pnlProfPreference = new javax.swing.JPanel();
-        lblProfPreferenceHighest = new javax.swing.JLabel();
-        lblProfPreferenceNormal = new javax.swing.JLabel();
-        lblProfPreferenceLeast = new javax.swing.JLabel();
-        cbProfPrefHighest = new javax.swing.JComboBox();
-        cbProfPrefNormal = new javax.swing.JComboBox();
-        cbProfPrefLeast = new javax.swing.JComboBox();
         pnlProfCourseTaught = new javax.swing.JPanel();
         btnAddCourseTaught = new javax.swing.JButton();
         cbProfCourseTaught = new javax.swing.JComboBox<String>();
@@ -814,6 +874,27 @@ public class GUIForm extends javax.swing.JFrame {
         listCourseTaught = new javax.swing.JList<Object>();
         btnDeleteProf = new javax.swing.JButton();
         btnSaveProf = new javax.swing.JButton();
+        chkProfNoPreference = new javax.swing.JCheckBox();
+        pnlProfTimePreference = new javax.swing.JPanel();
+        lblProfTimeHighest = new javax.swing.JLabel();
+        lblProfTimeNormal = new javax.swing.JLabel();
+        lblProfTimeLeast = new javax.swing.JLabel();
+        lblProfTimeNA = new javax.swing.JLabel();
+        lblProfTimeMorning = new javax.swing.JLabel();
+        lblProfTimeAfternoon = new javax.swing.JLabel();
+        lblProfTimeEvening = new javax.swing.JLabel();
+        cbProfHighestMorning = new javax.swing.JCheckBox();
+        cbProfHighestAfternoon = new javax.swing.JCheckBox();
+        cbProfHighestEvening = new javax.swing.JCheckBox();
+        cbProfNormalEvening = new javax.swing.JCheckBox();
+        cbProfNormalAfternoon = new javax.swing.JCheckBox();
+        cbProfNormalMorning = new javax.swing.JCheckBox();
+        cbProfLeastEvening = new javax.swing.JCheckBox();
+        cbProfLeastAfternoon = new javax.swing.JCheckBox();
+        cbProfLeastMorning = new javax.swing.JCheckBox();
+        cbProfNA_Morning = new javax.swing.JCheckBox();
+        cbProfNA_Afternoon = new javax.swing.JCheckBox();
+        cbProfNA_Evening = new javax.swing.JCheckBox();
         btnNewProf = new javax.swing.JButton();
         pnlTimeSlots = new javax.swing.JPanel();
         btnNewTimeslot = new javax.swing.JButton();
@@ -976,64 +1057,6 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
-        pnlCoursePreference.setBorder(javax.swing.BorderFactory.createTitledBorder("Preference"));
-
-        lblCoursePrefHighest.setLabelFor(cbCoursePrefHighest);
-        lblCoursePrefHighest.setText("Highest");
-
-        lblCoursePrefNormal.setLabelFor(cbCoursePrefNormal);
-        lblCoursePrefNormal.setText("Normal");
-
-        lblCoursePrefLeast.setLabelFor(cbCoursePrefLeast);
-        lblCoursePrefLeast.setText("Least");
-
-        cbCoursePrefHighest.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Morning", "Afternoon", "Evening" }));
-
-        cbCoursePrefNormal.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Morning", "Afternoon", "Evening" }));
-        cbCoursePrefNormal.setSelectedIndex(1);
-
-        cbCoursePrefLeast.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Morning", "Afternoon", "Evening" }));
-        cbCoursePrefLeast.setSelectedIndex(2);
-
-        javax.swing.GroupLayout pnlCoursePreferenceLayout = new javax.swing.GroupLayout(pnlCoursePreference);
-        pnlCoursePreference.setLayout(pnlCoursePreferenceLayout);
-        pnlCoursePreferenceLayout.setHorizontalGroup(
-            pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlCoursePreferenceLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlCoursePreferenceLayout.createSequentialGroup()
-                        .addComponent(lblCoursePrefHighest)
-                        .addGap(29, 29, 29)
-                        .addComponent(cbCoursePrefHighest, 0, 683, Short.MAX_VALUE))
-                    .addGroup(pnlCoursePreferenceLayout.createSequentialGroup()
-                        .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblCoursePrefNormal)
-                            .addComponent(lblCoursePrefLeast))
-                        .addGap(32, 32, 32)
-                        .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cbCoursePrefNormal, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cbCoursePrefLeast, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
-        );
-        pnlCoursePreferenceLayout.setVerticalGroup(
-            pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlCoursePreferenceLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCoursePrefHighest)
-                    .addComponent(cbCoursePrefHighest, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCoursePrefNormal)
-                    .addComponent(cbCoursePrefNormal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlCoursePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCoursePrefLeast)
-                    .addComponent(cbCoursePrefLeast, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
         btnSaveCourse.setBackground(new java.awt.Color(204, 204, 255));
         btnSaveCourse.setText("Save Course");
         btnSaveCourse.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
@@ -1086,7 +1109,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(dropIncompCourses, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnModifyIncomp))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 169, Short.MAX_VALUE)
+                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1107,16 +1130,177 @@ public class GUIForm extends javax.swing.JFrame {
 
         txtCourseGeneratedID.setEditable(false);
 
+        pnlCourseTimePreference.setBorder(javax.swing.BorderFactory.createTitledBorder("Time Preference"));
+
+        lblCourseTimeHighest.setText("Highest");
+
+        lblCourseTimeNormal.setText("Normal");
+
+        lblCourseTimeLeast.setText("Least");
+
+        lblCourseTimeNA.setText("<html><center>Not<br/>Available");
+
+        lblCourseTimeMorning.setText("Morning");
+
+        lblCourseTimeAfternoon.setText("Afternoon");
+
+        lblCourseTimeEvening.setText("Evening");
+
+        cbCourseHighestMorning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseHighestMorningActionPerformed(evt);
+            }
+        });
+
+        cbCourseHighestAfternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseHighestAfternoonActionPerformed(evt);
+            }
+        });
+
+        cbCourseHighestEvening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseHighestEveningActionPerformed(evt);
+            }
+        });
+
+        cbCourseNormalEvening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseNormalEveningActionPerformed(evt);
+            }
+        });
+
+        cbCourseNormalAfternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseNormalAfternoonActionPerformed(evt);
+            }
+        });
+
+        cbCourseNormalMorning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseNormalMorningActionPerformed(evt);
+            }
+        });
+
+        cbCourseLeastEvening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseLeastEveningActionPerformed(evt);
+            }
+        });
+
+        cbCourseLeastAfternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseLeastAfternoonActionPerformed(evt);
+            }
+        });
+
+        cbCourseLeastMorning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseLeastMorningActionPerformed(evt);
+            }
+        });
+
+        cbCourseNA_Morning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseNA_MorningActionPerformed(evt);
+            }
+        });
+
+        cbCourseNA_Afternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseNA_AfternoonActionPerformed(evt);
+            }
+        });
+
+        cbCourseNA_Evening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbCourseNA_EveningActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout pnlCourseTimePreferenceLayout = new javax.swing.GroupLayout(pnlCourseTimePreference);
+        pnlCourseTimePreference.setLayout(pnlCourseTimePreferenceLayout);
+        pnlCourseTimePreferenceLayout.setHorizontalGroup(
+            pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlCourseTimePreferenceLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblCourseTimeEvening)
+                    .addComponent(lblCourseTimeMorning)
+                    .addComponent(lblCourseTimeAfternoon))
+                .addGap(18, 18, 18)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(cbCourseHighestEvening)
+                    .addComponent(cbCourseHighestAfternoon)
+                    .addComponent(cbCourseHighestMorning)
+                    .addComponent(lblCourseTimeHighest))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblCourseTimeNormal)
+                    .addComponent(cbCourseNormalMorning)
+                    .addComponent(cbCourseNormalAfternoon)
+                    .addComponent(cbCourseNormalEvening))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblCourseTimeLeast)
+                    .addComponent(cbCourseLeastMorning)
+                    .addComponent(cbCourseLeastAfternoon)
+                    .addComponent(cbCourseLeastEvening))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblCourseTimeNA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cbCourseNA_Morning)
+                    .addComponent(cbCourseNA_Afternoon)
+                    .addComponent(cbCourseNA_Evening))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlCourseTimePreferenceLayout.setVerticalGroup(
+            pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlCourseTimePreferenceLayout.createSequentialGroup()
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblCourseTimeHighest)
+                    .addComponent(lblCourseTimeNormal)
+                    .addComponent(lblCourseTimeLeast)
+                    .addComponent(lblCourseTimeNA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(cbCourseNA_Morning)
+                    .addComponent(cbCourseLeastMorning)
+                    .addComponent(cbCourseNormalMorning)
+                    .addComponent(cbCourseHighestMorning)
+                    .addComponent(lblCourseTimeMorning))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblCourseTimeAfternoon)
+                    .addComponent(cbCourseHighestAfternoon)
+                    .addComponent(cbCourseNormalAfternoon)
+                    .addComponent(cbCourseLeastAfternoon)
+                    .addComponent(cbCourseNA_Afternoon))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblCourseTimeEvening)
+                    .addComponent(cbCourseHighestEvening)
+                    .addComponent(cbCourseNormalEvening)
+                    .addComponent(cbCourseLeastEvening)
+                    .addComponent(cbCourseNA_Evening)))
+        );
+
+        chkCourseNoPreference.setText("No Time Preference");
+        chkCourseNoPreference.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkCourseNoPreferenceActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout courseDataLayout = new javax.swing.GroupLayout(courseData);
         courseData.setLayout(courseDataLayout);
         courseDataLayout.setHorizontalGroup(
             courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, courseDataLayout.createSequentialGroup()
+            .addGroup(courseDataLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnlCoursePreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, courseDataLayout.createSequentialGroup()
+                .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(courseDataLayout.createSequentialGroup()
                         .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblCourseCreditValue)
                             .addComponent(lblCourseSectionCount, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1124,9 +1308,9 @@ public class GUIForm extends javax.swing.JFrame {
                         .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(spinnerSections, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtCourseCreditValue)))
-                    .addComponent(btnDeleteCourse, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnSaveCourse, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, courseDataLayout.createSequentialGroup()
+                    .addComponent(btnDeleteCourse, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnSaveCourse, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(courseDataLayout.createSequentialGroup()
                         .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblTitle)
                             .addComponent(lblCourseID)
@@ -1135,7 +1319,11 @@ public class GUIForm extends javax.swing.JFrame {
                         .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtCourseGeneratedID)
                             .addComponent(txtCourseTitle)
-                            .addComponent(txtCourseID))))
+                            .addComponent(txtCourseID)))
+                    .addGroup(courseDataLayout.createSequentialGroup()
+                        .addComponent(chkCourseNoPreference)
+                        .addGap(18, 18, 18)
+                        .addComponent(pnlCourseTimePreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         courseDataLayout.setVerticalGroup(
@@ -1161,14 +1349,16 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblCourseSectionCount)
                     .addComponent(spinnerSections, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(pnlCoursePreference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkCourseNoPreference)
+                    .addComponent(pnlCourseTimePreference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnSaveCourse, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnDeleteCourse, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(btnSaveCourse, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnDeleteCourse, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -1238,57 +1428,6 @@ public class GUIForm extends javax.swing.JFrame {
 
         spinnerCreditsAssigned.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(0.0d), null, null, Double.valueOf(0.0d)));
 
-        pnlProfPreference.setBorder(javax.swing.BorderFactory.createTitledBorder("Preference"));
-
-        lblProfPreferenceHighest.setText("Highest Preference");
-
-        lblProfPreferenceNormal.setText("Normal Preference");
-
-        lblProfPreferenceLeast.setText("Least Preference");
-
-        cbProfPrefHighest.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Morning", "Afternoon", "Evening" }));
-
-        cbProfPrefNormal.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Morning", "Afternoon", "Evening" }));
-        cbProfPrefNormal.setSelectedIndex(1);
-
-        cbProfPrefLeast.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Morning", "Afternoon", "Evening" }));
-        cbProfPrefLeast.setSelectedIndex(2);
-
-        javax.swing.GroupLayout pnlProfPreferenceLayout = new javax.swing.GroupLayout(pnlProfPreference);
-        pnlProfPreference.setLayout(pnlProfPreferenceLayout);
-        pnlProfPreferenceLayout.setHorizontalGroup(
-            pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlProfPreferenceLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblProfPreferenceHighest)
-                    .addComponent(lblProfPreferenceLeast)
-                    .addComponent(lblProfPreferenceNormal))
-                .addGap(18, 18, 18)
-                .addGroup(pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cbProfPrefHighest, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cbProfPrefNormal, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cbProfPrefLeast, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        pnlProfPreferenceLayout.setVerticalGroup(
-            pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnlProfPreferenceLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblProfPreferenceHighest)
-                    .addComponent(cbProfPrefHighest, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblProfPreferenceNormal)
-                    .addComponent(cbProfPrefNormal, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnlProfPreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblProfPreferenceLeast)
-                    .addComponent(cbProfPrefLeast, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
-        );
-
         pnlProfCourseTaught.setBorder(javax.swing.BorderFactory.createTitledBorder("Courses Taught"));
 
         btnAddCourseTaught.setText("Add");
@@ -1329,7 +1468,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(btnAddCourseTaught)
                     .addComponent(cbProfCourseTaught, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 188, Short.MAX_VALUE)
+                .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1347,17 +1486,178 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
+        chkProfNoPreference.setText("No Time Preference");
+        chkProfNoPreference.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkProfNoPreferenceActionPerformed(evt);
+            }
+        });
+
+        pnlProfTimePreference.setBorder(javax.swing.BorderFactory.createTitledBorder("Time Preference"));
+
+        lblProfTimeHighest.setText("Highest");
+
+        lblProfTimeNormal.setText("Normal");
+
+        lblProfTimeLeast.setText("Least");
+
+        lblProfTimeNA.setText("<html><center>Not<br/>Available");
+
+        lblProfTimeMorning.setText("Morning");
+
+        lblProfTimeAfternoon.setText("Afternoon");
+
+        lblProfTimeEvening.setText("Evening");
+
+        cbProfHighestMorning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfHighestMorningActionPerformed(evt);
+            }
+        });
+
+        cbProfHighestAfternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfHighestAfternoonActionPerformed(evt);
+            }
+        });
+
+        cbProfHighestEvening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfHighestEveningActionPerformed(evt);
+            }
+        });
+
+        cbProfNormalEvening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfNormalEveningActionPerformed(evt);
+            }
+        });
+
+        cbProfNormalAfternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfNormalAfternoonActionPerformed(evt);
+            }
+        });
+
+        cbProfNormalMorning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfNormalMorningActionPerformed(evt);
+            }
+        });
+
+        cbProfLeastEvening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfLeastEveningActionPerformed(evt);
+            }
+        });
+
+        cbProfLeastAfternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfLeastAfternoonActionPerformed(evt);
+            }
+        });
+
+        cbProfLeastMorning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfLeastMorningActionPerformed(evt);
+            }
+        });
+
+        cbProfNA_Morning.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfNA_MorningActionPerformed(evt);
+            }
+        });
+
+        cbProfNA_Afternoon.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfNA_AfternoonActionPerformed(evt);
+            }
+        });
+
+        cbProfNA_Evening.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbProfNA_EveningActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout pnlProfTimePreferenceLayout = new javax.swing.GroupLayout(pnlProfTimePreference);
+        pnlProfTimePreference.setLayout(pnlProfTimePreferenceLayout);
+        pnlProfTimePreferenceLayout.setHorizontalGroup(
+            pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlProfTimePreferenceLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblProfTimeEvening)
+                    .addComponent(lblProfTimeMorning)
+                    .addComponent(lblProfTimeAfternoon))
+                .addGap(18, 18, 18)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(cbProfHighestEvening)
+                    .addComponent(cbProfHighestAfternoon)
+                    .addComponent(cbProfHighestMorning)
+                    .addComponent(lblProfTimeHighest))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblProfTimeNormal)
+                    .addComponent(cbProfNormalMorning)
+                    .addComponent(cbProfNormalAfternoon)
+                    .addComponent(cbProfNormalEvening))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblProfTimeLeast)
+                    .addComponent(cbProfLeastMorning)
+                    .addComponent(cbProfLeastAfternoon)
+                    .addComponent(cbProfLeastEvening))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblProfTimeNA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cbProfNA_Morning)
+                    .addComponent(cbProfNA_Afternoon)
+                    .addComponent(cbProfNA_Evening))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlProfTimePreferenceLayout.setVerticalGroup(
+            pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlProfTimePreferenceLayout.createSequentialGroup()
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblProfTimeHighest)
+                    .addComponent(lblProfTimeNormal)
+                    .addComponent(lblProfTimeLeast)
+                    .addComponent(lblProfTimeNA, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(cbProfNA_Morning)
+                    .addComponent(cbProfLeastMorning)
+                    .addComponent(cbProfNormalMorning)
+                    .addComponent(cbProfHighestMorning)
+                    .addComponent(lblProfTimeMorning))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblProfTimeAfternoon)
+                    .addComponent(cbProfHighestAfternoon)
+                    .addComponent(cbProfNormalAfternoon)
+                    .addComponent(cbProfLeastAfternoon)
+                    .addComponent(cbProfNA_Afternoon))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlProfTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(lblProfTimeEvening)
+                    .addComponent(cbProfHighestEvening)
+                    .addComponent(cbProfNormalEvening)
+                    .addComponent(cbProfLeastEvening)
+                    .addComponent(cbProfNA_Evening)))
+        );
+
         javax.swing.GroupLayout pnlProfDataLayout = new javax.swing.GroupLayout(pnlProfData);
         pnlProfData.setLayout(pnlProfDataLayout);
         pnlProfDataLayout.setHorizontalGroup(
             pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlProfDataLayout.createSequentialGroup()
+            .addGroup(pnlProfDataLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnlProfPreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnDeleteProf, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnlProfCourseTaught, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, pnlProfDataLayout.createSequentialGroup()
+                .addGroup(pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnDeleteProf, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlProfCourseTaught, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlProfDataLayout.createSequentialGroup()
                         .addGroup(pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblGeneratedID)
                             .addComponent(lblProfName)
@@ -1367,7 +1667,11 @@ public class GUIForm extends javax.swing.JFrame {
                             .addComponent(spinnerCreditsAssigned)
                             .addComponent(txtProfGeneratedID)
                             .addComponent(txtProfName)))
-                    .addComponent(btnSaveProf, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnSaveProf, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlProfDataLayout.createSequentialGroup()
+                        .addComponent(chkProfNoPreference)
+                        .addGap(18, 18, 18)
+                        .addComponent(pnlProfTimePreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         pnlProfDataLayout.setVerticalGroup(
@@ -1385,9 +1689,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblProfCredits)
                     .addComponent(spinnerCreditsAssigned, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addComponent(pnlProfPreference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkProfNoPreference)
+                    .addComponent(pnlProfTimePreference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlProfCourseTaught, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnSaveProf, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2702,11 +3008,14 @@ public class GUIForm extends javax.swing.JFrame {
                     sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
                 }
             }
+            btnGenerateInputFile.setEnabled(false);
             incompatibleSectionList = GenerateIncompatibleSectionArray();
+            ArrayList<String> incompatibleBitString = GenerateIncompatibleSectionBitString();
             ArrayList<Double> sectionCredit = GenerateSectionCreditArray();
 
             ArrayList<ArrayList<Integer>> profSection = GenerateProfessorSectionArray();
             ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
+            ArrayList<ArrayList<ArrayList<Integer>>> associatedProf = GenerateAssociatedProfArray(sectionProf, profSection);
             HashMap<Double, ArrayList<Integer>> creditTimeslot = GenerateCreditTimeslotArray();
 
             String inputFile = txtGeneratedFileName.getText();
@@ -2729,12 +3038,7 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("//*START*SECTION*\n");
             writer.write("//sectionID, incompSize[, incompSections]\n");
             for (int i = 0; i < incompatibleSectionList.size(); i++) {
-                writer.write(i + "," + incompatibleSectionList.get(i).size());
-                if (incompatibleSectionList.get(i).size() > 0) {
-                    for (int z = 0; z < incompatibleSectionList.get(i).size(); z++) {
-                        writer.write("," + incompatibleSectionList.get(i).get(z));
-                    }
-                }
+                writer.write(i + "," + incompatibleBitString.get(i));
                 writer.write(("\n"));
             }
             writer.write("*END*SECTION*\n");
@@ -2766,12 +3070,25 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("//profID, sectionSize, sections\n");
             for (int i = 0; i < profSection.size(); i++) {
                 writer.write(i + "," + profSection.get(i).size());
+                Collections.sort(profSection.get(i));
                 for (int z = 0; z < profSection.get(i).size(); z++) {
                     writer.write("," + profSection.get(i).get(z));
                 }
                 writer.write(("\n"));
             }
             writer.write("*END*PROF*SECTION*\n");
+            writer.write("//*START*PROF*ASSOCIATE*\n");
+            writer.write("//profID, assocaiteSize, [associatesID, sectionsSize, sectionList]\n");
+            for (int i = 0; i < associatedProf.size(); i++) {
+                writer.write(i + "," + associatedProf.get(i).size());
+                for (int z = 0; z < associatedProf.get(i).size(); z++) {
+                    for (int y = 0; y < associatedProf.get(i).get(z).size(); y++) {
+                        writer.write("," + associatedProf.get(i).get(z).get(y));
+                    }
+                }
+                writer.write(("\n"));
+            }
+            writer.write("*END*PROF*ASSOCIATE*\n");
 
             writer.write("//*START*COURSEPREF*\n");
             writer.write("//sectionID, m, a, e\n");
@@ -2809,12 +3126,52 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("*END*CREDIT*TIMESLOT*\n");
 
             writer.write("//*START*TIMESLOT*\n");
-            writer.write("//timeslot_id	, credit rating, monday		, tuesday		, wednesday		, thursday		, friday		, saturday\n");
+            writer.write("//timeslot_id	, credit rating, isMorning, isAfternoon, isEvening, overlap, consecutive, spreadout\n");
             for (TimeSlot t : timeslotList.values()) {
-                writer.write(t.getID() + "," + df.format(t.getCredits()));
-                for (int i = 0; i < 6; i++) {
-                    writer.write(", " + t.GetTimeOnDay(i));
+                writer.write(t.getID() + "," + df.format(t.getCredits()) + ",");
+                if (t.isMorning()) {
+                    writer.write("1");
+                } else {
+                    writer.write("0");
                 }
+                writer.write(",");
+                if (t.isAfternoon()) {
+                    writer.write("1");
+                } else {
+                    writer.write("0");
+                }
+
+                writer.write(",");
+                if (t.isEvening()) {
+                    writer.write("1");
+                } else {
+                    writer.write("0");
+                }
+                writer.write(",");
+                char[] overlap = new char[timeslotList.size()];
+                char[] consecutive = new char[timeslotList.size()];
+                char[] spreadOut = new char[timeslotList.size()];
+
+                for (TimeSlot ot : timeslotList.values()) {
+                    if (t.isConflict(ot)) {
+                        overlap[ot.getID()] = '1';
+                    } else {
+                        overlap[ot.getID()] = '0';
+                    }
+
+                    if (t.isConsecutive(ot)) {
+                        consecutive[ot.getID()] = '1';
+                    } else {
+                        consecutive[ot.getID()] = '0';
+                    }
+
+                    if (t.isSpreadOut(ot)) {
+                        spreadOut[ot.getID()] = '1';
+                    } else {
+                        spreadOut[ot.getID()] = '0';
+                    }
+                }
+                writer.write(new String(overlap) + "," + new String(consecutive) + "," + new String(spreadOut));
                 writer.write("\n");
             }
             writer.write("*END*TIMESLOT*\n");
@@ -2829,6 +3186,7 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("*END*INITIAL*\n");
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtGeneratedFileName.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
             tabbedPanels.setEnabledAt(5, true);
+            btnGenerateInputFile.setEnabled(true);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -3227,9 +3585,6 @@ public class GUIForm extends javax.swing.JFrame {
                 newID = profList.size() + 1;
             }
         }
-        cbProfPrefHighest.setSelectedIndex(0);
-        cbProfPrefLeast.setSelectedIndex(2);
-        cbProfPrefNormal.setSelectedIndex(1);
         txtProfGeneratedID.setText(String.valueOf(newID));
         txtProfName.setText("");
         spinnerCreditsAssigned.setValue(0);
@@ -3238,12 +3593,38 @@ public class GUIForm extends javax.swing.JFrame {
             cbProfCourseTaught.addItem(it.next().toString());
         }
         listCourseTaught.setListData(new Vector<>());
-        cbProfPrefHighest.setSelectedIndex(0);
-        cbProfPrefNormal.setSelectedIndex(1);
-        cbProfPrefLeast.setSelectedIndex(2);
+        cbProfHighestMorning.setEnabled(false);
+        cbProfHighestAfternoon.setEnabled(false);
+        cbProfHighestEvening.setEnabled(false);
+        cbProfNormalMorning.setEnabled(false);
+        cbProfNormalAfternoon.setEnabled(false);
+        cbProfNormalEvening.setEnabled(false);
+        cbProfLeastMorning.setEnabled(false);
+        cbProfLeastAfternoon.setEnabled(false);
+        cbProfLeastEvening.setEnabled(false);
+        cbProfNA_Morning.setEnabled(false);
+        cbProfNA_Afternoon.setEnabled(false);
+        cbProfNA_Evening.setEnabled(false);
     }//GEN-LAST:event_btnNewProfActionPerformed
 
     private void btnSaveProfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveProfActionPerformed
+        if (!chkProfNoPreference.isSelected()) {
+            if (!(cbProfHighestMorning.isSelected() || cbProfNormalMorning.isSelected() || cbProfLeastMorning.isSelected() || cbProfNA_Morning.isSelected())) {
+                JOptionPane.showMessageDialog(pnlContainer, "Please select a time preference for morning.");
+                return;
+            }
+
+            if (!(cbProfHighestAfternoon.isSelected() || cbProfNormalAfternoon.isSelected() || cbProfLeastAfternoon.isSelected() || cbProfNA_Afternoon.isSelected())) {
+                JOptionPane.showMessageDialog(pnlContainer, "Please select a time preference for morning.");
+                return;
+            }
+
+            if (!(cbProfHighestEvening.isSelected() || cbProfNormalEvening.isSelected() || cbProfLeastEvening.isSelected() || cbProfNA_Evening.isSelected())) {
+                JOptionPane.showMessageDialog(pnlContainer, "Please select a time preference for morning.");
+                return;
+            }
+        }
+
         if (txtProfName.getText().isEmpty()) {
             JOptionPane.showMessageDialog(pnlContainer, "Please enter a professor name.");
             txtProfName.setBorder(new LineBorder(Color.red));
@@ -3273,43 +3654,44 @@ public class GUIForm extends javax.swing.JFrame {
         if (currentProfessor.getCredits() != creds) {
             currentProfessor.setCredits(creds);
         }
-        int highest = cbProfPrefHighest.getSelectedIndex(), normal = cbProfPrefNormal.getSelectedIndex(), least = cbProfPrefLeast.getSelectedIndex();
         int[] prefsSelected = new int[3];
-        switch (least) {
-            case 2:
-                prefsSelected[2] = 2;
-                break;
-            case 1:
-                prefsSelected[1] = 2;
-                break;
-            case 0:
-                prefsSelected[0] = 2;
-                break;
-        }
-        switch (normal) {
-            case 2:
-                prefsSelected[2] = 1;
-                break;
-            case 1:
-                prefsSelected[1] = 1;
-                break;
-            case 0:
-                prefsSelected[0] = 1;
-                break;
-        }
-        switch (highest) {
-            case 2:
-                prefsSelected[2] = 0;
-                break;
-            case 1:
-                prefsSelected[1] = 0;
-                break;
-            case 0:
+        if (chkProfNoPreference.isSelected()) {
+            prefsSelected[0] = -1;
+            prefsSelected[1] = -1;
+            prefsSelected[2] = -1;
+        } else {
+            if (cbProfHighestMorning.isSelected()) {
                 prefsSelected[0] = 0;
-                break;
-        }
+            } else if (cbProfNormalMorning.isSelected()) {
+                prefsSelected[0] = 1;
+            } else if (cbProfLeastMorning.isSelected()) {
+                prefsSelected[0] = 2;
+            } else if (cbProfNA_Morning.isSelected()) {
+                prefsSelected[0] = Integer.MAX_VALUE;
+            }
 
+            if (cbProfHighestAfternoon.isSelected()) {
+                prefsSelected[1] = 0;
+            } else if (cbProfNormalAfternoon.isSelected()) {
+                prefsSelected[1] = 1;
+            } else if (cbProfLeastAfternoon.isSelected()) {
+                prefsSelected[1] = 2;
+            } else if (cbProfNA_Afternoon.isSelected()) {
+                prefsSelected[1] = Integer.MAX_VALUE;
+            }
+
+            if (cbProfHighestEvening.isSelected()) {
+                prefsSelected[0] = 0;
+            } else if (cbProfNormalEvening.isSelected()) {
+                prefsSelected[0] = 1;
+            } else if (cbProfLeastEvening.isSelected()) {
+                prefsSelected[0] = 2;
+            } else if (cbProfNA_Evening.isSelected()) {
+                prefsSelected[0] = Integer.MAX_VALUE;
+            }
+        }
         currentProfessor.setPreference(prefsSelected);
+
         profList.put(currentProfessor.getProfName(), currentProfessor);
         if (!profListData.contains(currentProfessor.getProfName())) {
             profListData.addElement(currentProfessor.getProfName());
@@ -3366,41 +3748,76 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void listProfsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listProfsValueChanged
         if (listProfs.getSelectedIndex() >= 0) {
+            chkProfNoPreference.setSelected(false);
+            cbProfHighestMorning.setSelected(false);
+            cbProfHighestAfternoon.setSelected(false);
+            cbProfHighestEvening.setSelected(false);
+            cbProfNormalMorning.setSelected(false);
+            cbProfNormalAfternoon.setSelected(false);
+            cbProfNormalEvening.setSelected(false);
+            cbProfLeastMorning.setSelected(false);
+            cbProfLeastAfternoon.setSelected(false);
+            cbProfLeastEvening.setSelected(false);
+            cbProfNA_Morning.setSelected(false);
+            cbProfNA_Afternoon.setSelected(false);
+            cbProfNA_Evening.setSelected(false);
+
             currentProfessor = profList.get(listProfs.getSelectedValue());
             txtProfGeneratedID.setText(String.valueOf(currentProfessor.getProfID()));
             txtProfName.setText(currentProfessor.getProfName());
             spinnerCreditsAssigned.setValue(currentProfessor.getCredits());
+
             switch (currentProfessor.getPreference()[0]) {
+                case 100:
+                    cbProfNA_Morning.setSelected(true);
+                    break;
                 case 2:
-                    cbProfPrefLeast.setSelectedIndex(0);
+                    cbProfLeastMorning.setSelected(true);
                     break;
                 case 1:
-                    cbProfPrefNormal.setSelectedIndex(0);
+                    cbProfNormalMorning.setSelected(true);
                     break;
                 case 0:
-                    cbProfPrefHighest.setSelectedIndex(0);
+                    cbProfHighestMorning.setSelected(true);
+                    break;
+                case -1:
+                    chkProfNoPreference.setSelected(true);
                     break;
             }
+
             switch (currentProfessor.getPreference()[1]) {
+                case 100:
+                    cbProfNA_Afternoon.setSelected(true);
+                    break;
                 case 2:
-                    cbProfPrefLeast.setSelectedIndex(1);
+                    cbProfLeastAfternoon.setSelected(true);
                     break;
                 case 1:
-                    cbProfPrefNormal.setSelectedIndex(1);
+                    cbProfNormalAfternoon.setSelected(true);
                     break;
                 case 0:
-                    cbProfPrefHighest.setSelectedIndex(1);
+                    cbProfHighestAfternoon.setSelected(true);
+                    break;
+                case -1:
+                    chkProfNoPreference.setSelected(true);
                     break;
             }
+
             switch (currentProfessor.getPreference()[2]) {
+                case 100:
+                    cbProfNA_Evening.setSelected(true);
+                    break;
                 case 2:
-                    cbProfPrefLeast.setSelectedIndex(2);
+                    cbProfLeastEvening.setSelected(true);
                     break;
                 case 1:
-                    cbProfPrefNormal.setSelectedIndex(2);
+                    cbProfNormalEvening.setSelected(true);
                     break;
                 case 0:
-                    cbProfPrefHighest.setSelectedIndex(2);
+                    cbProfHighestEvening.setSelected(true);
+                    break;
+                case -1:
+                    chkProfNoPreference.setSelected(true);
                     break;
             }
             Object[] temp = currentProfessor.getCoursesTaught();
@@ -3414,6 +3831,8 @@ public class GUIForm extends javax.swing.JFrame {
             for (Object s : courseListData) {
                 cbProfCourseTaught.addItem(s.toString());
             }
+
+            updateProfTimePreferenceBoxes();
         }
     }//GEN-LAST:event_listProfsValueChanged
 
@@ -3439,9 +3858,19 @@ public class GUIForm extends javax.swing.JFrame {
         spinnerSections.setValue(0);
         dropIncompCourses.setEnabled(false);
         btnModifyIncomp.setEnabled(false);
-        cbCoursePrefHighest.setSelectedIndex(0);
-        cbCoursePrefNormal.setSelectedIndex(1);
-        cbCoursePrefLeast.setSelectedIndex(2);
+        chkCourseNoPreference.setSelected(false);
+        cbCourseHighestMorning.setSelected(false);
+        cbCourseHighestAfternoon.setSelected(false);
+        cbCourseHighestEvening.setSelected(false);
+        cbCourseNormalMorning.setSelected(false);
+        cbCourseNormalAfternoon.setSelected(false);
+        cbCourseNormalEvening.setSelected(false);
+        cbCourseLeastMorning.setSelected(false);
+        cbCourseLeastAfternoon.setSelected(false);
+        cbCourseLeastEvening.setSelected(false);
+        cbCourseNA_Morning.setSelected(false);
+        cbCourseNA_Afternoon.setSelected(false);
+        cbCourseNA_Evening.setSelected(false);
         dropIncompCourses.removeAllItems();
         Iterator it = courseList.keySet().iterator();
         while (it.hasNext()) {
@@ -3452,6 +3881,19 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void listCoursesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listCoursesValueChanged
         if (listCourses.getSelectedIndex() >= 0) {
+            chkCourseNoPreference.setSelected(false);
+            cbCourseHighestMorning.setSelected(false);
+            cbCourseHighestAfternoon.setSelected(false);
+            cbCourseHighestEvening.setSelected(false);
+            cbCourseNormalMorning.setSelected(false);
+            cbCourseNormalAfternoon.setSelected(false);
+            cbCourseNormalEvening.setSelected(false);
+            cbCourseLeastMorning.setSelected(false);
+            cbCourseLeastAfternoon.setSelected(false);
+            cbCourseLeastEvening.setSelected(false);
+            cbCourseNA_Morning.setSelected(false);
+            cbCourseNA_Afternoon.setSelected(false);
+            cbCourseNA_Evening.setSelected(false);
             currentCourse = courseList.get(listCourses.getSelectedValue());
             txtCourseGeneratedID.setText(String.valueOf(currentCourse.getGeneratedID()));
             txtCourseTitle.setText(currentCourse.getTitle());
@@ -3459,35 +3901,57 @@ public class GUIForm extends javax.swing.JFrame {
             txtCourseCreditValue.setText(String.valueOf(currentCourse.getCreditValue()));
             spinnerSections.setValue(currentCourse.getSectionCount());
             switch (currentCourse.getPreferences()[0]) {
+                case 100:
+                    cbCourseNA_Morning.setSelected(true);
+                    break;
                 case 2:
-                    cbCoursePrefHighest.setSelectedIndex(0);
+                    cbCourseLeastMorning.setSelected(true);
                     break;
                 case 1:
-                    cbCoursePrefNormal.setSelectedIndex(0);
+                    cbCourseNormalMorning.setSelected(true);
                     break;
                 case 0:
-                    cbCoursePrefLeast.setSelectedIndex(0);
+                    cbCourseHighestMorning.setSelected(true);
+                    break;
+                case -1:
+                    chkCourseNoPreference.setSelected(true);
+                    break;
             }
             switch (currentCourse.getPreferences()[1]) {
+                case 100:
+                    cbCourseNA_Afternoon.setSelected(true);
+                    break;
                 case 2:
-                    cbCoursePrefHighest.setSelectedIndex(1);
+                    cbCourseLeastAfternoon.setSelected(true);
                     break;
                 case 1:
-                    cbCoursePrefNormal.setSelectedIndex(1);
+                    cbCourseNormalAfternoon.setSelected(true);
                     break;
                 case 0:
-                    cbCoursePrefLeast.setSelectedIndex(1);
+                    cbCourseHighestAfternoon.setSelected(true);
+                    break;
+                case -1:
+                    chkCourseNoPreference.setSelected(true);
+                    break;
             }
             switch (currentCourse.getPreferences()[2]) {
+                case 100:
+                    cbCourseNA_Evening.setSelected(true);
+                    break;
                 case 2:
-                    cbCoursePrefHighest.setSelectedIndex(2);
+                    cbCourseLeastEvening.setSelected(true);
                     break;
                 case 1:
-                    cbCoursePrefNormal.setSelectedIndex(2);
+                    cbCourseNormalEvening.setSelected(true);
                     break;
                 case 0:
-                    cbCoursePrefLeast.setSelectedIndex(2);
+                    cbCourseHighestEvening.setSelected(true);
+                    break;
+                case -1:
+                    chkCourseNoPreference.setSelected(true);
+                    break;
             }
+
             Vector<String> temp = currentCourse.getIncompCourses();
             Collections.sort(temp);
             listIncompCourses.setListData(temp);
@@ -3498,6 +3962,7 @@ public class GUIForm extends javax.swing.JFrame {
             courseListData.stream().filter((s) -> (!s.equals(currentCourse.getID()))).forEach((s) -> {
                 dropIncompCourses.addItem(s);
             });
+            updateCourseTimePreferenceBoxes();
         }
     }//GEN-LAST:event_listCoursesValueChanged
 
@@ -3554,6 +4019,23 @@ public class GUIForm extends javax.swing.JFrame {
     }//GEN-LAST:event_dropIncompCoursesActionPerformed
 
     private void btnSaveCourseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveCourseActionPerformed
+        if (!chkCourseNoPreference.isSelected()) {
+            if (!(cbCourseHighestMorning.isSelected() || cbCourseNormalMorning.isSelected() || cbCourseLeastMorning.isSelected() || cbCourseNA_Morning.isSelected())) {
+                JOptionPane.showMessageDialog(pnlContainer, "Please select a time preference for Morning.");
+                return;
+            }
+
+            if (!(cbCourseHighestAfternoon.isSelected() || cbCourseNormalAfternoon.isSelected() || cbCourseLeastAfternoon.isSelected() || cbCourseNA_Afternoon.isSelected())) {
+                JOptionPane.showMessageDialog(pnlContainer, "Please select a time preference for Afternoon.");
+                return;
+            }
+
+            if (!(cbCourseHighestEvening.isSelected() || cbCourseNormalEvening.isSelected() || cbCourseLeastEvening.isSelected() || cbCourseNA_Evening.isSelected())) {
+                JOptionPane.showMessageDialog(pnlContainer, "Please select a time preference for Evening.");
+                return;
+            }
+        }
+
         if (txtCourseTitle.getText().isEmpty()) {
             txtCourseTitle.setBorder(new LineBorder(Color.red));
             JOptionPane.showMessageDialog(pnlContainer, "Please enter a course title.");
@@ -3601,42 +4083,46 @@ public class GUIForm extends javax.swing.JFrame {
             oldSectionCount = sections;
             currentCourse = new Course(txtCourseID.getText(), txtCourseTitle.getText(), courseList.size(), credits, sections);
         }
-        int highest = cbCoursePrefHighest.getSelectedIndex(), normal = cbCoursePrefNormal.getSelectedIndex(), least = cbCoursePrefLeast.getSelectedIndex();
-        int[] prefSelected = new int[3];
-        switch (least) {
-            case 0:
-                prefSelected[0] = 2;
-                break;
-            case 1:
-                prefSelected[1] = 2;
-                break;
-            case 2:
-                prefSelected[2] = 2;
-                break;
-        }
-        switch (normal) {
-            case 0:
-                prefSelected[0] = 1;
-                break;
-            case 1:
-                prefSelected[1] = 1;
-                break;
-            case 2:
-                prefSelected[2] = 1;
-                break;
-        }
-        switch (highest) {
-            case 0:
-                prefSelected[0] = 0;
-                break;
-            case 1:
-                prefSelected[1] = 0;
-                break;
-            case 2:
-                prefSelected[2] = 0;
-                break;
-        }
 
+        int highest = -1, normal = -1, least = -1;
+        int[] prefSelected = new int[3]; //m-a-e
+        if (!chkCourseNoPreference.isSelected()) {
+            if (cbCourseHighestMorning.isSelected()) {
+                prefSelected[0] = 0;
+            } else if (cbCourseHighestAfternoon.isSelected()) {
+                prefSelected[1] = 0;
+            } else if (cbCourseHighestEvening.isSelected()) {
+                prefSelected[2] = 0;
+            }
+
+            if (cbCourseNormalMorning.isSelected()) {
+                prefSelected[0] = 1;
+            } else if (cbCourseNormalAfternoon.isSelected()) {
+                prefSelected[1] = 1;
+            } else if (cbCourseNormalEvening.isSelected()) {
+                prefSelected[2] = 1;
+            }
+
+            if (cbCourseLeastMorning.isSelected()) {
+                prefSelected[0] = 2;
+            } else if (cbCourseLeastAfternoon.isSelected()) {
+                prefSelected[1] = 2;
+            } else if (cbCourseLeastEvening.isSelected()) {
+                prefSelected[2] = 2;
+            }
+
+            if (cbCourseNA_Morning.isSelected()) {
+                prefSelected[0] = 100;
+            } else if (cbCourseNA_Afternoon.isSelected()) {
+                prefSelected[1] = 100;
+            } else if (cbCourseNA_Evening.isSelected()) {
+                prefSelected[2] = 100;
+            }
+        } else {
+            prefSelected[0] = -1;
+            prefSelected[1] = -1;
+            prefSelected[2] = -1;
+        }
         currentCourse.setPreferences(prefSelected);
         courseList.put(currentCourse.getID(), currentCourse);
         if (!courseListData.contains(currentCourse.getID())) {
@@ -3951,6 +4437,312 @@ public class GUIForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnValidateInitialScheduleActionPerformed
 
+    private void chkCourseNoPreferenceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkCourseNoPreferenceActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_chkCourseNoPreferenceActionPerformed
+
+    private void cbCourseHighestMorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseHighestMorningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseHighestMorningActionPerformed
+
+    private void cbCourseNormalMorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseNormalMorningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseNormalMorningActionPerformed
+
+    private void cbCourseLeastMorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseLeastMorningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseLeastMorningActionPerformed
+
+    private void cbCourseNA_MorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseNA_MorningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseNA_MorningActionPerformed
+
+    private void cbCourseHighestAfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseHighestAfternoonActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseHighestAfternoonActionPerformed
+
+    private void cbCourseHighestEveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseHighestEveningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseHighestEveningActionPerformed
+
+    private void cbCourseNormalAfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseNormalAfternoonActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseNormalAfternoonActionPerformed
+
+    private void cbCourseNormalEveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseNormalEveningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseNormalEveningActionPerformed
+
+    private void cbCourseLeastAfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseLeastAfternoonActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseLeastAfternoonActionPerformed
+
+    private void cbCourseLeastEveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseLeastEveningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseLeastEveningActionPerformed
+
+    private void cbCourseNA_AfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseNA_AfternoonActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseNA_AfternoonActionPerformed
+
+    private void cbCourseNA_EveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbCourseNA_EveningActionPerformed
+        updateCourseTimePreferenceBoxes();
+    }//GEN-LAST:event_cbCourseNA_EveningActionPerformed
+
+    private void chkProfNoPreferenceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkProfNoPreferenceActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_chkProfNoPreferenceActionPerformed
+
+    private void cbProfHighestMorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfHighestMorningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfHighestMorningActionPerformed
+
+    private void cbProfHighestAfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfHighestAfternoonActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfHighestAfternoonActionPerformed
+
+    private void cbProfHighestEveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfHighestEveningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfHighestEveningActionPerformed
+
+    private void cbProfNormalMorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfNormalMorningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfNormalMorningActionPerformed
+
+    private void cbProfNormalAfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfNormalAfternoonActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfNormalAfternoonActionPerformed
+
+    private void cbProfNormalEveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfNormalEveningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfNormalEveningActionPerformed
+
+    private void cbProfLeastMorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfLeastMorningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfLeastMorningActionPerformed
+
+    private void cbProfLeastAfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfLeastAfternoonActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfLeastAfternoonActionPerformed
+
+    private void cbProfLeastEveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfLeastEveningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfLeastEveningActionPerformed
+
+    private void cbProfNA_MorningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfNA_MorningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfNA_MorningActionPerformed
+
+    private void cbProfNA_AfternoonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfNA_AfternoonActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfNA_AfternoonActionPerformed
+
+    private void cbProfNA_EveningActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbProfNA_EveningActionPerformed
+        updateProfTimePreferenceBoxes();
+    }//GEN-LAST:event_cbProfNA_EveningActionPerformed
+
+    private void updateCourseTimePreferenceBoxes() {
+        if (chkCourseNoPreference.isSelected()) {
+            cbCourseHighestMorning.setEnabled(false);
+            cbCourseHighestAfternoon.setEnabled(false);
+            cbCourseHighestEvening.setEnabled(false);
+            cbCourseNormalMorning.setEnabled(false);
+            cbCourseNormalAfternoon.setEnabled(false);
+            cbCourseNormalEvening.setEnabled(false);
+            cbCourseLeastMorning.setEnabled(false);
+            cbCourseLeastAfternoon.setEnabled(false);
+            cbCourseLeastEvening.setEnabled(false);
+            cbCourseNA_Morning.setEnabled(false);
+            cbCourseNA_Afternoon.setEnabled(false);
+            cbCourseNA_Evening.setEnabled(false);
+        } else {
+            if (!cbCourseHighestAfternoon.isSelected() && !cbCourseHighestEvening.isSelected() && !cbCourseNormalMorning.isSelected()
+                    && !cbCourseLeastMorning.isSelected() && !cbCourseNA_Morning.isSelected()) {
+                cbCourseHighestMorning.setEnabled(true);
+            } else {
+                cbCourseHighestMorning.setEnabled(false);
+            }
+
+            if (!cbCourseHighestMorning.isSelected() && !cbCourseHighestEvening.isSelected() && !cbCourseNormalAfternoon.isSelected()
+                    && !cbCourseLeastAfternoon.isSelected() && !cbCourseNA_Afternoon.isSelected()) {
+                cbCourseHighestAfternoon.setEnabled(true);
+            } else {
+                cbCourseHighestAfternoon.setEnabled(false);
+            }
+
+            if (!cbCourseHighestAfternoon.isSelected() && !cbCourseHighestMorning.isSelected() && !cbCourseNormalEvening.isSelected()
+                    && !cbCourseLeastEvening.isSelected() && !cbCourseNA_Evening.isSelected()) {
+                cbCourseHighestEvening.setEnabled(true);
+            } else {
+                cbCourseHighestEvening.setEnabled(false);
+            }
+
+            if (!cbCourseNormalAfternoon.isSelected() && !cbCourseNormalEvening.isSelected() && !cbCourseHighestMorning.isSelected()
+                    && !cbCourseLeastMorning.isSelected() && !cbCourseNA_Morning.isSelected()) {
+                cbCourseNormalMorning.setEnabled(true);
+            } else {
+                cbCourseNormalMorning.setEnabled(false);
+            }
+
+            if (!cbCourseNormalMorning.isSelected() && !cbCourseNormalEvening.isSelected() && !cbCourseHighestAfternoon.isSelected()
+                    && !cbCourseLeastAfternoon.isSelected() && !cbCourseNA_Afternoon.isSelected()) {
+                cbCourseNormalAfternoon.setEnabled(true);
+            } else {
+                cbCourseNormalAfternoon.setEnabled(false);
+            }
+
+            if (!cbCourseNormalAfternoon.isSelected() && !cbCourseNormalMorning.isSelected() && !cbCourseHighestEvening.isSelected()
+                    && !cbCourseLeastEvening.isSelected() && !cbCourseNA_Evening.isSelected()) {
+                cbCourseNormalEvening.setEnabled(true);
+            } else {
+                cbCourseNormalEvening.setEnabled(false);
+            }
+
+            if (!cbCourseLeastAfternoon.isSelected() && !cbCourseLeastEvening.isSelected() && !cbCourseNormalMorning.isSelected()
+                    && !cbCourseHighestMorning.isSelected() && !cbCourseNA_Morning.isSelected()) {
+                cbCourseLeastMorning.setEnabled(true);
+            } else {
+                cbCourseLeastMorning.setEnabled(false);
+            }
+
+            if (!cbCourseLeastMorning.isSelected() && !cbCourseLeastEvening.isSelected() && !cbCourseNormalAfternoon.isSelected()
+                    && !cbCourseHighestAfternoon.isSelected() && !cbCourseNA_Afternoon.isSelected()) {
+                cbCourseLeastAfternoon.setEnabled(true);
+            } else {
+                cbCourseLeastAfternoon.setEnabled(false);
+            }
+
+            if (!cbCourseLeastAfternoon.isSelected() && !cbCourseLeastMorning.isSelected() && !cbCourseNormalEvening.isSelected()
+                    && !cbCourseHighestEvening.isSelected() && !cbCourseNA_Evening.isSelected()) {
+                cbCourseLeastEvening.setEnabled(true);
+            } else {
+                cbCourseLeastEvening.setEnabled(false);
+            }
+
+            if (!cbCourseNA_Afternoon.isSelected() && !cbCourseNA_Evening.isSelected() && !cbCourseNormalMorning.isSelected()
+                    && !cbCourseLeastMorning.isSelected() && !cbCourseHighestMorning.isSelected()) {
+                cbCourseNA_Morning.setEnabled(true);
+            } else {
+                cbCourseNA_Morning.setEnabled(false);
+            }
+
+            if (!cbCourseNA_Morning.isSelected() && !cbCourseNA_Evening.isSelected() && !cbCourseNormalAfternoon.isSelected()
+                    && !cbCourseLeastAfternoon.isSelected() && !cbCourseHighestAfternoon.isSelected()) {
+                cbCourseNA_Afternoon.setEnabled(true);
+            } else {
+                cbCourseNA_Afternoon.setEnabled(false);
+            }
+
+            if (!cbCourseNA_Afternoon.isSelected() && !cbCourseNA_Morning.isSelected() && !cbCourseNormalEvening.isSelected()
+                    && !cbCourseLeastEvening.isSelected() && !cbCourseHighestEvening.isSelected()) {
+                cbCourseNA_Evening.setEnabled(true);
+            } else {
+                cbCourseNA_Evening.setEnabled(false);
+            }
+        }
+    }
+
+    private void updateProfTimePreferenceBoxes() {
+        if (chkProfNoPreference.isSelected()) {
+            cbProfHighestMorning.setEnabled(false);
+            cbProfHighestAfternoon.setEnabled(false);
+            cbProfHighestEvening.setEnabled(false);
+            cbProfNormalMorning.setEnabled(false);
+            cbProfNormalAfternoon.setEnabled(false);
+            cbProfNormalEvening.setEnabled(false);
+            cbProfLeastMorning.setEnabled(false);
+            cbProfLeastAfternoon.setEnabled(false);
+            cbProfLeastEvening.setEnabled(false);
+            cbProfNA_Morning.setEnabled(false);
+            cbProfNA_Afternoon.setEnabled(false);
+            cbProfNA_Evening.setEnabled(false);
+        } else {
+            if (!cbProfHighestAfternoon.isSelected() && !cbProfHighestEvening.isSelected() && !cbProfNormalMorning.isSelected()
+                    && !cbProfLeastMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
+                cbProfHighestMorning.setEnabled(true);
+            } else {
+                cbProfHighestMorning.setEnabled(false);
+            }
+
+            if (!cbProfHighestMorning.isSelected() && !cbProfHighestEvening.isSelected() && !cbProfNormalAfternoon.isSelected()
+                    && !cbProfLeastAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
+                cbProfHighestAfternoon.setEnabled(true);
+            } else {
+                cbProfHighestAfternoon.setEnabled(false);
+            }
+
+            if (!cbProfHighestAfternoon.isSelected() && !cbProfHighestMorning.isSelected() && !cbProfNormalEvening.isSelected()
+                    && !cbProfLeastEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
+                cbProfHighestEvening.setEnabled(true);
+            } else {
+                cbProfHighestEvening.setEnabled(false);
+            }
+
+            if (!cbProfNormalAfternoon.isSelected() && !cbProfNormalEvening.isSelected() && !cbProfHighestMorning.isSelected()
+                    && !cbProfLeastMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
+                cbProfNormalMorning.setEnabled(true);
+            } else {
+                cbProfNormalMorning.setEnabled(false);
+            }
+
+            if (!cbProfNormalMorning.isSelected() && !cbProfNormalEvening.isSelected() && !cbProfHighestAfternoon.isSelected()
+                    && !cbProfLeastAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
+                cbProfNormalAfternoon.setEnabled(true);
+            } else {
+                cbProfNormalAfternoon.setEnabled(false);
+            }
+
+            if (!cbProfNormalAfternoon.isSelected() && !cbProfNormalMorning.isSelected() && !cbProfHighestEvening.isSelected()
+                    && !cbProfLeastEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
+                cbProfNormalEvening.setEnabled(true);
+            } else {
+                cbProfNormalEvening.setEnabled(false);
+            }
+
+            if (!cbProfLeastAfternoon.isSelected() && !cbProfLeastEvening.isSelected() && !cbProfNormalMorning.isSelected()
+                    && !cbProfHighestMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
+                cbProfLeastMorning.setEnabled(true);
+            } else {
+                cbProfLeastMorning.setEnabled(false);
+            }
+
+            if (!cbProfLeastMorning.isSelected() && !cbProfLeastEvening.isSelected() && !cbProfNormalAfternoon.isSelected()
+                    && !cbProfHighestAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
+                cbProfLeastAfternoon.setEnabled(true);
+            } else {
+                cbProfLeastAfternoon.setEnabled(false);
+            }
+
+            if (!cbProfLeastAfternoon.isSelected() && !cbProfLeastMorning.isSelected() && !cbProfNormalEvening.isSelected()
+                    && !cbProfHighestEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
+                cbProfLeastEvening.setEnabled(true);
+            } else {
+                cbProfLeastEvening.setEnabled(false);
+            }
+
+            if (!cbProfNA_Afternoon.isSelected() && !cbProfNA_Evening.isSelected() && !cbProfNormalMorning.isSelected()
+                    && !cbProfLeastMorning.isSelected() && !cbProfHighestMorning.isSelected()) {
+                cbProfNA_Morning.setEnabled(true);
+            } else {
+                cbProfNA_Morning.setEnabled(false);
+            }
+
+            if (!cbProfNA_Morning.isSelected() && !cbProfNA_Evening.isSelected() && !cbProfNormalAfternoon.isSelected()
+                    && !cbProfLeastAfternoon.isSelected() && !cbProfHighestAfternoon.isSelected()) {
+                cbProfNA_Afternoon.setEnabled(true);
+            } else {
+                cbProfNA_Afternoon.setEnabled(false);
+            }
+
+            if (!cbProfNA_Afternoon.isSelected() && !cbProfNA_Morning.isSelected() && !cbProfNormalEvening.isSelected()
+                    && !cbProfLeastEvening.isSelected() && !cbProfHighestEvening.isSelected()) {
+                cbProfNA_Evening.setEnabled(true);
+            } else {
+                cbProfNA_Evening.setEnabled(false);
+            }
+        }
+    }
+
     private void updateCourseGeneratedIDs() {
         int arraySize = courseList.size();
         int leftID = 0, rightID = 0;
@@ -4170,19 +4962,39 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JButton btnSaveTimeSlot;
     private javax.swing.JButton btnStatistics;
     private javax.swing.JButton btnValidateInitialSchedule;
-    private javax.swing.JComboBox cbCoursePrefHighest;
-    private javax.swing.JComboBox cbCoursePrefLeast;
-    private javax.swing.JComboBox cbCoursePrefNormal;
+    private javax.swing.JCheckBox cbCourseHighestAfternoon;
+    private javax.swing.JCheckBox cbCourseHighestEvening;
+    private javax.swing.JCheckBox cbCourseHighestMorning;
+    private javax.swing.JCheckBox cbCourseLeastAfternoon;
+    private javax.swing.JCheckBox cbCourseLeastEvening;
+    private javax.swing.JCheckBox cbCourseLeastMorning;
+    private javax.swing.JCheckBox cbCourseNA_Afternoon;
+    private javax.swing.JCheckBox cbCourseNA_Evening;
+    private javax.swing.JCheckBox cbCourseNA_Morning;
+    private javax.swing.JCheckBox cbCourseNormalAfternoon;
+    private javax.swing.JCheckBox cbCourseNormalEvening;
+    private javax.swing.JCheckBox cbCourseNormalMorning;
     private javax.swing.JComboBox<String> cbProfCourseTaught;
-    private javax.swing.JComboBox cbProfPrefHighest;
-    private javax.swing.JComboBox cbProfPrefLeast;
-    private javax.swing.JComboBox cbProfPrefNormal;
+    private javax.swing.JCheckBox cbProfHighestAfternoon;
+    private javax.swing.JCheckBox cbProfHighestEvening;
+    private javax.swing.JCheckBox cbProfHighestMorning;
+    private javax.swing.JCheckBox cbProfLeastAfternoon;
+    private javax.swing.JCheckBox cbProfLeastEvening;
+    private javax.swing.JCheckBox cbProfLeastMorning;
+    private javax.swing.JCheckBox cbProfNA_Afternoon;
+    private javax.swing.JCheckBox cbProfNA_Evening;
+    private javax.swing.JCheckBox cbProfNA_Morning;
+    private javax.swing.JCheckBox cbProfNormalAfternoon;
+    private javax.swing.JCheckBox cbProfNormalEvening;
+    private javax.swing.JCheckBox cbProfNormalMorning;
     private javax.swing.JComboBox<String> cbProfessorSelection;
     private javax.swing.JComboBox<String> cbScheduleCourse;
     private javax.swing.JComboBox<String> cbScheduleProfessor;
     private javax.swing.JComboBox<String> cbScheduleSection;
     private javax.swing.JComboBox<String> cbScheduleTimeslot;
     private javax.swing.JComboBox<String> cbTimeSelection;
+    private javax.swing.JCheckBox chkCourseNoPreference;
+    private javax.swing.JCheckBox chkProfNoPreference;
     private javax.swing.JPanel courseData;
     private javax.swing.JComboBox<String> dropIncompCourses;
     private javax.swing.JLabel lbFridayStart;
@@ -4194,10 +5006,14 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblCourseCreditValue;
     private javax.swing.JLabel lblCourseGeneratedID;
     private javax.swing.JLabel lblCourseID;
-    private javax.swing.JLabel lblCoursePrefHighest;
-    private javax.swing.JLabel lblCoursePrefLeast;
-    private javax.swing.JLabel lblCoursePrefNormal;
     private javax.swing.JLabel lblCourseSectionCount;
+    private javax.swing.JLabel lblCourseTimeAfternoon;
+    private javax.swing.JLabel lblCourseTimeEvening;
+    private javax.swing.JLabel lblCourseTimeHighest;
+    private javax.swing.JLabel lblCourseTimeLeast;
+    private javax.swing.JLabel lblCourseTimeMorning;
+    private javax.swing.JLabel lblCourseTimeNA;
+    private javax.swing.JLabel lblCourseTimeNormal;
     private javax.swing.JLabel lblFridayColumn;
     private javax.swing.JLabel lblFridayEnd;
     private javax.swing.JLabel lblGeneratedFileName;
@@ -4211,9 +5027,13 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblPopulationSize;
     private javax.swing.JLabel lblProfCredits;
     private javax.swing.JLabel lblProfName;
-    private javax.swing.JLabel lblProfPreferenceHighest;
-    private javax.swing.JLabel lblProfPreferenceLeast;
-    private javax.swing.JLabel lblProfPreferenceNormal;
+    private javax.swing.JLabel lblProfTimeAfternoon;
+    private javax.swing.JLabel lblProfTimeEvening;
+    private javax.swing.JLabel lblProfTimeHighest;
+    private javax.swing.JLabel lblProfTimeLeast;
+    private javax.swing.JLabel lblProfTimeMorning;
+    private javax.swing.JLabel lblProfTimeNA;
+    private javax.swing.JLabel lblProfTimeNormal;
     private javax.swing.JLabel lblReplacementWait;
     private javax.swing.JLabel lblResultFile;
     private javax.swing.JLabel lblSaturdayColumn;
@@ -4246,7 +5066,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JPanel pnlAdvancedConfig;
     private javax.swing.JPanel pnlConfiguration;
     private javax.swing.JPanel pnlContainer;
-    private javax.swing.JPanel pnlCoursePreference;
+    private javax.swing.JPanel pnlCourseTimePreference;
     private javax.swing.JPanel pnlCourses;
     private javax.swing.JPanel pnlFriday;
     private javax.swing.JPanel pnlFridayColumn;
@@ -4256,7 +5076,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JPanel pnlMondayColumn;
     private javax.swing.JPanel pnlProfCourseTaught;
     private javax.swing.JPanel pnlProfData;
-    private javax.swing.JPanel pnlProfPreference;
+    private javax.swing.JPanel pnlProfTimePreference;
     private javax.swing.JPanel pnlProfessor;
     private javax.swing.JPanel pnlResultContainer;
     private javax.swing.JPanel pnlResultScheduleLabel_Friday;
