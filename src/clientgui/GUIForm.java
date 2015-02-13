@@ -719,10 +719,11 @@ public class GUIForm extends javax.swing.JFrame {
 
             ArrayList<ArrayList<Integer>> sharedCourses = new ArrayList<>();
             currentProf = new ArrayList<>(new LinkedHashSet<Integer>(currentProf));
-            
+
             for (Integer ap : currentProf) {
-                if(ap == p.getProfID())
+                if (ap == p.getProfID()) {
                     continue;
+                }
                 ArrayList<Integer> sectionsShared = GetIntersection(profSection.get(p.getProfID()), profSection.get(ap));
                 int shareSize = sectionsShared.size();
                 sectionsShared.add(0, ap);
@@ -752,18 +753,18 @@ public class GUIForm extends javax.swing.JFrame {
     private int FindRowInSchedule(String elementID) {
         int rowID = -1;
         int col = tableSchedule.convertColumnIndexToView(0);
-        for(int row = tableSchedule.getRowCount(); --row >= 0 && rowID == -1; ){
-            if(elementID.equals(tableSchedule.getValueAt(row, col))){
+        for (int row = tableSchedule.getRowCount(); --row >= 0 && rowID == -1;) {
+            if (elementID.equals(tableSchedule.getValueAt(row, col))) {
                 rowID = tableSchedule.convertRowIndexToModel(row);
             }
         }
-        
+
         return rowID;
     }
 
     private void RemoveSection(String elementID) {
-        for(int s : sectionLookup.keySet()){
-            if(sectionLookup.get(s).equals(elementID)){
+        for (int s : sectionLookup.keySet()) {
+            if (sectionLookup.get(s).equals(elementID)) {
                 sectionLookup.remove(s);
                 return;
             }
@@ -2982,7 +2983,19 @@ public class GUIForm extends javax.swing.JFrame {
             n.printStackTrace();
         }
     }//GEN-LAST:event_btnSaveSetupActionPerformed
+    
+    private HashMap<Double, ArrayList<Integer>> GenerateCreditTimeslotMap() {
+        HashMap<Double, ArrayList<Integer>> rtnVal = new HashMap<>();
+        for (TimeSlot t : timeslotList.values()) {
+            if (!rtnVal.containsKey(t.getCredits())) {
+                rtnVal.put(t.getCredits(), new ArrayList<>());
+            }
+            rtnVal.get(t.getCredits()).add(t.getID());
+        }
 
+        return rtnVal;
+    }
+    
     private void btnGenerateInputFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerateInputFileActionPerformed
         while (txtGeneratedFileName.getText().isEmpty()) {
             btnBrowseGeneratedFileNameActionPerformed(null);
@@ -3084,7 +3097,20 @@ public class GUIForm extends javax.swing.JFrame {
                 writer.write(("\n"));
             }
             writer.write("*END*SECTION*PROF*\n");
-
+            writer.write("//*START*SECTION*TIMESLOT*\n");
+            HashMap<Double, ArrayList<Integer>> creditTimeslotMap = GenerateCreditTimeslotMap();
+            for (int i = 0; i < sectionLookup.size(); i++) {
+                writer.write(i + ",");
+                String course = sectionLookup.get(i);
+                course = course.substring(0, course.indexOf("("));
+                double credit = courseList.get(course).getCreditValue();
+                writer.write(String.valueOf(creditTimeslotMap.get(credit).size()));
+                for (Integer time : creditTimeslotMap.get(credit)) {
+                    writer.write("," + time);
+                }
+                writer.write("\n");
+            }
+            writer.write("*END*SECTION*TIMESLOT*\n");
             writer.write("//*START*PROF*SECTION*\n");
             writer.write("//profID, sectionSize, sections\n");
             for (int i = 0; i < profSection.size(); i++) {
@@ -3206,18 +3232,18 @@ public class GUIForm extends javax.swing.JFrame {
             //OUTPUT KEY
             writer.write("*START*KEY*\n");
             //OUtput section: sxx%SectionID
-            for(int s : sectionLookup.keySet()){
+            for (int s : sectionLookup.keySet()) {
                 writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
             }
-            
-            for(int p : profLookup.keySet()){
+
+            for (int p : profLookup.keySet()) {
                 writer.write("p" + p + "%" + profLookup.get(p) + "\n");
             }
-            
-            for(int t : timeslotLookup.keySet()){
+
+            for (int t : timeslotLookup.keySet()) {
                 writer.write("t" + t + "%" + timeslotLookup.get(t) + "\n");
             }
-            
+
             writer.write("*END*KEY*\n");
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtGeneratedFileName.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
             tabbedPanels.setEnabledAt(5, true);
@@ -4206,15 +4232,15 @@ public class GUIForm extends javax.swing.JFrame {
                 unscheduledCourses.removeElement(elementID);
                 RemoveSection(elementID);
                 int row = FindRowInSchedule(elementID);
-                if(row != -1){
+                if (row != -1) {
                     dtm.removeRow(row);
                 }
-                
+
             }
         }
-        if ((newCourse && sections > 0) || (oldSectionCount < sections)){
+        if ((newCourse && sections > 0) || (oldSectionCount < sections)) {
             int i = 1;
-            if(oldSectionCount < sections){
+            if (oldSectionCount < sections) {
                 i = oldSectionCount + 1;
             }
             for (; i <= sections; i++) {
@@ -4226,7 +4252,7 @@ public class GUIForm extends javax.swing.JFrame {
             Collections.sort(unscheduledCourses);
         }
 
-        if(newCourse){
+        if (newCourse) {
             updateCourseGeneratedIDs();
         }
     }//GEN-LAST:event_btnSaveCourseActionPerformed
