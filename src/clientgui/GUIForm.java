@@ -344,13 +344,6 @@ public class GUIForm extends javax.swing.JFrame {
 
                         courseIDs = (HashSet<Integer>) input.readObject();
                         profIDs = (HashSet<Integer>) input.readObject();
-                        timeslotIDs = (HashSet<Integer>) input.readObject();
-                        if (timeslotIDs.size() != timeslotList.size()) {
-                            timeslotIDs.clear();
-                            for (String s : timeslotList.keySet()) {
-                                timeslotIDs.add(timeslotList.get(s).getID());
-                            }
-                        }
                         String generatedFile = (String) input.readObject();
                         if (!generatedFile.isEmpty()) {
                             txtGeneratedFileName.setText(generatedFile);
@@ -364,8 +357,10 @@ public class GUIForm extends javax.swing.JFrame {
                     e.printStackTrace();
                 }
                 tabbedPanels.setEnabledAt(5, true);
+                setTitle("CS:POp - " + fc.getSelectedFile().getName());
             }
         } else {
+            setTitle("CS:POp");
             generations = 5000;
             populationSize = 50;
             replacementWait = 100;
@@ -752,6 +747,27 @@ public class GUIForm extends javax.swing.JFrame {
         }
 
         return result;
+    }
+
+    private int FindRowInSchedule(String elementID) {
+        int rowID = -1;
+        int col = tableSchedule.convertColumnIndexToView(0);
+        for(int row = tableSchedule.getRowCount(); --row >= 0 && rowID == -1; ){
+            if(elementID.equals(tableSchedule.getValueAt(row, col))){
+                rowID = tableSchedule.convertRowIndexToModel(row);
+            }
+        }
+        
+        return rowID;
+    }
+
+    private void RemoveSection(String elementID) {
+        for(int s : sectionLookup.keySet()){
+            if(sectionLookup.get(s).equals(elementID)){
+                sectionLookup.remove(s);
+                return;
+            }
+        }
     }
 
     private static class ScheduleReplace {
@@ -2956,9 +2972,8 @@ public class GUIForm extends javax.swing.JFrame {
             output.writeObject(timeslotListData);
             output.writeObject(courseIDs);
             output.writeObject(profIDs);
-            output.writeObject(timeslotIDs);
             output.writeObject(txtGeneratedFileName.getText());
-
+            setTitle("CS:POp - " + (new File(txtSetupFileName.getText())).getName());
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Setup Saved to<br />" + txtSetupFileName.getText() + "</p></html>", "Save Successful", JOptionPane.INFORMATION_MESSAGE);
         } catch (IOException e) {
             e.printStackTrace();
@@ -2982,8 +2997,12 @@ public class GUIForm extends javax.swing.JFrame {
         }
         DecimalFormat df = new DecimalFormat("#.#");
         if (profCredits < courseCredits) {
-            JOptionPane.showMessageDialog(pnlContainer, "<html>You have scheduled " + df.format(courseCredits) + "worth of classes,<br/>while only " + df.format(profCredits) + " worth of professor credits is available.<br />Please increase the number of credits for professors.</html>", "Insufficient Credits Available", JOptionPane.ERROR_MESSAGE);
-            return;
+            String[] options = {"Yes", "No"};
+            String message = "<html>You have scheduled " + df.format(courseCredits) + "worth of classes,<br/>while only " + df.format(profCredits) + " worth of professor credits is available.<br />Would you like to generate an input? (Schedule might contain severely unbalanced professors.).</html>";
+            int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Invalid Schedule", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, options, "No");
+            if (choice == 1) {
+                return;
+            }
         }
         String validation = validateSchedule(false);
         if (!validation.isEmpty()) {
@@ -3184,6 +3203,22 @@ public class GUIForm extends javax.swing.JFrame {
             }
 
             writer.write("*END*INITIAL*\n");
+            //OUTPUT KEY
+            writer.write("*START*KEY*\n");
+            //OUtput section: sxx%SectionID
+            for(int s : sectionLookup.keySet()){
+                writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
+            }
+            
+            for(int p : profLookup.keySet()){
+                writer.write("p" + p + "%" + profLookup.get(p) + "\n");
+            }
+            
+            for(int t : timeslotLookup.keySet()){
+                writer.write("t" + t + "%" + timeslotLookup.get(t) + "\n");
+            }
+            
+            writer.write("*END*KEY*\n");
             JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtGeneratedFileName.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
             tabbedPanels.setEnabledAt(5, true);
             btnGenerateInputFile.setEnabled(true);
@@ -3496,6 +3531,7 @@ public class GUIForm extends javax.swing.JFrame {
         }
         timeslotList.put(currentTimeslot.toString(), currentTimeslot);
         updateTimeSlotIDs();
+        btnSaveTimeSlot.setEnabled(false);
     }//GEN-LAST:event_btnSaveTimeSlotActionPerformed
 
     private void listTimeslotsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listTimeslotsValueChanged
@@ -3533,6 +3569,33 @@ public class GUIForm extends javax.swing.JFrame {
                                 txtSaturdayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
                                 break;
                         }
+                    } else {
+                        switch (i) {
+                            case 0:
+                                txtMondayStart.setText("");
+                                txtMondayEnd.setText("");
+                                break;
+                            case 1:
+                                txtTuesdayStart.setText("");
+                                txtTuesdayEnd.setText("");
+                                break;
+                            case 2:
+                                txtWednesdayStart.setText("");
+                                txtWednesdayEnd.setText("");
+                                break;
+                            case 3:
+                                txtThursdayStart.setText("");
+                                txtThursdayEnd.setText("");
+                                break;
+                            case 4:
+                                txtFridayStart.setText("");
+                                txtFridayEnd.setText("");
+                                break;
+                            case 5:
+                                txtSaturdayStart.setText("");
+                                txtSaturdayEnd.setText("");
+                                break;
+                        }
                     }
                 }
             }
@@ -3541,18 +3604,7 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void btnNewTimeslotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewTimeslotActionPerformed
         int newID = timeslotList.size();
-        boolean switchSides = false;
-        while (timeslotIDs.contains(newID)) {
-            if (!switchSides) {
-                newID--;
-            } else {
-                newID++;
-            }
-            if (newID == -1) {
-                switchSides = true;
-                newID = timeslotList.size() + 1;
-            }
-        }
+
         txtTSGeneratedID.setText(String.valueOf(newID));
         String empty = "";
         txtTimeSlotCreditValue.setText(empty);
@@ -3569,6 +3621,7 @@ public class GUIForm extends javax.swing.JFrame {
         txtSaturdayEnd.setText(empty);
         txtSaturdayStart.setText(empty);
         currentTimeslot = null;
+        btnSaveTimeSlot.setEnabled(true);
     }//GEN-LAST:event_btnNewTimeslotActionPerformed
 
     private void btnNewProfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewProfActionPerformed
@@ -4066,7 +4119,8 @@ public class GUIForm extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(rootPane, e.getMessage());
         }
 
-        int oldSectionCount;
+        int oldSectionCount = -1;
+        boolean newCourse = false;
         if (courseList.containsKey(txtCourseID.getText().toLowerCase())) {
             currentCourse = courseList.get(txtCourseID.getText().toLowerCase());
             oldSectionCount = currentCourse.getSectionCount();
@@ -4080,7 +4134,7 @@ public class GUIForm extends javax.swing.JFrame {
                 currentCourse.setSectionCount(sections);
             }
         } else {
-            oldSectionCount = sections;
+            newCourse = true;
             currentCourse = new Course(txtCourseID.getText(), txtCourseTitle.getText(), courseList.size(), credits, sections);
         }
 
@@ -4145,15 +4199,25 @@ public class GUIForm extends javax.swing.JFrame {
             }
         }
 
-        if (oldSectionCount != sections) {
-            for (int i = 1; i <= oldSectionCount; i++) {
+        if (oldSectionCount > sections) {
+            for (int i = oldSectionCount; i > sections; i--) {
                 String elementID = currentCourse.getID() + "(" + String.valueOf(i) + ")";
                 courseSectionListData.removeElement(elementID);
                 unscheduledCourses.removeElement(elementID);
+                RemoveSection(elementID);
+                int row = FindRowInSchedule(elementID);
+                if(row != -1){
+                    dtm.removeRow(row);
+                }
+                
             }
         }
-        if (sections > 0) {
-            for (int i = 1; i <= sections; i++) {
+        if ((newCourse && sections > 0) || (oldSectionCount < sections)){
+            int i = 1;
+            if(oldSectionCount < sections){
+                i = oldSectionCount + 1;
+            }
+            for (; i <= sections; i++) {
                 String elementID = currentCourse.getID() + "(" + String.valueOf(i) + ")";
                 courseSectionListData.addElement(elementID);
                 unscheduledCourses.addElement(elementID);
@@ -4162,7 +4226,9 @@ public class GUIForm extends javax.swing.JFrame {
             Collections.sort(unscheduledCourses);
         }
 
-        updateCourseGeneratedIDs();
+        if(newCourse){
+            updateCourseGeneratedIDs();
+        }
     }//GEN-LAST:event_btnSaveCourseActionPerformed
 
     private void txtCourseCreditValueKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCourseCreditValueKeyTyped
