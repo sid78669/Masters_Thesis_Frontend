@@ -872,7 +872,11 @@ public class GUIForm extends javax.swing.JFrame {
         cbCourseNA_Afternoon = new javax.swing.JCheckBox();
         cbCourseNA_Evening = new javax.swing.JCheckBox();
         chkCourseNoPreference = new javax.swing.JCheckBox();
-        jPanel1 = new javax.swing.JPanel();
+        pnlTimeslotConstraint = new javax.swing.JPanel();
+        dropTimeslotConstraint = new javax.swing.JComboBox();
+        btnModifyTimeslotConstraint = new javax.swing.JButton();
+        spTimeslotContraintList = new javax.swing.JScrollPane();
+        listTimeslotConstraints = new javax.swing.JList();
         spCourseList = new javax.swing.JScrollPane();
         listCourses = new JList(courseListData);
         btnNewCourse = new javax.swing.JButton();
@@ -919,16 +923,20 @@ public class GUIForm extends javax.swing.JFrame {
         btnNewTimeslot = new javax.swing.JButton();
         spTimeslotList = new javax.swing.JScrollPane();
         listTimeslots = new javax.swing.JList<String>();
-        lblGeneratedTSID = new javax.swing.JLabel();
-        txtTSGeneratedID = new javax.swing.JTextField();
+        jPanel1 = new javax.swing.JPanel();
         lblTimeSlotCreditValue = new javax.swing.JLabel();
-        txtTimeSlotCreditValue = new javax.swing.JTextField();
         pnlScheduleDays = new javax.swing.JPanel();
         pnlMonday = new javax.swing.JPanel();
         lblMondayStart = new javax.swing.JLabel();
         txtMondayStart = new javax.swing.JTextField();
         lblMondayEnd = new javax.swing.JLabel();
         txtMondayEnd = new javax.swing.JTextField();
+        tsMondayStartHH = new javax.swing.JSpinner();
+        tsMondayStartMM = new javax.swing.JSpinner();
+        tsMondayStartAMPM = new javax.swing.JSpinner();
+        tsMondayEndtHH = new javax.swing.JSpinner();
+        tsMondayEndMM = new javax.swing.JSpinner();
+        tsMondayEndAMPM = new javax.swing.JSpinner();
         pnlTuesday = new javax.swing.JPanel();
         lblTuesdayStart = new javax.swing.JLabel();
         txtTuesdayStart = new javax.swing.JTextField();
@@ -954,8 +962,11 @@ public class GUIForm extends javax.swing.JFrame {
         txtSaturdayStart = new javax.swing.JTextField();
         lblSaturdayEnd = new javax.swing.JLabel();
         txtSaturdayEnd = new javax.swing.JTextField();
-        btnSaveTimeSlot = new javax.swing.JButton();
+        txtTimeSlotCreditValue = new javax.swing.JTextField();
+        txtTSGeneratedID = new javax.swing.JTextField();
+        lblGeneratedTSID = new javax.swing.JLabel();
         btnDeleteTimeSlot = new javax.swing.JButton();
+        btnSaveTimeSlot = new javax.swing.JButton();
         pnlInitSchedule = new javax.swing.JPanel();
         spTableSchedule = new javax.swing.JScrollPane();
         tableSchedule = new javax.swing.JTable();
@@ -1091,6 +1102,7 @@ public class GUIForm extends javax.swing.JFrame {
         });
 
         pnlIncompatibleCourses.setBorder(javax.swing.BorderFactory.createTitledBorder("Incompatible Courses"));
+        pnlIncompatibleCourses.setPreferredSize(new java.awt.Dimension(215, 268));
 
         listIncompCourses.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         listIncompCourses.setEnabled(false);
@@ -1133,7 +1145,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(dropIncompCourses, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnModifyIncomp))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                .addComponent(spCourseIncomp)
                 .addContainerGap())
         );
 
@@ -1316,15 +1328,51 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+        pnlTimeslotConstraint.setBorder(javax.swing.BorderFactory.createTitledBorder("Timeslot Constraints"));
+        pnlTimeslotConstraint.setPreferredSize(new java.awt.Dimension(215, 204));
+
+        dropTimeslotConstraint.setEnabled(false);
+        dropTimeslotConstraint.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dropTimeslotConstraintActionPerformed(evt);
+            }
+        });
+
+        btnModifyTimeslotConstraint.setText("Add");
+        btnModifyTimeslotConstraint.setEnabled(false);
+        btnModifyTimeslotConstraint.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnModifyTimeslotConstraintActionPerformed(evt);
+            }
+        });
+
+        listTimeslotConstraints.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        spTimeslotContraintList.setViewportView(listTimeslotConstraints);
+
+        javax.swing.GroupLayout pnlTimeslotConstraintLayout = new javax.swing.GroupLayout(pnlTimeslotConstraint);
+        pnlTimeslotConstraint.setLayout(pnlTimeslotConstraintLayout);
+        pnlTimeslotConstraintLayout.setHorizontalGroup(
+            pnlTimeslotConstraintLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlTimeslotConstraintLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlTimeslotConstraintLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(spTimeslotContraintList)
+                    .addGroup(pnlTimeslotConstraintLayout.createSequentialGroup()
+                        .addComponent(dropTimeslotConstraint, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnModifyTimeslotConstraint)))
+                .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+        pnlTimeslotConstraintLayout.setVerticalGroup(
+            pnlTimeslotConstraintLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlTimeslotConstraintLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlTimeslotConstraintLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(dropTimeslotConstraint, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnModifyTimeslotConstraint))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(spTimeslotContraintList)
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout courseDataLayout = new javax.swing.GroupLayout(courseData);
@@ -1340,8 +1388,10 @@ public class GUIForm extends javax.swing.JFrame {
                             .addComponent(lblCourseSectionCount, javax.swing.GroupLayout.PREFERRED_SIZE, 53, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(25, 25, 25)
                         .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(spinnerSections, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(txtCourseCreditValue)))
+                            .addComponent(txtCourseCreditValue)
+                            .addGroup(courseDataLayout.createSequentialGroup()
+                                .addComponent(spinnerSections, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))))
                     .addComponent(btnDeleteCourse, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnSaveCourse, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(courseDataLayout.createSequentialGroup()
@@ -1359,10 +1409,9 @@ public class GUIForm extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(pnlCourseTimePreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(courseDataLayout.createSequentialGroup()
-                        .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(289, 289, 289)))
+                        .addComponent(pnlTimeslotConstraint, javax.swing.GroupLayout.DEFAULT_SIZE, 421, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         courseDataLayout.setVerticalGroup(
@@ -1395,9 +1444,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(courseDataLayout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addComponent(pnlTimeslotConstraint, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnSaveCourse, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1707,9 +1754,11 @@ public class GUIForm extends javax.swing.JFrame {
                             .addComponent(lblProfCredits))
                         .addGap(18, 18, 18)
                         .addGroup(pnlProfDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(spinnerCreditsAssigned)
                             .addComponent(txtProfGeneratedID)
-                            .addComponent(txtProfName)))
+                            .addComponent(txtProfName)
+                            .addGroup(pnlProfDataLayout.createSequentialGroup()
+                                .addComponent(spinnerCreditsAssigned, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))))
                     .addComponent(btnSaveProf, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnlProfDataLayout.createSequentialGroup()
                         .addComponent(chkProfNoPreference)
@@ -1795,12 +1844,6 @@ public class GUIForm extends javax.swing.JFrame {
         });
         spTimeslotList.setViewportView(listTimeslots);
 
-        lblGeneratedTSID.setLabelFor(txtTSGeneratedID);
-        lblGeneratedTSID.setText("Generated ID");
-
-        txtTSGeneratedID.setEditable(false);
-        txtTSGeneratedID.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
-
         lblTimeSlotCreditValue.setLabelFor(txtTimeSlotCreditValue);
         lblTimeSlotCreditValue.setText("Credit Value");
 
@@ -1814,6 +1857,18 @@ public class GUIForm extends javax.swing.JFrame {
         lblMondayEnd.setLabelFor(txtMondayEnd);
         lblMondayEnd.setText("End Time");
 
+        tsMondayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+
+        tsMondayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+
+        tsMondayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+
+        tsMondayEndtHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+
+        tsMondayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+
+        tsMondayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+
         javax.swing.GroupLayout pnlMondayLayout = new javax.swing.GroupLayout(pnlMonday);
         pnlMonday.setLayout(pnlMondayLayout);
         pnlMondayLayout.setHorizontalGroup(
@@ -1822,12 +1877,24 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblMondayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(lblMondayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtMondayEnd, javax.swing.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(txtMondayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tsMondayEndtHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnlMondayLayout.setVerticalGroup(
             pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1835,7 +1902,14 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(lblMondayStart)
                 .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(lblMondayEnd)
-                .addComponent(txtMondayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(txtMondayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsMondayEndtHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         pnlTuesday.setBorder(javax.swing.BorderFactory.createTitledBorder("Tuesday"));
@@ -1854,11 +1928,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblTuesdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtTuesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtTuesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblTuesdayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtTuesdayEnd)
+                .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlTuesdayLayout.setVerticalGroup(
@@ -1886,11 +1960,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblWednesdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtWednesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtWednesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblWednesdayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtWednesdayEnd)
+                .addComponent(txtWednesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlWednesdayLayout.setVerticalGroup(
@@ -1918,11 +1992,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lbThursdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtThursdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtThursdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblThursdayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtThursdayEnd)
+                .addComponent(txtThursdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlThursdayLayout.setVerticalGroup(
@@ -1950,11 +2024,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lbFridayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtFridayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtFridayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblFridayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtFridayEnd)
+                .addComponent(txtFridayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlFridayLayout.setVerticalGroup(
@@ -1982,11 +2056,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lbSaturdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtSaturdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(txtSaturdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lblSaturdayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtSaturdayEnd)
+                .addComponent(txtSaturdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlSaturdayLayout.setVerticalGroup(
@@ -2030,12 +2104,13 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        btnSaveTimeSlot.setText("Save Timeslot");
-        btnSaveTimeSlot.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveTimeSlotActionPerformed(evt);
-            }
-        });
+        txtTimeSlotCreditValue.setHorizontalAlignment(javax.swing.JTextField.LEFT);
+
+        txtTSGeneratedID.setEditable(false);
+        txtTSGeneratedID.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
+
+        lblGeneratedTSID.setLabelFor(txtTSGeneratedID);
+        lblGeneratedTSID.setText("Generated ID");
 
         btnDeleteTimeSlot.setText("Delete Timeslot");
         btnDeleteTimeSlot.addActionListener(new java.awt.event.ActionListener() {
@@ -2043,6 +2118,53 @@ public class GUIForm extends javax.swing.JFrame {
                 btnDeleteTimeSlotActionPerformed(evt);
             }
         });
+
+        btnSaveTimeSlot.setText("Save Timeslot");
+        btnSaveTimeSlot.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnSaveTimeSlotActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(btnSaveTimeSlot, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnDeleteTimeSlot, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(pnlScheduleDays, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(lblTimeSlotCreditValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblGeneratedTSID, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtTSGeneratedID)
+                            .addComponent(txtTimeSlotCreditValue))))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtTSGeneratedID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblGeneratedTSID))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtTimeSlotCreditValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblTimeSlotCreditValue))
+                .addGap(18, 18, 18)
+                .addComponent(pnlScheduleDays, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(26, 26, 26)
+                .addComponent(btnSaveTimeSlot, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(btnDeleteTimeSlot, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
         javax.swing.GroupLayout pnlTimeSlotsLayout = new javax.swing.GroupLayout(pnlTimeSlots);
         pnlTimeSlots.setLayout(pnlTimeSlotsLayout);
@@ -2053,46 +2175,20 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(spTimeslotList, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
                     .addComponent(btnNewTimeslot, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(btnSaveTimeSlot, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnDeleteTimeSlot, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(pnlScheduleDays, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(pnlTimeSlotsLayout.createSequentialGroup()
-                        .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(lblTimeSlotCreditValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblGeneratedTSID, javax.swing.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtTSGeneratedID)
-                            .addComponent(txtTimeSlotCreditValue))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         pnlTimeSlotsLayout.setVerticalGroup(
             pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTimeSlotsLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnlTimeSlotsLayout.createSequentialGroup()
-                        .addContainerGap()
                         .addComponent(btnNewTimeslot)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(spTimeslotList))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlTimeSlotsLayout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtTSGeneratedID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblGeneratedTSID))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtTimeSlotCreditValue, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblTimeSlotCreditValue))
-                        .addGap(18, 18, 18)
-                        .addComponent(pnlScheduleDays, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(26, 26, 26)
-                        .addComponent(btnSaveTimeSlot, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(btnDeleteTimeSlot, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(104, 104, 104)))
+                        .addComponent(spTimeslotList, javax.swing.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -3035,7 +3131,7 @@ public class GUIForm extends javax.swing.JFrame {
             n.printStackTrace();
         }
     }//GEN-LAST:event_btnSaveSetupActionPerformed
-    
+
     private HashMap<Double, ArrayList<Integer>> GenerateCreditTimeslotMap() {
         HashMap<Double, ArrayList<Integer>> rtnVal = new HashMap<>();
         for (TimeSlot t : timeslotList.values()) {
@@ -3047,7 +3143,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         return rtnVal;
     }
-    
+
     private void btnGenerateInputFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerateInputFileActionPerformed
         while (txtGeneratedFileName.getText().isEmpty()) {
             btnBrowseGeneratedFileNameActionPerformed(null);
@@ -3086,7 +3182,7 @@ public class GUIForm extends javax.swing.JFrame {
             for (String c : courseList.keySet()) {
                 courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
             }
-            if(sectionLookup.isEmpty()){
+            if (sectionLookup.isEmpty()) {
                 for (String s : courses) {
                     String[] parts = s.split(",");
                     for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
@@ -3158,10 +3254,18 @@ public class GUIForm extends javax.swing.JFrame {
                 writer.write(i + ",");
                 String course = sectionLookup.get(i);
                 course = course.substring(0, course.indexOf("("));
-                double credit = courseList.get(course).getCreditValue();
-                writer.write(String.valueOf(creditTimeslotMap.get(credit).size()));
-                for (Integer time : creditTimeslotMap.get(credit)) {
-                    writer.write("," + time);
+                if (courseList.get(course).getTimeslotConstraints().isEmpty()) {
+                    double credit = courseList.get(course).getCreditValue();
+                    writer.write(String.valueOf(creditTimeslotMap.get(credit).size()));
+                    for (Integer time : creditTimeslotMap.get(credit)) {
+                        writer.write("," + time);
+                    }
+                } else {
+                    Vector<String> times = courseList.get(course).getTimeslotConstraints();
+                    writer.write(String.valueOf(times.size()));
+                    for(String t : times){
+                        writer.write("," + String.valueOf(timeslotList.get(t).getID()));
+                    }                    
                 }
                 writer.write("\n");
             }
@@ -3291,8 +3395,8 @@ public class GUIForm extends javax.swing.JFrame {
                 writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
             }
 
-            if(profLookup.isEmpty()){
-                for(String prof : profList.keySet()){
+            if (profLookup.isEmpty()) {
+                for (String prof : profList.keySet()) {
                     profLookup.put(profList.get(prof).getProfID(), prof);
                 }
             }
@@ -3300,11 +3404,11 @@ public class GUIForm extends javax.swing.JFrame {
                 writer.write("p" + p + "%" + profLookup.get(p) + "\n");
             }
 
-            if(timeslotLookup.isEmpty()){
-                for(String ti : timeslotList.keySet()){
+            if (timeslotLookup.isEmpty()) {
+                for (String ti : timeslotList.keySet()) {
                     timeslotLookup.put(timeslotList.get(ti).getID(), ti);
-                }                
-            }            
+                }
+            }
             for (int t : timeslotLookup.keySet()) {
                 writer.write("t" + t + "%" + timeslotLookup.get(t) + "\n");
             }
@@ -4001,6 +4105,7 @@ public class GUIForm extends javax.swing.JFrame {
         txtCourseTitle.setText("");
         spinnerSections.setValue(0);
         dropIncompCourses.setEnabled(false);
+        dropTimeslotConstraint.setEnabled(false);
         btnModifyIncomp.setEnabled(false);
         chkCourseNoPreference.setSelected(false);
         cbCourseHighestMorning.setSelected(false);
@@ -4016,11 +4121,17 @@ public class GUIForm extends javax.swing.JFrame {
         cbCourseNA_Afternoon.setSelected(false);
         cbCourseNA_Evening.setSelected(false);
         dropIncompCourses.removeAllItems();
+        dropTimeslotConstraint.removeAllItems();
         Iterator it = courseList.keySet().iterator();
         while (it.hasNext()) {
             dropIncompCourses.addItem(it.next().toString());
         }
+        it = timeslotList.keySet().iterator();
+        while (it.hasNext()) {
+            dropTimeslotConstraint.addItem((it.next().toString()));
+        }
         listIncompCourses.setListData(new Vector<>());
+        listTimeslotConstraints.setListData(new Vector<>());
     }//GEN-LAST:event_btnNewCourseActionPerformed
 
     private void listCoursesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_listCoursesValueChanged
@@ -4096,16 +4207,29 @@ public class GUIForm extends javax.swing.JFrame {
                     break;
             }
 
-            Vector<String> temp = currentCourse.getIncompCourses();
-            Collections.sort(temp);
-            listIncompCourses.setListData(temp);
+            Vector<String> incCourses = currentCourse.getIncompCourses();
+            Collections.sort(incCourses);
+            listIncompCourses.setListData(incCourses);
+
+            Vector<String> timeslotConstraints = currentCourse.getTimeslotConstraints();
+            Collections.sort(timeslotConstraints);
+            listTimeslotConstraints.setListData(timeslotConstraints);
+
             dropIncompCourses.setEnabled(true);
+            dropTimeslotConstraint.setEnabled(true);
             btnModifyIncomp.setEnabled(true);
+            btnModifyTimeslotConstraint.setEnabled(true);
             btnModifyIncomp.setText("Add");
+            btnModifyTimeslotConstraint.setText("Add");
             dropIncompCourses.removeAllItems();
+            dropTimeslotConstraint.removeAllItems();
             courseListData.stream().filter((s) -> (!s.equals(currentCourse.getID()))).forEach((s) -> {
                 dropIncompCourses.addItem(s);
             });
+            for (String s : timeslotListData) {
+                dropTimeslotConstraint.addItem(s);
+            }
+
             updateCourseTimePreferenceBoxes();
         }
     }//GEN-LAST:event_listCoursesValueChanged
@@ -4279,15 +4403,22 @@ public class GUIForm extends javax.swing.JFrame {
         }
         //btnNewCourseActionPerformed(null);
         dropIncompCourses.setEnabled(true);
+        dropTimeslotConstraint.setEnabled(true);
         btnModifyIncomp.setEnabled(true);
         btnModifyIncomp.setText("Add");
         dropIncompCourses.removeAllItems();
+        dropTimeslotConstraint.removeAllItems();
         Iterator it = courseList.keySet().iterator();
         while (it.hasNext()) {
             String inc = it.next().toString();
             if (!inc.equals(currentCourse.getID())) {
                 dropIncompCourses.addItem(inc);
             }
+        }
+
+        it = timeslotList.keySet().iterator();
+        while (it.hasNext()) {
+            dropTimeslotConstraint.addItem(it.next().toString());
         }
 
         if (oldSectionCount > sections) {
@@ -4300,7 +4431,6 @@ public class GUIForm extends javax.swing.JFrame {
                 if (row != -1) {
                     dtm.removeRow(row);
                 }
-
             }
         }
         if ((newCourse && sections > 0) || (oldSectionCount < sections)) {
@@ -4705,6 +4835,34 @@ public class GUIForm extends javax.swing.JFrame {
     private void miSaveConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miSaveConfigActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_miSaveConfigActionPerformed
+
+    private void btnModifyTimeslotConstraintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModifyTimeslotConstraintActionPerformed
+        String timeslot = dropTimeslotConstraint.getSelectedItem().toString();
+        if (btnModifyTimeslotConstraint.getText().equals("Add")) {
+            currentCourse.addTimeslotConstraint(timeslot);
+            btnModifyTimeslotConstraint.setText("Remove");
+        } else {
+            currentCourse.removeTimeslotConstraint(timeslot);
+        }
+        Vector<String> temp = currentCourse.getTimeslotConstraints();
+        Collections.sort(temp);
+        listTimeslotConstraints.setListData(temp);
+        spTimeslotContraintList.revalidate();
+        spTimeslotContraintList.repaint();
+    }//GEN-LAST:event_btnModifyTimeslotConstraintActionPerformed
+
+    private void dropTimeslotConstraintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dropTimeslotConstraintActionPerformed
+        if (dropTimeslotConstraint != null && dropTimeslotConstraint.getSelectedIndex() >= 0) {
+            String selectedConstraint = dropTimeslotConstraint.getSelectedItem().toString();
+            if (currentCourse != null) {
+                if (currentCourse.hasTimeslot(selectedConstraint)) {
+                    btnModifyTimeslotConstraint.setText("Remove");
+                } else {
+                    btnModifyTimeslotConstraint.setText("Add");
+                }
+            }
+        }
+    }//GEN-LAST:event_dropTimeslotConstraintActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
@@ -5115,6 +5273,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JButton btnGenerateInputFile;
     private javax.swing.JButton btnGenerateResult;
     private javax.swing.JButton btnModifyIncomp;
+    private javax.swing.JButton btnModifyTimeslotConstraint;
     private javax.swing.JButton btnNewCourse;
     private javax.swing.JButton btnNewProf;
     private javax.swing.JButton btnNewTimeslot;
@@ -5162,6 +5321,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkProfNoPreference;
     private javax.swing.JPanel courseData;
     private javax.swing.JComboBox<String> dropIncompCourses;
+    private javax.swing.JComboBox dropTimeslotConstraint;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lbFridayStart;
     private javax.swing.JLabel lbSaturdayStart;
@@ -5226,6 +5386,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JList<String> listCourses;
     private javax.swing.JList<String> listIncompCourses;
     private javax.swing.JList<String> listProfs;
+    private javax.swing.JList listTimeslotConstraints;
     private javax.swing.JList<String> listTimeslots;
     private javax.swing.JList<String> listUnscheduledCourses;
     private javax.swing.JList<String> listViewBySelection;
@@ -5269,6 +5430,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JPanel pnlThursdayColumn;
     private javax.swing.JPanel pnlTimeColumn;
     private javax.swing.JPanel pnlTimeSlots;
+    private javax.swing.JPanel pnlTimeslotConstraint;
     private javax.swing.JPanel pnlTuesday;
     private javax.swing.JPanel pnlTuesdayColumn;
     private javax.swing.JPanel pnlViewByControls;
@@ -5282,6 +5444,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JScrollPane spCourseTaughtList;
     private javax.swing.JScrollPane spProfList;
     private javax.swing.JScrollPane spTableSchedule;
+    private javax.swing.JScrollPane spTimeslotContraintList;
     private javax.swing.JScrollPane spTimeslotList;
     private javax.swing.JScrollPane spUnscheduledCourses;
     private javax.swing.JScrollPane spViewBySelection;
@@ -5293,6 +5456,12 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JSpinner spinnerSections;
     private javax.swing.JTabbedPane tabbedPanels;
     private javax.swing.JTable tableSchedule;
+    private javax.swing.JSpinner tsMondayEndAMPM;
+    private javax.swing.JSpinner tsMondayEndMM;
+    private javax.swing.JSpinner tsMondayEndtHH;
+    private javax.swing.JSpinner tsMondayStartAMPM;
+    private javax.swing.JSpinner tsMondayStartHH;
+    private javax.swing.JSpinner tsMondayStartMM;
     private javax.swing.JTextField txtCourseCreditValue;
     private javax.swing.JTextField txtCourseGeneratedID;
     private javax.swing.JTextField txtCourseID;
