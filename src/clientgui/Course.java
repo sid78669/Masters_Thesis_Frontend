@@ -17,12 +17,13 @@ public class Course implements Serializable {
 
     static final long serialVersionUID = -7810198861837087621L;
     private final HashSet<String> incompCourses;
+    private HashSet<String> timeslotConstraints;
     private String courseID;
     private String courseTitle;
     private int courseIDGenerated;
     private double creditValue;
     private int sectionCount;
-    private int[] preferences;
+    private final int[] preferences;
 
     public Course(String courseID, String courseTitle, int courseIDGenerated, double creditValue, int sectionCount) {
         this.courseID = courseID.toLowerCase();
@@ -32,6 +33,7 @@ public class Course implements Serializable {
         this.sectionCount = sectionCount;
         this.incompCourses = new HashSet<>();
         this.preferences = new int[3];
+        this.timeslotConstraints = new HashSet<>();
     }
 
     @Override
@@ -53,15 +55,34 @@ public class Course implements Serializable {
             incompCourses.add(incomp);
         }
     }
+    
+    public void addTimeslotConstraint(String timeslot){
+        if(!timeslot.isEmpty() && !timeslotConstraints.contains(timeslot)){
+            timeslotConstraints.add(timeslot);
+        }
+    }
+    
 
     @SuppressWarnings("unchecked")
     public Vector<String> getIncompCourses() {
         Vector<String> v = new Vector(incompCourses);
         return v;
     }
+    
+    public Vector<String> getTimeslotConstraints(){
+        if(timeslotConstraints == null) {
+            timeslotConstraints = new HashSet<>();
+        }
+        return new Vector<String>(timeslotConstraints);
+        
+    }
 
     public boolean hasIncomp(String incomp) {
         return incompCourses.contains(incomp);
+    }
+    
+    public boolean hasTimeslot(String timeslot){
+        return timeslotConstraints.contains(timeslot);
     }
 
     public boolean removeIncompatibleCourse(String incomp) {
@@ -69,6 +90,14 @@ public class Course implements Serializable {
             return false;
         } else {
             return incompCourses.remove(incomp);
+        }
+    }
+    
+    public boolean removeTimeslotConstraint(String timeslot){
+        if(timeslot.isEmpty()){
+            return false;
+        } else {
+            return timeslotConstraints.remove(timeslot);
         }
     }
 
