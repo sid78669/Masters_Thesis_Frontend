@@ -13,6 +13,9 @@
           <SubComponents>
             <MenuItem class="javax.swing.JMenuItem" name="miOpenConfig">
               <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/Icons/image-folder-icon.png"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Open Config"/>
               </Properties>
               <Events>
@@ -21,6 +24,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="miSaveConfig">
               <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/Icons/image-save-icon.png"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Save Config"/>
               </Properties>
               <Events>

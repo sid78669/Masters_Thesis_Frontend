@@ -9,7 +9,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -102,6 +101,7 @@ public class GUIForm extends javax.swing.JFrame {
     private JPanel[][] timeblocks;
     private String resultKey;
     private boolean resultCourse;
+    private boolean saveAbort;
     private ArrayList<ArrayList<Integer>> incompatibleSectionList;
 
     /**
@@ -132,7 +132,7 @@ public class GUIForm extends javax.swing.JFrame {
                     }
                 }
         );
-
+        saveAbort = false;
         undoList = new LinkedList<>();
         courseIDs = new HashSet<>();
         profIDs = new HashSet<>();
@@ -256,110 +256,7 @@ public class GUIForm extends javax.swing.JFrame {
         String[] options = {"Yes", "No"};
         int choice = JOptionPane.showOptionDialog(null, "Would you like to load data from a file?", "Load Setup From File", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "Yes");
         if (choice == 0) {
-            JFileChooser fc = new JFileChooser();
-            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            fc.setFileFilter(new FileNameExtensionFilter("Configuration File", new String[]{"conf"}));
-
-            int returnVal = fc.showOpenDialog(pnlContainer);
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                try (
-                        InputStream inFile = new FileInputStream(fc.getSelectedFile());
-                        InputStream buffer = new BufferedInputStream(inFile);
-                        ObjectInput input = new ObjectInputStream(buffer);) {
-                    try {
-                        outputFileName = fc.getSelectedFile().getAbsolutePath();
-                        txtSetupFileName.setText(outputFileName);
-                        courseList = (HashMap<String, Course>) input.readObject();
-                        if (courseList != null && courseList.size() > 0) {
-                            for (String key : courseList.keySet()) {
-                                if (courseList.get(key).getSectionCount() > 0) {
-                                    for (int i = 1; i <= courseList.get(key).getSectionCount(); i++) {
-                                        courseSectionListData.addElement(key + "(" + String.valueOf(i) + ")");
-                                    }
-                                }
-                            }
-                            Collections.sort(courseSectionListData);
-                            unscheduledCourses = new Vector(courseSectionListData);
-                            Collections.sort(unscheduledCourses);
-                        }
-
-                        try {
-                            profList = (HashMap<String, Professor>) input.readObject();
-                        } catch (IncompatibleClassChangeError c) {
-                            System.err.println(c.getMessage());
-                        }
-                        timeslotList = (HashMap<String, TimeSlot>) input.readObject();
-                        scheduledCoursesList = (HashMap<String, Schedule>) input.readObject();
-                        if (scheduledCoursesList == null) {
-                            scheduledCoursesList = new HashMap<>();
-                        } else {
-                            for (String s : scheduledCoursesList.keySet()) {
-                                unscheduledCourses.removeElement(s);
-                                Schedule t = scheduledCoursesList.get(s);
-                                dtm.addRow(new String[]{t.course, t.prof, t.time});
-                            }
-                        }
-                        generations = (int) input.readObject();
-                        spinnerGenerations.setValue(generations);
-
-                        populationSize = (int) input.readObject();
-                        spinnerPopulationSize.setValue(populationSize);
-
-                        replacementWait = (int) input.readObject();
-                        spinnerReplacementWait.setValue(replacementWait);
-
-                        mutationProbability = (int) input.readObject();
-                        spinnerMutationProbabilty.setValue(mutationProbability);
-
-                        courseListData = (Vector) input.readObject();
-
-                        if (courseListData == null) {
-                            courseListData = new Vector();
-                        } else if (courseList.size() != courseListData.size()) {
-                            courseListData.clear();
-                            for (String s : courseList.keySet()) {
-                                courseListData.addElement(s);
-                            }
-                            Collections.sort(courseListData);
-                        }
-                        profListData = (Vector) input.readObject();
-                        if (profListData == null) {
-                            profListData = new Vector();
-                        } else if (profListData.size() != profList.size()) {
-                            profListData.clear();
-                            for (String s : profList.keySet()) {
-                                profListData.addElement(s);
-                            }
-                            Collections.sort(profListData);
-                        }
-                        timeslotListData = (Vector) input.readObject();
-                        if (timeslotListData == null) {
-                            timeslotListData = new Vector();
-                        } else if (timeslotList.size() != timeslotListData.size()) {
-                            timeslotListData.clear();
-                            for (String key : timeslotList.keySet()) {
-                                timeslotListData.addElement(timeslotList.get(key).toString());
-                            }
-                            Collections.sort(timeslotListData);
-                        }
-
-                        courseIDs = (HashSet<Integer>) input.readObject();
-                        profIDs = (HashSet<Integer>) input.readObject();
-                        String generatedFile = (String) input.readObject();
-                        if (!generatedFile.isEmpty()) {
-                            txtGeneratedFileName.setText(generatedFile);
-                        }
-                    } catch (ClassNotFoundException ex) {
-                        System.err.println(ex.getMessage());
-                    }
-
-                } catch (IOException e) {
-                    System.err.println(e.getMessage());
-                    e.printStackTrace();
-                }
-                tabbedPanels.setEnabledAt(5, true);
-                setTitle("CS:POp - " + fc.getSelectedFile().getName());
-            }
+            OpenSetupFile();
         } else {
             setTitle("CS:POp");
             generations = 5000;
@@ -769,6 +666,113 @@ public class GUIForm extends javax.swing.JFrame {
                 sectionLookup.remove(s);
                 return;
             }
+        }
+    }
+
+    private void OpenSetupFile() {
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Configuration File", new String[]{"conf"}));
+
+        int returnVal = fc.showOpenDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            try (
+                    InputStream inFile = new FileInputStream(fc.getSelectedFile());
+                    InputStream buffer = new BufferedInputStream(inFile);
+                    ObjectInput input = new ObjectInputStream(buffer);) {
+                try {
+                    outputFileName = fc.getSelectedFile().getAbsolutePath();
+                    txtSetupFileName.setText(outputFileName);
+                    courseList = (HashMap<String, Course>) input.readObject();
+                    if (courseList != null && courseList.size() > 0) {
+                        for (String key : courseList.keySet()) {
+                            if (courseList.get(key).getSectionCount() > 0) {
+                                for (int i = 1; i <= courseList.get(key).getSectionCount(); i++) {
+                                    courseSectionListData.addElement(key + "(" + String.valueOf(i) + ")");
+                                }
+                            }
+                        }
+                        Collections.sort(courseSectionListData);
+                        unscheduledCourses = new Vector(courseSectionListData);
+                        Collections.sort(unscheduledCourses);
+                    }
+
+                    try {
+                        profList = (HashMap<String, Professor>) input.readObject();
+                    } catch (IncompatibleClassChangeError c) {
+                        System.err.println(c.getMessage());
+                    }
+                    timeslotList = (HashMap<String, TimeSlot>) input.readObject();
+                    scheduledCoursesList = (HashMap<String, Schedule>) input.readObject();
+                    if (scheduledCoursesList == null) {
+                        scheduledCoursesList = new HashMap<>();
+                    } else {
+                        for (String s : scheduledCoursesList.keySet()) {
+                            unscheduledCourses.removeElement(s);
+                            Schedule t = scheduledCoursesList.get(s);
+                            dtm.addRow(new String[]{t.course, t.prof, t.time});
+                        }
+                    }
+                    generations = (int) input.readObject();
+                    spinnerGenerations.setValue(generations);
+
+                    populationSize = (int) input.readObject();
+                    spinnerPopulationSize.setValue(populationSize);
+
+                    replacementWait = (int) input.readObject();
+                    spinnerReplacementWait.setValue(replacementWait);
+
+                    mutationProbability = (int) input.readObject();
+                    spinnerMutationProbabilty.setValue(mutationProbability);
+
+                    courseListData = (Vector) input.readObject();
+
+                    if (courseListData == null) {
+                        courseListData = new Vector();
+                    } else if (courseList.size() != courseListData.size()) {
+                        courseListData.clear();
+                        for (String s : courseList.keySet()) {
+                            courseListData.addElement(s);
+                        }
+                        Collections.sort(courseListData);
+                    }
+                    profListData = (Vector) input.readObject();
+                    if (profListData == null) {
+                        profListData = new Vector();
+                    } else if (profListData.size() != profList.size()) {
+                        profListData.clear();
+                        for (String s : profList.keySet()) {
+                            profListData.addElement(s);
+                        }
+                        Collections.sort(profListData);
+                    }
+                    timeslotListData = (Vector) input.readObject();
+                    if (timeslotListData == null) {
+                        timeslotListData = new Vector();
+                    } else if (timeslotList.size() != timeslotListData.size()) {
+                        timeslotListData.clear();
+                        for (String key : timeslotList.keySet()) {
+                            timeslotListData.addElement(timeslotList.get(key).toString());
+                        }
+                        Collections.sort(timeslotListData);
+                    }
+
+                    courseIDs = (HashSet<Integer>) input.readObject();
+                    profIDs = (HashSet<Integer>) input.readObject();
+                    String generatedFile = (String) input.readObject();
+                    if (!generatedFile.isEmpty()) {
+                        txtGeneratedFileName.setText(generatedFile);
+                    }
+                } catch (ClassNotFoundException ex) {
+                    System.err.println(ex.getMessage());
+                }
+
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+            }
+            tabbedPanels.setEnabledAt(5, true);
+            setTitle("CS:POp - " + fc.getSelectedFile().getName());
         }
     }
 
@@ -3000,6 +3004,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuFile.setText("File");
 
+        miOpenConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-folder-icon.png"))); // NOI18N
         miOpenConfig.setText("Open Config");
         miOpenConfig.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -3008,6 +3013,7 @@ public class GUIForm extends javax.swing.JFrame {
         });
         menuFile.add(miOpenConfig);
 
+        miSaveConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-save-icon.png"))); // NOI18N
         miSaveConfig.setText("Save Config");
         miSaveConfig.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -3098,7 +3104,16 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void btnSaveSetupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveSetupActionPerformed
         while (txtSetupFileName.getText().isEmpty()) {
+            saveAbort = false;
             btnBrowseSetupFileNameActionPerformed(evt);
+            if (saveAbort) {
+                String[] options = {"Yes", "No"};
+                String message = "Are you sure you do not wish to save the setup file?";
+                int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Setup not saved.", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, options, "No");
+                if (choice == 0) {
+                    return;
+                }
+            }
         }
         try (
                 OutputStream oFile = new FileOutputStream(txtSetupFileName.getText());
@@ -3263,9 +3278,9 @@ public class GUIForm extends javax.swing.JFrame {
                 } else {
                     Vector<String> times = courseList.get(course).getTimeslotConstraints();
                     writer.write(String.valueOf(times.size()));
-                    for(String t : times){
+                    for (String t : times) {
                         writer.write("," + String.valueOf(timeslotList.get(t).getID()));
-                    }                    
+                    }
                 }
                 writer.write("\n");
             }
@@ -3444,6 +3459,9 @@ public class GUIForm extends javax.swing.JFrame {
                 fileName += ".conf";
             }
             txtSetupFileName.setText(fileName);
+        } else if (returnVal == JFileChooser.CANCEL_OPTION) {
+            saveAbort = true;
+            return;
         }
     }//GEN-LAST:event_btnBrowseSetupFileNameActionPerformed
 
@@ -4829,11 +4847,11 @@ public class GUIForm extends javax.swing.JFrame {
     }//GEN-LAST:event_cbProfNA_EveningActionPerformed
 
     private void miOpenConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miOpenConfigActionPerformed
-        // TODO add your handling code here:
+        OpenSetupFile();
     }//GEN-LAST:event_miOpenConfigActionPerformed
 
     private void miSaveConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miSaveConfigActionPerformed
-        // TODO add your handling code here:
+        btnSaveSetupActionPerformed(evt);
     }//GEN-LAST:event_miSaveConfigActionPerformed
 
     private void btnModifyTimeslotConstraintActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModifyTimeslotConstraintActionPerformed
