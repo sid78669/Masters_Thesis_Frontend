@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -871,6 +872,7 @@ public class GUIForm extends javax.swing.JFrame {
         cbCourseNA_Afternoon = new javax.swing.JCheckBox();
         cbCourseNA_Evening = new javax.swing.JCheckBox();
         chkCourseNoPreference = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
         spCourseList = new javax.swing.JScrollPane();
         listCourses = new JList(courseListData);
         btnNewCourse = new javax.swing.JButton();
@@ -1036,6 +1038,11 @@ public class GUIForm extends javax.swing.JFrame {
         pnlResultScheduleLabel_Monday = new javax.swing.JPanel();
         lblMondayColumn = new javax.swing.JLabel();
         txtResultStatus = new javax.swing.JTextField();
+        menuBar = new javax.swing.JMenuBar();
+        menuFile = new javax.swing.JMenu();
+        miOpenConfig = new javax.swing.JMenuItem();
+        miSaveConfig = new javax.swing.JMenuItem();
+        menuAbout = new javax.swing.JMenu();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(800, 800));
@@ -1111,11 +1118,11 @@ public class GUIForm extends javax.swing.JFrame {
             .addGroup(pnlIncompatibleCoursesLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(pnlIncompatibleCoursesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 748, Short.MAX_VALUE)
+                    .addComponent(spCourseIncomp)
                     .addGroup(pnlIncompatibleCoursesLayout.createSequentialGroup()
-                        .addComponent(dropIncompCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 481, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(dropIncompCourses, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(btnModifyIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(btnModifyIncomp, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         pnlIncompatibleCoursesLayout.setVerticalGroup(
@@ -1126,7 +1133,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(dropIncompCourses, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnModifyIncomp))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 213, Short.MAX_VALUE)
+                .addComponent(spCourseIncomp, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1269,7 +1276,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(cbCourseNA_Morning)
                     .addComponent(cbCourseNA_Afternoon)
                     .addComponent(cbCourseNA_Evening))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(386, Short.MAX_VALUE))
         );
         pnlCourseTimePreferenceLayout.setVerticalGroup(
             pnlCourseTimePreferenceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1309,6 +1316,17 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
 
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+
         javax.swing.GroupLayout courseDataLayout = new javax.swing.GroupLayout(courseData);
         courseData.setLayout(courseDataLayout);
         courseDataLayout.setHorizontalGroup(
@@ -1316,7 +1334,6 @@ public class GUIForm extends javax.swing.JFrame {
             .addGroup(courseDataLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(courseDataLayout.createSequentialGroup()
                         .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblCourseCreditValue)
@@ -1340,7 +1357,12 @@ public class GUIForm extends javax.swing.JFrame {
                     .addGroup(courseDataLayout.createSequentialGroup()
                         .addComponent(chkCourseNoPreference)
                         .addGap(18, 18, 18)
-                        .addComponent(pnlCourseTimePreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(pnlCourseTimePreference, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(courseDataLayout.createSequentialGroup()
+                        .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(289, 289, 289)))
                 .addContainerGap())
         );
         courseDataLayout.setVerticalGroup(
@@ -1371,7 +1393,11 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(chkCourseNoPreference)
                     .addComponent(pnlCourseTimePreference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(courseDataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pnlIncompatibleCourses, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(courseDataLayout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnSaveCourse, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1485,7 +1511,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(btnAddCourseTaught)
                     .addComponent(cbProfCourseTaught, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE)
+                .addComponent(spCourseTaughtList, javax.swing.GroupLayout.DEFAULT_SIZE, 191, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2050,7 +2076,7 @@ public class GUIForm extends javax.swing.JFrame {
                         .addContainerGap()
                         .addComponent(btnNewTimeslot)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(spTimeslotList, javax.swing.GroupLayout.DEFAULT_SIZE, 708, Short.MAX_VALUE))
+                        .addComponent(spTimeslotList))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlTimeSlotsLayout.createSequentialGroup()
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(pnlTimeSlotsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -2183,7 +2209,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlInitScheduleLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(spUnscheduledCourses)
-                    .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 572, Short.MAX_VALUE))
+                    .addComponent(spTableSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 553, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -2328,7 +2354,7 @@ public class GUIForm extends javax.swing.JFrame {
                     .addComponent(txtSetupFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnSaveSetup, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(354, Short.MAX_VALUE))
+                .addContainerGap(335, Short.MAX_VALUE))
         );
 
         tabbedPanels.addTab("Generate Input", pnlConfiguration);
@@ -2843,7 +2869,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlResultScheduleLabels, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollSchedule)
+                .addComponent(scrollSchedule, javax.swing.GroupLayout.DEFAULT_SIZE, 519, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(pnlResultContainerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnStatistics)
@@ -2876,6 +2902,31 @@ public class GUIForm extends javax.swing.JFrame {
             .addComponent(tabbedPanels)
         );
 
+        menuFile.setText("File");
+
+        miOpenConfig.setText("Open Config");
+        miOpenConfig.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miOpenConfigActionPerformed(evt);
+            }
+        });
+        menuFile.add(miOpenConfig);
+
+        miSaveConfig.setText("Save Config");
+        miSaveConfig.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miSaveConfigActionPerformed(evt);
+            }
+        });
+        menuFile.add(miSaveConfig);
+
+        menuBar.add(menuFile);
+
+        menuAbout.setText("Edit");
+        menuBar.add(menuAbout);
+
+        setJMenuBar(menuBar);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -2905,6 +2956,7 @@ public class GUIForm extends javax.swing.JFrame {
             listUnscheduledCourses.setListData(unscheduledCourses);
             spUnscheduledCourses.revalidate();
             spUnscheduledCourses.repaint();
+            incompatibleSectionList.clear();
             incompatibleSectionList = GenerateIncompatibleSectionArray();
         } else if (tabbedPanels.getSelectedIndex() == 5) {
             listViewBySelection.setListData(courseListData);
@@ -3034,13 +3086,16 @@ public class GUIForm extends javax.swing.JFrame {
             for (String c : courseList.keySet()) {
                 courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
             }
-            for (String s : courses) {
-                String[] parts = s.split(",");
-                for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
-                    sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
+            if(sectionLookup.isEmpty()){
+                for (String s : courses) {
+                    String[] parts = s.split(",");
+                    for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
+                        sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
+                    }
                 }
             }
             btnGenerateInputFile.setEnabled(false);
+            incompatibleSectionList.clear();
             incompatibleSectionList = GenerateIncompatibleSectionArray();
             ArrayList<String> incompatibleBitString = GenerateIncompatibleSectionBitString();
             ArrayList<Double> sectionCredit = GenerateSectionCreditArray();
@@ -3070,7 +3125,7 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("//*START*SECTION*\n");
             writer.write("//sectionID, incompSize[, incompSections]\n");
             for (int i = 0; i < incompatibleSectionList.size(); i++) {
-                writer.write(i + "," + incompatibleBitString.get(i));
+                writer.write(i + "," + incompatibleBitString.get(i) + " ");
                 writer.write(("\n"));
             }
             writer.write("*END*SECTION*\n");
@@ -3231,15 +3286,25 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write("*END*INITIAL*\n");
             //OUTPUT KEY
             writer.write("*START*KEY*\n");
-            //OUtput section: sxx%SectionID
+            //Output section: sxx%SectionID
             for (int s : sectionLookup.keySet()) {
                 writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
             }
 
+            if(profLookup.isEmpty()){
+                for(String prof : profList.keySet()){
+                    profLookup.put(profList.get(prof).getProfID(), prof);
+                }
+            }
             for (int p : profLookup.keySet()) {
                 writer.write("p" + p + "%" + profLookup.get(p) + "\n");
             }
 
+            if(timeslotLookup.isEmpty()){
+                for(String ti : timeslotList.keySet()){
+                    timeslotLookup.put(timeslotList.get(ti).getID(), ti);
+                }                
+            }            
             for (int t : timeslotLookup.keySet()) {
                 writer.write("t" + t + "%" + timeslotLookup.get(t) + "\n");
             }
@@ -4633,6 +4698,14 @@ public class GUIForm extends javax.swing.JFrame {
         updateProfTimePreferenceBoxes();
     }//GEN-LAST:event_cbProfNA_EveningActionPerformed
 
+    private void miOpenConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miOpenConfigActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_miOpenConfigActionPerformed
+
+    private void miSaveConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miSaveConfigActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_miSaveConfigActionPerformed
+
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
             cbCourseHighestMorning.setEnabled(false);
@@ -5089,6 +5162,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkProfNoPreference;
     private javax.swing.JPanel courseData;
     private javax.swing.JComboBox<String> dropIncompCourses;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel lbFridayStart;
     private javax.swing.JLabel lbSaturdayStart;
     private javax.swing.JLabel lbSetupFileName;
@@ -5155,6 +5229,11 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JList<String> listTimeslots;
     private javax.swing.JList<String> listUnscheduledCourses;
     private javax.swing.JList<String> listViewBySelection;
+    private javax.swing.JMenu menuAbout;
+    private javax.swing.JMenuBar menuBar;
+    private javax.swing.JMenu menuFile;
+    private javax.swing.JMenuItem miOpenConfig;
+    private javax.swing.JMenuItem miSaveConfig;
     private javax.swing.JPanel pnlAdvancedConfig;
     private javax.swing.JPanel pnlConfiguration;
     private javax.swing.JPanel pnlContainer;
