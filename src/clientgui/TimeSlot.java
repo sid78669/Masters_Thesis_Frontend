@@ -6,7 +6,9 @@
 package clientgui;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -29,14 +31,57 @@ public class TimeSlot implements Serializable {
         }
     }
 
+    public class TimeOfDay implements Serializable {
+
+        public Calendar start = null;
+        public Calendar end = null;
+
+        public TimeOfDay() {
+        }
+
+        ;
+
+        @Override
+        public String toString() {
+            StringBuilder rtnVal = new StringBuilder("(");
+            rtnVal.append(start.get(Calendar.HOUR));
+            rtnVal.append(":");
+            if (start.get(Calendar.MINUTE) < 10) {
+                rtnVal.append("0");
+            }
+            rtnVal.append(start.get(Calendar.MINUTE));
+            if (start.get(Calendar.AM) == 1) {
+                rtnVal.append(" AM - ");
+            } else {
+                rtnVal.append(" PM - ");
+            }
+            rtnVal.append(end.get(Calendar.HOUR));
+            rtnVal.append(":");
+            if (end.get(Calendar.MINUTE) < 10) {
+                rtnVal.append("0");
+            }
+            rtnVal.append(end.get(Calendar.MINUTE));
+            if (end.get(Calendar.AM) == 1) {
+                rtnVal.append(" AM");
+            } else {
+                rtnVal.append(" PM");
+            }
+
+            return rtnVal.toString();
+        }
+    }
+
     private final DayTime[] week;
+    private final TimeOfDay[] times;
     private int id;
     private double credits;
 
     public TimeSlot(int TimeSlotID, double credits) {
         this.week = new DayTime[6];
+        this.times = new TimeOfDay[6];
         for (int i = 0; i < 6; i++) {
             week[i] = new DayTime();
+            times[i] = new TimeOfDay();
         }
         this.id = TimeSlotID;
         this.credits = credits;
@@ -100,7 +145,7 @@ public class TimeSlot implements Serializable {
     public boolean isSpreadOut(TimeSlot other) {
         for (int i = 0; i < 6; i++) {
             if (week[i].start != -1 && other.week[i].start != -1) {
-                if((isMorning() && other.isEvening()) || (isEvening() && other.isMorning())){
+                if ((isMorning() && other.isEvening()) || (isEvening() && other.isMorning())) {
                     return true;
                 }
             }
@@ -118,13 +163,23 @@ public class TimeSlot implements Serializable {
         }
     }
 
+    public boolean SetTime(int day, int hourStart, int minuteStart, int hourEnd, int minuteEnd) {
+        if (day >= 0 && day <= 5) {
+            times[day].start = new GregorianCalendar(0, 0, 0, hourStart, minuteStart);
+            times[day].end = new GregorianCalendar(0, 0, 0, hourStart, minuteEnd);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public boolean isMorning() {
         return week[0].end < 1200 && week[1].end < 1200 && week[2].end < 1200 && week[3].end < 1200 && week[4].end < 1200;
     }
 
     public boolean isAfternoon() {
-        return ((week[0].start != -1 && week[0].start >= 1200 && week[0].end < 1800) || week[0].start == -1) && ((week[1].start != -1 && week[1].start >= 1200 && week[1].end < 1800) || week[1].start == -1) && ((week[2].start != -1 && week[2].start >= 1200 && week[2].end < 1800) || week[2].start == -1) &&
-                ((week[3].start != -1 && week[3].start >= 1200 && week[3].end < 1800) || week[3].start == -1) && ((week[4].start != -1 && week[4].start >= 1200 && week[4].end < 1800) || week[4].start == -1); 
+        return ((week[0].start != -1 && week[0].start >= 1200 && week[0].end < 1800) || week[0].start == -1) && ((week[1].start != -1 && week[1].start >= 1200 && week[1].end < 1800) || week[1].start == -1) && ((week[2].start != -1 && week[2].start >= 1200 && week[2].end < 1800) || week[2].start == -1)
+                && ((week[3].start != -1 && week[3].start >= 1200 && week[3].end < 1800) || week[3].start == -1) && ((week[4].start != -1 && week[4].start >= 1200 && week[4].end < 1800) || week[4].start == -1);
     }
 
     public boolean isEvening() {
@@ -229,5 +284,4 @@ public class TimeSlot implements Serializable {
             return String.valueOf(hour) + ":" + (minute < 10 ? "0" + String.valueOf(minute) : String.valueOf(minute)) + "PM";
         }
     }
-
 }

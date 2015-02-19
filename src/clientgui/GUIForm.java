@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
@@ -39,6 +40,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -66,7 +68,7 @@ import javax.swing.table.TableRowSorter;
  */
 public class GUIForm extends javax.swing.JFrame {
 
-    private int CurrentStep = 0;
+    //private int CurrentStep = 0;
     private HashMap<String, Course> courseList;
     private HashSet<Integer> courseIDs;
     private HashSet<Integer> profIDs;
@@ -74,6 +76,7 @@ public class GUIForm extends javax.swing.JFrame {
     private HashMap<String, Professor> profList;
     private HashMap<String, TimeSlot> timeslotList;
     private HashMap<String, Schedule> scheduledCoursesList;
+    private HashMap<String, Schedule> scheduledCoursesListBackup;
     private HashMap<String, Schedule> resultListBySections;
     private HashMap<String, ArrayList<Schedule>> resultListByProfessor;
     private HashMap<String, ArrayList<Schedule>> resultListByCourses;
@@ -141,6 +144,7 @@ public class GUIForm extends javax.swing.JFrame {
         profList = new HashMap<>();
         timeslotList = new HashMap<>();
         scheduledCoursesList = new HashMap<>();
+        scheduledCoursesListBackup = new HashMap<>();
         resultListBySections = new HashMap<>();
         resultListByProfessor = new HashMap<>();
         resultListByCourses = new HashMap<>();
@@ -252,6 +256,7 @@ public class GUIForm extends javax.swing.JFrame {
         tableSchedule.setModel(dtm);
         if (scheduledCoursesList == null) {
             scheduledCoursesList = new HashMap<>();
+            scheduledCoursesListBackup = new HashMap<>();
         }
         String[] options = {"Yes", "No"};
         int choice = JOptionPane.showOptionDialog(null, "Would you like to load data from a file?", "Load Setup From File", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "Yes");
@@ -676,6 +681,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         int returnVal = fc.showOpenDialog(pnlContainer);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            ResetAllData();
             try (
                     InputStream inFile = new FileInputStream(fc.getSelectedFile());
                     InputStream buffer = new BufferedInputStream(inFile);
@@ -706,7 +712,9 @@ public class GUIForm extends javax.swing.JFrame {
                     scheduledCoursesList = (HashMap<String, Schedule>) input.readObject();
                     if (scheduledCoursesList == null) {
                         scheduledCoursesList = new HashMap<>();
+                        scheduledCoursesListBackup = new HashMap<>();
                     } else {
+                        scheduledCoursesListBackup = new HashMap<>(scheduledCoursesList);
                         for (String s : scheduledCoursesList.keySet()) {
                             unscheduledCourses.removeElement(s);
                             Schedule t = scheduledCoursesList.get(s);
@@ -773,7 +781,64 @@ public class GUIForm extends javax.swing.JFrame {
             }
             tabbedPanels.setEnabledAt(5, true);
             setTitle("CS:POp - " + fc.getSelectedFile().getName());
+            listCourses.setListData(courseListData);
+            spCourseList.revalidate();
+            spCourseList.repaint();
+
+            listProfs.setListData(profListData);
+            spProfList.revalidate();
+            spProfList.repaint();
+
+            listTimeslots.setListData(timeslotListData);
+            spTimeslotList.revalidate();
+            spTimeslotList.repaint();
+
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
         }
+    }
+
+    private void ResetAllData() {
+        courseList.clear();
+        courseIDs.clear();
+        profIDs.clear();
+        timeslotIDs.clear();
+        profList.clear();
+        timeslotList.clear();
+        scheduledCoursesList.clear();
+        scheduledCoursesListBackup.clear();
+        resultListBySections.clear();
+        resultListByProfessor.clear();
+        resultListByCourses.clear();
+        timeslotLookup.clear();
+        profLookup.clear();
+        sectionLookup.clear();
+        undoList.clear();
+        courseListData.clear();
+        courseSectionListData.clear();
+        unscheduledCourses.clear();
+        profListData.clear();
+        timeslotListData.clear();
+        listCourses.setListData(new Vector<>());
+        spCourseList.revalidate();
+        spCourseList.repaint();
+        listProfs.setListData(new Vector<>());
+        spProfList.revalidate();
+        spProfList.repaint();
+        for (int i = dtm.getRowCount(); --i >= 0;) {
+            dtm.removeRow(i);
+        }
+        cbScheduleCourse.removeAllItems();
+        cbScheduleProfessor.removeAllItems();
+        cbScheduleTimeslot.removeAllItems();
+        currentCourse = null;
+        currentProfessor = null;
+        currentTimeslot = null;
+        currentSchedule = null;
+        txtCourseGeneratedID.setText("");
+        txtProfGeneratedID.setText("");
+        txtTSGeneratedID.setText("");
     }
 
     private static class ScheduleReplace {
@@ -946,6 +1011,12 @@ public class GUIForm extends javax.swing.JFrame {
         txtTuesdayStart = new javax.swing.JTextField();
         lblTuesdayEnd = new javax.swing.JLabel();
         txtTuesdayEnd = new javax.swing.JTextField();
+        jSpinner1 = new javax.swing.JSpinner();
+        jSpinner2 = new javax.swing.JSpinner();
+        jSpinner3 = new javax.swing.JSpinner();
+        jSpinner4 = new javax.swing.JSpinner();
+        jSpinner5 = new javax.swing.JSpinner();
+        jSpinner6 = new javax.swing.JSpinner();
         pnlWednesday = new javax.swing.JPanel();
         lblWednesdayStart = new javax.swing.JLabel();
         txtWednesdayStart = new javax.swing.JTextField();
@@ -1055,6 +1126,7 @@ public class GUIForm extends javax.swing.JFrame {
         txtResultStatus = new javax.swing.JTextField();
         menuBar = new javax.swing.JMenuBar();
         menuFile = new javax.swing.JMenu();
+        miNewConfig = new javax.swing.JMenuItem();
         miOpenConfig = new javax.swing.JMenuItem();
         miSaveConfig = new javax.swing.JMenuItem();
         menuAbout = new javax.swing.JMenu();
@@ -1112,6 +1184,7 @@ public class GUIForm extends javax.swing.JFrame {
         btnSaveCourse.setBackground(new java.awt.Color(204, 204, 255));
         btnSaveCourse.setText("Save Course");
         btnSaveCourse.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnSaveCourse.setEnabled(false);
         btnSaveCourse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnSaveCourseActionPerformed(evt);
@@ -1172,6 +1245,7 @@ public class GUIForm extends javax.swing.JFrame {
         btnDeleteCourse.setBackground(new java.awt.Color(204, 204, 255));
         btnDeleteCourse.setText("Delete Course");
         btnDeleteCourse.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+        btnDeleteCourse.setEnabled(false);
         btnDeleteCourse.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnDeleteCourseActionPerformed(evt);
@@ -1875,16 +1949,28 @@ public class GUIForm extends javax.swing.JFrame {
         lblMondayEnd.setText("End Time");
 
         tsMondayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsMondayStartHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayStartHH.setPreferredSize(new java.awt.Dimension(40, 20));
 
         tsMondayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsMondayStartMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayStartMM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         tsMondayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsMondayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         tsMondayEndtHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsMondayEndtHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayEndtHH.setPreferredSize(new java.awt.Dimension(40, 20));
 
         tsMondayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsMondayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayEndMM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         tsMondayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsMondayEndAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayEndAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout pnlMondayLayout = new javax.swing.GroupLayout(pnlMonday);
         pnlMonday.setLayout(pnlMondayLayout);
@@ -1897,10 +1983,10 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(5, 5, 5)
                 .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(lblMondayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1910,8 +1996,8 @@ public class GUIForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(99, Short.MAX_VALUE))
         );
         pnlMondayLayout.setVerticalGroup(
             pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1937,6 +2023,30 @@ public class GUIForm extends javax.swing.JFrame {
         lblTuesdayEnd.setLabelFor(txtTuesdayEnd);
         lblTuesdayEnd.setText("End Time");
 
+        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        jSpinner1.setMinimumSize(new java.awt.Dimension(40, 20));
+        jSpinner1.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        jSpinner2.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        jSpinner2.setMinimumSize(new java.awt.Dimension(40, 20));
+        jSpinner2.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        jSpinner3.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        jSpinner3.setMinimumSize(new java.awt.Dimension(40, 20));
+        jSpinner3.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        jSpinner4.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        jSpinner4.setMinimumSize(new java.awt.Dimension(40, 20));
+        jSpinner4.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        jSpinner5.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        jSpinner5.setMinimumSize(new java.awt.Dimension(40, 20));
+        jSpinner5.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        jSpinner6.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        jSpinner6.setMinimumSize(new java.awt.Dimension(40, 20));
+        jSpinner6.setPreferredSize(new java.awt.Dimension(40, 20));
+
         javax.swing.GroupLayout pnlTuesdayLayout = new javax.swing.GroupLayout(pnlTuesday);
         pnlTuesday.setLayout(pnlTuesdayLayout);
         pnlTuesdayLayout.setHorizontalGroup(
@@ -1946,10 +2056,22 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(lblTuesdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtTuesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(3, 3, 3)
+                .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30)
                 .addComponent(lblTuesdayEnd)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jSpinner6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlTuesdayLayout.setVerticalGroup(
@@ -1958,7 +2080,13 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(lblTuesdayStart)
                 .addComponent(txtTuesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(lblTuesdayEnd)
-                .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jSpinner6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pnlWednesday.setBorder(javax.swing.BorderFactory.createTitledBorder("Wednesday"));
@@ -2212,6 +2340,11 @@ public class GUIForm extends javax.swing.JFrame {
         tabbedPanels.addTab("Time Slots", pnlTimeSlots);
 
         tableSchedule.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tableSchedule.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                tableScheduleKeyPressed(evt);
+            }
+        });
         spTableSchedule.setViewportView(tableSchedule);
 
         lblScheduleCourse.setText("Course");
@@ -3017,8 +3150,17 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuFile.setText("File");
 
+        miNewConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-new-icon.png"))); // NOI18N
+        miNewConfig.setText("New Configuration");
+        miNewConfig.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miNewConfigActionPerformed(evt);
+            }
+        });
+        menuFile.add(miNewConfig);
+
         miOpenConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-folder-icon.png"))); // NOI18N
-        miOpenConfig.setText("Open Config");
+        miOpenConfig.setText("Open Configuration");
         miOpenConfig.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 miOpenConfigActionPerformed(evt);
@@ -3027,7 +3169,7 @@ public class GUIForm extends javax.swing.JFrame {
         menuFile.add(miOpenConfig);
 
         miSaveConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-save-icon.png"))); // NOI18N
-        miSaveConfig.setText("Save Config");
+        miSaveConfig.setText("Save Configuration");
         miSaveConfig.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 miSaveConfigActionPerformed(evt);
@@ -3065,6 +3207,11 @@ public class GUIForm extends javax.swing.JFrame {
         menuExport.add(miExport_Timeslot);
 
         miExport_InitialSchedule.setText("Initial Schedule");
+        miExport_InitialSchedule.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_InitialScheduleActionPerformed(evt);
+            }
+        });
         menuExport.add(miExport_InitialSchedule);
 
         menuBar.add(menuExport);
@@ -3072,6 +3219,11 @@ public class GUIForm extends javax.swing.JFrame {
         menuAnalysis.setText("Analysis");
 
         miAnalysis_RestrictInitial.setText("Restrict Initial Schedule");
+        miAnalysis_RestrictInitial.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_RestrictInitialActionPerformed(evt);
+            }
+        });
         menuAnalysis.add(miAnalysis_RestrictInitial);
 
         miAnalysis_RandomCourses.setText("Generate Random Courses");
@@ -3530,6 +3682,7 @@ public class GUIForm extends javax.swing.JFrame {
         if (currentSchedule != null) {
             unscheduledCourses.add(currentSchedule.course);
             dtm.removeRow(dtmSelectedRow);
+            scheduledCoursesList.remove(currentSchedule.course);
             listUnscheduledCourses.setListData(unscheduledCourses);
             spUnscheduledCourses.revalidate();
             spUnscheduledCourses.repaint();
@@ -3584,6 +3737,7 @@ public class GUIForm extends javax.swing.JFrame {
         sorter.sort();
 
         scheduledCoursesList.put(currentSchedule.course, currentSchedule);
+        scheduledCoursesListBackup.put(currentSchedule.course, currentSchedule);
         unscheduledCourses.removeElement(currentSchedule.course);
         listUnscheduledCourses.setListData(unscheduledCourses);
         spUnscheduledCourses.revalidate();
@@ -3867,12 +4021,15 @@ public class GUIForm extends javax.swing.JFrame {
                     }
                 }
             }
+            btnSaveTimeSlot.setEnabled(true);
+            btnDeleteTimeSlot.setEnabled(true);
         }
     }//GEN-LAST:event_listTimeslotsValueChanged
 
     private void btnNewTimeslotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewTimeslotActionPerformed
         int newID = timeslotList.size();
-
+        btnSaveTimeSlot.setEnabled(true);
+        btnDeleteTimeSlot.setEnabled(false);
         txtTSGeneratedID.setText(String.valueOf(newID));
         String empty = "";
         txtTimeSlotCreditValue.setText(empty);
@@ -3895,6 +4052,8 @@ public class GUIForm extends javax.swing.JFrame {
     private void btnNewProfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewProfActionPerformed
         int newID = profList.size();
         boolean switchSides = false;
+        btnSaveProf.setEnabled(true);
+        btnDeleteProf.setEnabled(false);
         while (profIDs.contains(newID)) {
             if (!switchSides) {
                 newID--;
@@ -3914,18 +4073,18 @@ public class GUIForm extends javax.swing.JFrame {
             cbProfCourseTaught.addItem(it.next().toString());
         }
         listCourseTaught.setListData(new Vector<>());
-        cbProfHighestMorning.setEnabled(false);
-        cbProfHighestAfternoon.setEnabled(false);
-        cbProfHighestEvening.setEnabled(false);
-        cbProfNormalMorning.setEnabled(false);
-        cbProfNormalAfternoon.setEnabled(false);
-        cbProfNormalEvening.setEnabled(false);
-        cbProfLeastMorning.setEnabled(false);
-        cbProfLeastAfternoon.setEnabled(false);
-        cbProfLeastEvening.setEnabled(false);
-        cbProfNA_Morning.setEnabled(false);
-        cbProfNA_Afternoon.setEnabled(false);
-        cbProfNA_Evening.setEnabled(false);
+//        cbProfHighestMorning.setEnabled(false);
+//        cbProfHighestAfternoon.setEnabled(false);
+//        cbProfHighestEvening.setEnabled(false);
+//        cbProfNormalMorning.setEnabled(false);
+//        cbProfNormalAfternoon.setEnabled(false);
+//        cbProfNormalEvening.setEnabled(false);
+//        cbProfLeastMorning.setEnabled(false);
+//        cbProfLeastAfternoon.setEnabled(false);
+//        cbProfLeastEvening.setEnabled(false);
+//        cbProfNA_Morning.setEnabled(false);
+//        cbProfNA_Afternoon.setEnabled(false);
+//        cbProfNA_Evening.setEnabled(false);
     }//GEN-LAST:event_btnNewProfActionPerformed
 
     private void btnSaveProfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveProfActionPerformed
@@ -4002,13 +4161,13 @@ public class GUIForm extends javax.swing.JFrame {
             }
 
             if (cbProfHighestEvening.isSelected()) {
-                prefsSelected[0] = 0;
+                prefsSelected[2] = 0;
             } else if (cbProfNormalEvening.isSelected()) {
-                prefsSelected[0] = 1;
+                prefsSelected[2] = 1;
             } else if (cbProfLeastEvening.isSelected()) {
-                prefsSelected[0] = 2;
+                prefsSelected[2] = 2;
             } else if (cbProfNA_Evening.isSelected()) {
-                prefsSelected[0] = Integer.MAX_VALUE;
+                prefsSelected[2] = Integer.MAX_VALUE;
             }
         }
         currentProfessor.setPreference(prefsSelected);
@@ -4154,12 +4313,16 @@ public class GUIForm extends javax.swing.JFrame {
             }
 
             updateProfTimePreferenceBoxes();
+            btnSaveProf.setEnabled(true);
+            btnDeleteProf.setEnabled(true);
         }
     }//GEN-LAST:event_listProfsValueChanged
 
     private void btnNewCourseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNewCourseActionPerformed
         currentCourse = null;
         txtCourseCreditValue.setText("");
+        btnSaveCourse.setEnabled(true);
+        btnDeleteCourse.setEnabled(false);
         int newID = courseList.size();
         boolean switchSides = false;
         while (courseIDs.contains(newID)) {
@@ -4304,6 +4467,8 @@ public class GUIForm extends javax.swing.JFrame {
             }
 
             updateCourseTimePreferenceBoxes();
+            btnSaveCourse.setEnabled(true);
+            btnDeleteCourse.setEnabled(true);
         }
     }//GEN-LAST:event_listCoursesValueChanged
 
@@ -4323,6 +4488,7 @@ public class GUIForm extends javax.swing.JFrame {
                 courseSectionListData.removeElement(currentCourse.getID() + "(" + String.valueOf(i) + ")");
                 unscheduledCourses.removeElement(currentCourse.getID() + "(" + String.valueOf(i) + ")");
                 scheduledCoursesList.remove(currentCourse.getID() + "(" + String.valueOf(i) + ")");
+                scheduledCoursesListBackup.remove(currentCourse.getID() + "(" + String.valueOf(i) + ")");
             }
 
             currentCourse = null;
@@ -4937,6 +5103,112 @@ public class GUIForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_dropTimeslotConstraintActionPerformed
 
+    private void tableScheduleKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tableScheduleKeyPressed
+        if (currentSchedule != null && evt.getKeyCode() == KeyEvent.VK_DELETE) {
+            unscheduledCourses.add(currentSchedule.course);
+            dtm.removeRow(dtmSelectedRow);
+            scheduledCoursesList.remove(currentSchedule.course);
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
+        }
+    }//GEN-LAST:event_tableScheduleKeyPressed
+
+    private void miNewConfigActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miNewConfigActionPerformed
+        ResetAllData();
+    }//GEN-LAST:event_miNewConfigActionPerformed
+
+    private void miAnalysis_RestrictInitialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RestrictInitialActionPerformed
+        /*
+         Idea: When pressed, open a dialog box asking for either percentage or number of schedules to keep.
+         Then, if percentage, round to the nearest integer and see if that number is greater or smaller than 
+         the number of courses scheduled. If the number is greater, then copy over that percentage of schedules
+         from the backup at random. If the number is lower, just see how many schedules need to be removed and
+         remove those schedules.
+         */
+        RestrictInitialDialog rid = new RestrictInitialDialog(this);
+        rid.setVisible(true);
+        int percentage = rid.getPercentage();
+        int schedulesToShow = (int) Math.rint((percentage * scheduledCoursesListBackup.size()) / 100.0);
+        Random r = new Random();
+        if (schedulesToShow > scheduledCoursesList.size()) {
+            while (schedulesToShow > dtm.getRowCount()) {
+                //Retrieve schedule
+                int randomUnscheduledIndex = r.nextInt(unscheduledCourses.size());
+                currentSchedule = scheduledCoursesListBackup.get(unscheduledCourses.get(randomUnscheduledIndex));
+
+                dtm.addRow(new String[]{currentSchedule.course, currentSchedule.prof, currentSchedule.time});
+                scheduledCoursesList.put(currentSchedule.course, currentSchedule);
+                unscheduledCourses.removeElement(currentSchedule.course);
+            }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+            sorter.setSortsOnUpdates(true);
+            tableSchedule.setRowSorter(sorter);
+
+            List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+            int columnIndexToSort = 0;
+            sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+            sorter.setSortKeys(sortKeys);
+            sorter.sort();
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
+        } else if (schedulesToShow < scheduledCoursesList.size()) {
+            //Remove some schedules
+            while (dtm.getRowCount() > schedulesToShow) {
+                int rawIndex = r.nextInt(dtm.getRowCount());
+                int rowToRemove = tableSchedule.convertRowIndexToModel(rawIndex);
+                String courseTitle = dtm.getValueAt(rowToRemove, 0).toString();
+                unscheduledCourses.add(courseTitle);
+                dtm.removeRow(rowToRemove);
+                scheduledCoursesList.remove(courseTitle);
+            }
+            Collections.sort(unscheduledCourses);
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
+        } else {
+            String message = "<html>You have chosen to keep " + percentage + "% of the schedule.<br />This will keep "
+                    + schedulesToShow + " of the " + scheduledCoursesList.size() + " schedules.<br />Hence, no changes have been made.";
+            JOptionPane.showMessageDialog(this, message, "No Changes Made", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_miAnalysis_RestrictInitialActionPerformed
+
+    private void miExport_InitialScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_InitialScheduleActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                for(String sc : scheduledCoursesList.keySet()){
+                    writer.write(scheduledCoursesList.get(sc).toString() + "\n");
+                }
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else if (returnVal == JFileChooser.CANCEL_OPTION) {
+            saveAbort = true;
+            return;
+        }
+    }//GEN-LAST:event_miExport_InitialScheduleActionPerformed
+
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
             cbCourseHighestMorning.setEnabled(false);
@@ -5040,101 +5312,101 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void updateProfTimePreferenceBoxes() {
         if (chkProfNoPreference.isSelected()) {
-            cbProfHighestMorning.setEnabled(false);
-            cbProfHighestAfternoon.setEnabled(false);
-            cbProfHighestEvening.setEnabled(false);
-            cbProfNormalMorning.setEnabled(false);
-            cbProfNormalAfternoon.setEnabled(false);
-            cbProfNormalEvening.setEnabled(false);
-            cbProfLeastMorning.setEnabled(false);
-            cbProfLeastAfternoon.setEnabled(false);
-            cbProfLeastEvening.setEnabled(false);
-            cbProfNA_Morning.setEnabled(false);
-            cbProfNA_Afternoon.setEnabled(false);
-            cbProfNA_Evening.setEnabled(false);
+//            cbProfHighestMorning.setEnabled(false);
+//            cbProfHighestAfternoon.setEnabled(false);
+//            cbProfHighestEvening.setEnabled(false);
+//            cbProfNormalMorning.setEnabled(false);
+//            cbProfNormalAfternoon.setEnabled(false);
+//            cbProfNormalEvening.setEnabled(false);
+//            cbProfLeastMorning.setEnabled(false);
+//            cbProfLeastAfternoon.setEnabled(false);
+//            cbProfLeastEvening.setEnabled(false);
+//            cbProfNA_Morning.setEnabled(false);
+//            cbProfNA_Afternoon.setEnabled(false);
+//            cbProfNA_Evening.setEnabled(false);
         } else {
             if (!cbProfHighestAfternoon.isSelected() && !cbProfHighestEvening.isSelected() && !cbProfNormalMorning.isSelected()
                     && !cbProfLeastMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
                 cbProfHighestMorning.setEnabled(true);
             } else {
-                cbProfHighestMorning.setEnabled(false);
+//                cbProfHighestMorning.setEnabled(false);
             }
 
             if (!cbProfHighestMorning.isSelected() && !cbProfHighestEvening.isSelected() && !cbProfNormalAfternoon.isSelected()
                     && !cbProfLeastAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
                 cbProfHighestAfternoon.setEnabled(true);
             } else {
-                cbProfHighestAfternoon.setEnabled(false);
+//                cbProfHighestAfternoon.setEnabled(false);
             }
 
             if (!cbProfHighestAfternoon.isSelected() && !cbProfHighestMorning.isSelected() && !cbProfNormalEvening.isSelected()
                     && !cbProfLeastEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
                 cbProfHighestEvening.setEnabled(true);
             } else {
-                cbProfHighestEvening.setEnabled(false);
+//                cbProfHighestEvening.setEnabled(false);
             }
 
             if (!cbProfNormalAfternoon.isSelected() && !cbProfNormalEvening.isSelected() && !cbProfHighestMorning.isSelected()
                     && !cbProfLeastMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
                 cbProfNormalMorning.setEnabled(true);
             } else {
-                cbProfNormalMorning.setEnabled(false);
+//                cbProfNormalMorning.setEnabled(false);
             }
 
             if (!cbProfNormalMorning.isSelected() && !cbProfNormalEvening.isSelected() && !cbProfHighestAfternoon.isSelected()
                     && !cbProfLeastAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
                 cbProfNormalAfternoon.setEnabled(true);
             } else {
-                cbProfNormalAfternoon.setEnabled(false);
+//                cbProfNormalAfternoon.setEnabled(false);
             }
 
             if (!cbProfNormalAfternoon.isSelected() && !cbProfNormalMorning.isSelected() && !cbProfHighestEvening.isSelected()
                     && !cbProfLeastEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
                 cbProfNormalEvening.setEnabled(true);
             } else {
-                cbProfNormalEvening.setEnabled(false);
+//                cbProfNormalEvening.setEnabled(false);
             }
 
             if (!cbProfLeastAfternoon.isSelected() && !cbProfLeastEvening.isSelected() && !cbProfNormalMorning.isSelected()
                     && !cbProfHighestMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
                 cbProfLeastMorning.setEnabled(true);
             } else {
-                cbProfLeastMorning.setEnabled(false);
+//                cbProfLeastMorning.setEnabled(false);
             }
 
             if (!cbProfLeastMorning.isSelected() && !cbProfLeastEvening.isSelected() && !cbProfNormalAfternoon.isSelected()
                     && !cbProfHighestAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
                 cbProfLeastAfternoon.setEnabled(true);
             } else {
-                cbProfLeastAfternoon.setEnabled(false);
+//                cbProfLeastAfternoon.setEnabled(false);
             }
 
             if (!cbProfLeastAfternoon.isSelected() && !cbProfLeastMorning.isSelected() && !cbProfNormalEvening.isSelected()
                     && !cbProfHighestEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
                 cbProfLeastEvening.setEnabled(true);
             } else {
-                cbProfLeastEvening.setEnabled(false);
+//                cbProfLeastEvening.setEnabled(false);
             }
 
             if (!cbProfNA_Afternoon.isSelected() && !cbProfNA_Evening.isSelected() && !cbProfNormalMorning.isSelected()
                     && !cbProfLeastMorning.isSelected() && !cbProfHighestMorning.isSelected()) {
                 cbProfNA_Morning.setEnabled(true);
             } else {
-                cbProfNA_Morning.setEnabled(false);
+//                cbProfNA_Morning.setEnabled(false);
             }
 
             if (!cbProfNA_Morning.isSelected() && !cbProfNA_Evening.isSelected() && !cbProfNormalAfternoon.isSelected()
                     && !cbProfLeastAfternoon.isSelected() && !cbProfHighestAfternoon.isSelected()) {
                 cbProfNA_Afternoon.setEnabled(true);
             } else {
-                cbProfNA_Afternoon.setEnabled(false);
+//                cbProfNA_Afternoon.setEnabled(false);
             }
 
             if (!cbProfNA_Afternoon.isSelected() && !cbProfNA_Morning.isSelected() && !cbProfNormalEvening.isSelected()
                     && !cbProfLeastEvening.isSelected() && !cbProfHighestEvening.isSelected()) {
                 cbProfNA_Evening.setEnabled(true);
             } else {
-                cbProfNA_Evening.setEnabled(false);
+//                cbProfNA_Evening.setEnabled(false);
             }
         }
     }
@@ -5396,6 +5668,12 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> dropIncompCourses;
     private javax.swing.JComboBox dropTimeslotConstraint;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JSpinner jSpinner1;
+    private javax.swing.JSpinner jSpinner2;
+    private javax.swing.JSpinner jSpinner3;
+    private javax.swing.JSpinner jSpinner4;
+    private javax.swing.JSpinner jSpinner5;
+    private javax.swing.JSpinner jSpinner6;
     private javax.swing.JLabel lbFridayStart;
     private javax.swing.JLabel lbSaturdayStart;
     private javax.swing.JLabel lbSetupFileName;
@@ -5479,6 +5757,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JMenuItem miImport_Course;
     private javax.swing.JMenuItem miImport_Professor;
     private javax.swing.JMenuItem miImport_Timeslot;
+    private javax.swing.JMenuItem miNewConfig;
     private javax.swing.JMenuItem miOpenConfig;
     private javax.swing.JMenuItem miSaveConfig;
     private javax.swing.JPanel pnlAdvancedConfig;
