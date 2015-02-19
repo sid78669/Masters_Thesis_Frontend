@@ -1058,6 +1058,19 @@ public class GUIForm extends javax.swing.JFrame {
         miOpenConfig = new javax.swing.JMenuItem();
         miSaveConfig = new javax.swing.JMenuItem();
         menuAbout = new javax.swing.JMenu();
+        menuImport = new javax.swing.JMenu();
+        miImport_Course = new javax.swing.JMenuItem();
+        miImport_Professor = new javax.swing.JMenuItem();
+        miImport_Timeslot = new javax.swing.JMenuItem();
+        menuExport = new javax.swing.JMenu();
+        miExport_Course = new javax.swing.JMenuItem();
+        miExport_Professor = new javax.swing.JMenuItem();
+        miExport_Timeslot = new javax.swing.JMenuItem();
+        miExport_InitialSchedule = new javax.swing.JMenuItem();
+        menuAnalysis = new javax.swing.JMenu();
+        miAnalysis_RestrictInitial = new javax.swing.JMenuItem();
+        miAnalysis_RandomCourses = new javax.swing.JMenuItem();
+        miAnalysis_RandomProfessors = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(800, 800));
@@ -1903,17 +1916,17 @@ public class GUIForm extends javax.swing.JFrame {
         pnlMondayLayout.setVerticalGroup(
             pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(tsMondayEndtHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lblMondayStart)
                 .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(lblMondayEnd)
                 .addComponent(txtMondayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsMondayEndtHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pnlTuesday.setBorder(javax.swing.BorderFactory.createTitledBorder("Tuesday"));
@@ -3026,6 +3039,48 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuAbout.setText("Edit");
         menuBar.add(menuAbout);
+
+        menuImport.setText("Import");
+
+        miImport_Course.setText("Course List");
+        menuImport.add(miImport_Course);
+
+        miImport_Professor.setText("Professor List");
+        menuImport.add(miImport_Professor);
+
+        miImport_Timeslot.setText("Timeslot List");
+        menuImport.add(miImport_Timeslot);
+
+        menuBar.add(menuImport);
+
+        menuExport.setText("Export");
+
+        miExport_Course.setText("Course List");
+        menuExport.add(miExport_Course);
+
+        miExport_Professor.setText("Professor List");
+        menuExport.add(miExport_Professor);
+
+        miExport_Timeslot.setText("Timeslot List");
+        menuExport.add(miExport_Timeslot);
+
+        miExport_InitialSchedule.setText("Initial Schedule");
+        menuExport.add(miExport_InitialSchedule);
+
+        menuBar.add(menuExport);
+
+        menuAnalysis.setText("Analysis");
+
+        miAnalysis_RestrictInitial.setText("Restrict Initial Schedule");
+        menuAnalysis.add(miAnalysis_RestrictInitial);
+
+        miAnalysis_RandomCourses.setText("Generate Random Courses");
+        menuAnalysis.add(miAnalysis_RandomCourses);
+
+        miAnalysis_RandomProfessors.setText("Generate Random Professors");
+        menuAnalysis.add(miAnalysis_RandomProfessors);
+
+        menuBar.add(menuAnalysis);
 
         setJMenuBar(menuBar);
 
@@ -5409,8 +5464,21 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JList<String> listUnscheduledCourses;
     private javax.swing.JList<String> listViewBySelection;
     private javax.swing.JMenu menuAbout;
+    private javax.swing.JMenu menuAnalysis;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JMenu menuExport;
     private javax.swing.JMenu menuFile;
+    private javax.swing.JMenu menuImport;
+    private javax.swing.JMenuItem miAnalysis_RandomCourses;
+    private javax.swing.JMenuItem miAnalysis_RandomProfessors;
+    private javax.swing.JMenuItem miAnalysis_RestrictInitial;
+    private javax.swing.JMenuItem miExport_Course;
+    private javax.swing.JMenuItem miExport_InitialSchedule;
+    private javax.swing.JMenuItem miExport_Professor;
+    private javax.swing.JMenuItem miExport_Timeslot;
+    private javax.swing.JMenuItem miImport_Course;
+    private javax.swing.JMenuItem miImport_Professor;
+    private javax.swing.JMenuItem miImport_Timeslot;
     private javax.swing.JMenuItem miOpenConfig;
     private javax.swing.JMenuItem miSaveConfig;
     private javax.swing.JPanel pnlAdvancedConfig;

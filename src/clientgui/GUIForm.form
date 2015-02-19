@@ -40,6 +40,77 @@
             <Property name="text" type="java.lang.String" value="Edit"/>
           </Properties>
         </Menu>
+        <Menu class="javax.swing.JMenu" name="menuImport">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Import"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="miImport_Course">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Course List"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miImport_Professor">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Professor List"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miImport_Timeslot">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Timeslot List"/>
+              </Properties>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="menuExport">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Export"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="miExport_Course">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Course List"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miExport_Professor">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Professor List"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miExport_Timeslot">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Timeslot List"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miExport_InitialSchedule">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Initial Schedule"/>
+              </Properties>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
+        <Menu class="javax.swing.JMenu" name="menuAnalysis">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Analysis"/>
+          </Properties>
+          <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RestrictInitial">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Restrict Initial Schedule"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomCourses">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Generate Random Courses"/>
+              </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomProfessors">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Generate Random Professors"/>
+              </Properties>
+            </MenuItem>
+          </SubComponents>
+        </Menu>
       </SubComponents>
     </Menu>
   </NonVisualComponents>
@@ -1465,6 +1536,11 @@
                             </DimensionLayout>
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                      <Component id="tsMondayEndtHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsMondayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsMondayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="lblMondayStart" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="txtMondayStart" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1473,11 +1549,6 @@
                                       <Component id="tsMondayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsMondayEndtHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsMondayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsMondayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
