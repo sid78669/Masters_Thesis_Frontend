@@ -174,20 +174,37 @@ public class TimeSlot implements Serializable {
     }
 
     public boolean isMorning() {
-        return week[0].end < 1200 && week[1].end < 1200 && week[2].end < 1200 && week[3].end < 1200 && week[4].end < 1200;
+        return week[0].start < 1200
+                && week[1].start < 1200
+                && week[2].start < 1200
+                && week[3].start < 1200
+                && week[4].start < 1200;
     }
 
     public boolean isAfternoon() {
-        return ((week[0].start != -1 && week[0].start >= 1200 && week[0].end < 1800) || week[0].start == -1) && ((week[1].start != -1 && week[1].start >= 1200 && week[1].end < 1800) || week[1].start == -1) && ((week[2].start != -1 && week[2].start >= 1200 && week[2].end < 1800) || week[2].start == -1)
-                && ((week[3].start != -1 && week[3].start >= 1200 && week[3].end < 1800) || week[3].start == -1) && ((week[4].start != -1 && week[4].start >= 1200 && week[4].end < 1800) || week[4].start == -1);
+        return ((week[0].start != -1 && week[0].start >= 1200 && week[0].end < 1800) || week[0].start == -1)
+                && ((week[1].start != -1 && week[1].start >= 1200 && week[1].end < 1800) || week[1].start == -1)
+                && ((week[2].start != -1 && week[2].start >= 1200 && week[2].end < 1800) || week[2].start == -1)
+                && ((week[3].start != -1 && week[3].start >= 1200 && week[3].end < 1800) || week[3].start == -1)
+                && ((week[4].start != -1 && week[4].start >= 1200 && week[4].end < 1800) || week[4].start == -1);
     }
 
     public boolean isEvening() {
-        return !(isMorning() || isAfternoon());
+        return (!isMorning() && !isAfternoon());
     }
 
     public String GetTimeOnDay(int day) {
         return week[day].toString();
+    }
+
+    public char TimeOfDay() {
+        if (isMorning()) {
+            return 'M';
+        } else if (isAfternoon()) {
+            return 'A';
+        } else {
+            return 'E';
+        }
     }
 
     public HashSet<String> GetUniqueTimes() {

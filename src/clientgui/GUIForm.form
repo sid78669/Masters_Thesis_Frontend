@@ -13,6 +13,9 @@
           <SubComponents>
             <MenuItem class="javax.swing.JMenuItem" name="miNewConfig">
               <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+N"/>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/Icons/image-new-icon.png"/>
                 </Property>
@@ -24,6 +27,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="miOpenConfig">
               <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+O"/>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/Icons/image-folder-icon.png"/>
                 </Property>
@@ -35,6 +41,9 @@
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="miSaveConfig">
               <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+S"/>
+                </Property>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/Icons/image-save-icon.png"/>
                 </Property>
@@ -78,21 +87,82 @@
             <Property name="text" type="java.lang.String" value="Export"/>
           </Properties>
           <SubComponents>
-            <MenuItem class="javax.swing.JMenuItem" name="miExport_Course">
+            <Menu class="javax.swing.JMenu" name="menuExportCourse">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Course List"/>
+                <Property name="text" type="java.lang.String" value="Course"/>
               </Properties>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="miExport_Professor">
+              <SubComponents>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Course">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Course Detailed List"/>
+                  </Properties>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Course_Preferences">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Preferences"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miExport_Course_PreferencesActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Course_Incompibility">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Incompatiblity List"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miExport_Course_IncompibilityActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
+            <Menu class="javax.swing.JMenu" name="menuExportProfessor">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Professor List"/>
+                <Property name="text" type="java.lang.String" value="Professor"/>
               </Properties>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="miExport_Timeslot">
+              <SubComponents>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Professor">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Professor Detailed List"/>
+                  </Properties>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Professor_Preferences">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Preferences"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miExport_Professor_PreferencesActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Professor_CoursesTaught">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Courses Taught"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miExport_Professor_CoursesTaughtActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
+            <Menu class="javax.swing.JMenu" name="menuExportTimeslot">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Timeslot List"/>
+                <Property name="text" type="java.lang.String" value="Timeslot"/>
               </Properties>
-            </MenuItem>
+              <SubComponents>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Timeslot">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Timeslot Detailed List"/>
+                  </Properties>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="miExport_Timeslot_Daytime">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Daytime List"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miExport_Timeslot_DaytimeActionPerformed"/>
+                  </Events>
+                </MenuItem>
+              </SubComponents>
+            </Menu>
             <MenuItem class="javax.swing.JMenuItem" name="miExport_InitialSchedule">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Initial Schedule"/>
@@ -110,6 +180,9 @@
           <SubComponents>
             <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RestrictInitial">
               <Properties>
+                <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
+                  <KeyStroke key="Ctrl+R"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Restrict Initial Schedule"/>
               </Properties>
               <Events>

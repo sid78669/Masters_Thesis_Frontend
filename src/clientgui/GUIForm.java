@@ -1135,9 +1135,17 @@ public class GUIForm extends javax.swing.JFrame {
         miImport_Professor = new javax.swing.JMenuItem();
         miImport_Timeslot = new javax.swing.JMenuItem();
         menuExport = new javax.swing.JMenu();
+        menuExportCourse = new javax.swing.JMenu();
         miExport_Course = new javax.swing.JMenuItem();
+        miExport_Course_Preferences = new javax.swing.JMenuItem();
+        miExport_Course_Incompibility = new javax.swing.JMenuItem();
+        menuExportProfessor = new javax.swing.JMenu();
         miExport_Professor = new javax.swing.JMenuItem();
+        miExport_Professor_Preferences = new javax.swing.JMenuItem();
+        miExport_Professor_CoursesTaught = new javax.swing.JMenuItem();
+        menuExportTimeslot = new javax.swing.JMenu();
         miExport_Timeslot = new javax.swing.JMenuItem();
+        miExport_Timeslot_Daytime = new javax.swing.JMenuItem();
         miExport_InitialSchedule = new javax.swing.JMenuItem();
         menuAnalysis = new javax.swing.JMenu();
         miAnalysis_RestrictInitial = new javax.swing.JMenuItem();
@@ -3150,6 +3158,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuFile.setText("File");
 
+        miNewConfig.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
         miNewConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-new-icon.png"))); // NOI18N
         miNewConfig.setText("New Configuration");
         miNewConfig.addActionListener(new java.awt.event.ActionListener() {
@@ -3159,6 +3168,7 @@ public class GUIForm extends javax.swing.JFrame {
         });
         menuFile.add(miNewConfig);
 
+        miOpenConfig.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.CTRL_MASK));
         miOpenConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-folder-icon.png"))); // NOI18N
         miOpenConfig.setText("Open Configuration");
         miOpenConfig.addActionListener(new java.awt.event.ActionListener() {
@@ -3168,6 +3178,7 @@ public class GUIForm extends javax.swing.JFrame {
         });
         menuFile.add(miOpenConfig);
 
+        miSaveConfig.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_S, java.awt.event.InputEvent.CTRL_MASK));
         miSaveConfig.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Icons/image-save-icon.png"))); // NOI18N
         miSaveConfig.setText("Save Configuration");
         miSaveConfig.addActionListener(new java.awt.event.ActionListener() {
@@ -3197,14 +3208,66 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuExport.setText("Export");
 
-        miExport_Course.setText("Course List");
-        menuExport.add(miExport_Course);
+        menuExportCourse.setText("Course");
 
-        miExport_Professor.setText("Professor List");
-        menuExport.add(miExport_Professor);
+        miExport_Course.setText("Course Detailed List");
+        menuExportCourse.add(miExport_Course);
 
-        miExport_Timeslot.setText("Timeslot List");
-        menuExport.add(miExport_Timeslot);
+        miExport_Course_Preferences.setText("Preferences");
+        miExport_Course_Preferences.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_Course_PreferencesActionPerformed(evt);
+            }
+        });
+        menuExportCourse.add(miExport_Course_Preferences);
+
+        miExport_Course_Incompibility.setText("Incompatiblity List");
+        miExport_Course_Incompibility.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_Course_IncompibilityActionPerformed(evt);
+            }
+        });
+        menuExportCourse.add(miExport_Course_Incompibility);
+
+        menuExport.add(menuExportCourse);
+
+        menuExportProfessor.setText("Professor");
+
+        miExport_Professor.setText("Professor Detailed List");
+        menuExportProfessor.add(miExport_Professor);
+
+        miExport_Professor_Preferences.setText("Preferences");
+        miExport_Professor_Preferences.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_Professor_PreferencesActionPerformed(evt);
+            }
+        });
+        menuExportProfessor.add(miExport_Professor_Preferences);
+
+        miExport_Professor_CoursesTaught.setText("Courses Taught");
+        miExport_Professor_CoursesTaught.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_Professor_CoursesTaughtActionPerformed(evt);
+            }
+        });
+        menuExportProfessor.add(miExport_Professor_CoursesTaught);
+
+        menuExport.add(menuExportProfessor);
+
+        menuExportTimeslot.setText("Timeslot");
+
+        miExport_Timeslot.setText("Timeslot Detailed List");
+        menuExportTimeslot.add(miExport_Timeslot);
+
+        miExport_Timeslot_Daytime.setText("Daytime List");
+        miExport_Timeslot_Daytime.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_Timeslot_DaytimeActionPerformed(evt);
+            }
+        });
+        menuExportTimeslot.add(miExport_Timeslot_Daytime);
+
+        menuExport.add(menuExportTimeslot);
 
         miExport_InitialSchedule.setText("Initial Schedule");
         miExport_InitialSchedule.addActionListener(new java.awt.event.ActionListener() {
@@ -3218,6 +3281,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuAnalysis.setText("Analysis");
 
+        miAnalysis_RestrictInitial.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
         miAnalysis_RestrictInitial.setText("Restrict Initial Schedule");
         miAnalysis_RestrictInitial.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -3632,7 +3696,7 @@ public class GUIForm extends javax.swing.JFrame {
                 }
             }
             for (int t : timeslotLookup.keySet()) {
-                writer.write("t" + t + "%" + timeslotLookup.get(t) + "\n");
+                writer.write("t" + t + "%" + timeslotLookup.get(t) + "," + timeslotList.get(timeslotLookup.get(t)).TimeOfDay() + "\n");
             }
 
             writer.write("*END*KEY*\n");
@@ -4665,6 +4729,7 @@ public class GUIForm extends javax.swing.JFrame {
                 String elementID = currentCourse.getID() + "(" + String.valueOf(i) + ")";
                 courseSectionListData.removeElement(elementID);
                 unscheduledCourses.removeElement(elementID);
+                scheduledCoursesList.remove(elementID);
                 RemoveSection(elementID);
                 int row = FindRowInSchedule(elementID);
                 if (row != -1) {
@@ -5188,7 +5253,7 @@ public class GUIForm extends javax.swing.JFrame {
             try {
                 File outFile = new File(fileName);
                 writer = new BufferedWriter(new FileWriter(outFile));
-                for(String sc : scheduledCoursesList.keySet()){
+                for (String sc : scheduledCoursesList.keySet()) {
                     writer.write(scheduledCoursesList.get(sc).toString() + "\n");
                 }
                 writer.close();
@@ -5205,9 +5270,238 @@ public class GUIForm extends javax.swing.JFrame {
             }
         } else if (returnVal == JFileChooser.CANCEL_OPTION) {
             saveAbort = true;
-            return;
         }
     }//GEN-LAST:event_miExport_InitialScheduleActionPerformed
+
+    private void miExport_Course_PreferencesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_Course_PreferencesActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                writer.write("Course, Morning, Afternoon, Evening\n");
+                for (String crs : courseList.keySet()) {
+                    writer.write(crs);
+                    for (int i = 0; i < 3; i++) {
+                        int time = courseList.get(crs).getPreferences()[i];
+                        switch (time) {
+                            case -1:
+                                writer.write(", NP");
+                                break;
+                            case 0:
+                                writer.write(", Highest");
+                                break;
+                            case 1:
+                                writer.write(", Normal");
+                                break;
+                            case 2:
+                                writer.write(", Least");
+                                break;
+                            case Integer.MAX_VALUE:
+                                writer.write(", NA");
+                                break;
+                        }
+                    }
+                    writer.write("\n");
+                }
+
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_miExport_Course_PreferencesActionPerformed
+
+    private void miExport_Professor_PreferencesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_Professor_PreferencesActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                writer.write("Professor, Morning, Afternoon, Evening\n");
+                for (String prof : profList.keySet()) {
+                    writer.write(prof);
+                    for (int i = 0; i < 3; i++) {
+                        int time = profList.get(prof).getPreference()[i];
+                        switch (time) {
+                            case -1:
+                                writer.write(", NP");
+                                break;
+                            case 0:
+                                writer.write(", Highest");
+                                break;
+                            case 1:
+                                writer.write(", Normal");
+                                break;
+                            case 2:
+                                writer.write(", Least");
+                                break;
+                            case Integer.MAX_VALUE:
+                                writer.write(", NA");
+                                break;
+                        }
+                    }
+                    writer.write("\n");
+                }
+
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_miExport_Professor_PreferencesActionPerformed
+
+    private void miExport_Course_IncompibilityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_Course_IncompibilityActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                
+                for (String crs : courseList.keySet()) {
+                    writer.write(crs);
+                    Vector<String> incomps = courseList.get(crs).getIncompCourses();
+                    for (int i = 0; i < incomps.size(); i++) {
+                        writer.write(", " + incomps.get(i));
+                    }
+                    writer.write("\n");
+                }
+
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_miExport_Course_IncompibilityActionPerformed
+
+    private void miExport_Timeslot_DaytimeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_Timeslot_DaytimeActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                
+                for (String ts : timeslotList.keySet()) {
+                    writer.write(ts + ", ");
+                    if(timeslotList.get(ts).isMorning()){
+                        writer.write("M");
+                    } else if(timeslotList.get(ts).isAfternoon()){
+                        writer.write("A");
+                    } else {
+                        writer.write("E");
+                    } 
+                    writer.write("\n");
+                }
+
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_miExport_Timeslot_DaytimeActionPerformed
+
+    private void miExport_Professor_CoursesTaughtActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_Professor_CoursesTaughtActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                
+                for (String prof : profList.keySet()) {
+                    writer.write(prof);
+                    Object[] ct = profList.get(prof).getCoursesTaught();
+                    for (int i = 0; i < ct.length; i++) {
+                        writer.write(", " + String.valueOf(ct[i]));
+                    }
+                    writer.write("\n");
+                }
+
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_miExport_Professor_CoursesTaughtActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
@@ -5509,6 +5803,10 @@ public class GUIForm extends javax.swing.JFrame {
                 String course = s.course;
                 course = course.substring(0, course.indexOf("("));
                 profCreditsAssigned.put(s.prof, profCreditsAssigned.get(s.prof) + courseList.get(course).getCreditValue());
+            } else {
+                String course = s.course;
+                course = course.substring(0, course.indexOf("("));
+                profCreditsAssigned.put(s.prof, courseList.get(course).getCreditValue());
             }
         }
 
@@ -5745,15 +6043,23 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JMenu menuAnalysis;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenu menuExport;
+    private javax.swing.JMenu menuExportCourse;
+    private javax.swing.JMenu menuExportProfessor;
+    private javax.swing.JMenu menuExportTimeslot;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuImport;
     private javax.swing.JMenuItem miAnalysis_RandomCourses;
     private javax.swing.JMenuItem miAnalysis_RandomProfessors;
     private javax.swing.JMenuItem miAnalysis_RestrictInitial;
     private javax.swing.JMenuItem miExport_Course;
+    private javax.swing.JMenuItem miExport_Course_Incompibility;
+    private javax.swing.JMenuItem miExport_Course_Preferences;
     private javax.swing.JMenuItem miExport_InitialSchedule;
     private javax.swing.JMenuItem miExport_Professor;
+    private javax.swing.JMenuItem miExport_Professor_CoursesTaught;
+    private javax.swing.JMenuItem miExport_Professor_Preferences;
     private javax.swing.JMenuItem miExport_Timeslot;
+    private javax.swing.JMenuItem miExport_Timeslot_Daytime;
     private javax.swing.JMenuItem miImport_Course;
     private javax.swing.JMenuItem miImport_Professor;
     private javax.swing.JMenuItem miImport_Timeslot;
