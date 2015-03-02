@@ -52,7 +52,6 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.ProgressMonitor;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.SpinnerNumberModel;
@@ -108,6 +107,7 @@ public class GUIForm extends javax.swing.JFrame {
     private boolean resultCourse;
     private boolean saveAbort;
     private ArrayList<ArrayList<Integer>> incompatibleSectionList;
+    private ArrayList<ArrayList<Integer>> sectionTabooList;
 
     /**
      * Creates new form GUIForm
@@ -137,6 +137,7 @@ public class GUIForm extends javax.swing.JFrame {
                     }
                 }
         );
+        
         saveAbort = false;
         undoList = new LinkedList<>();
         courseIDs = new HashSet<>();
@@ -220,18 +221,18 @@ public class GUIForm extends javax.swing.JFrame {
         txtCourseCreditValue.setInputVerifier(new DoubleValueInputVerifier());
         txtTimeSlotCreditValue.setInputVerifier(new DoubleValueInputVerifier());
         tsVerify = new TimeSlotVerifier();
-        txtMondayStart.setInputVerifier(tsVerify);
-        txtMondayEnd.setInputVerifier(tsVerify);
-        txtTuesdayStart.setInputVerifier(tsVerify);
-        txtTuesdayEnd.setInputVerifier(tsVerify);
-        txtWednesdayStart.setInputVerifier(tsVerify);
-        txtWednesdayEnd.setInputVerifier(tsVerify);
-        txtThursdayStart.setInputVerifier(tsVerify);
-        txtThursdayEnd.setInputVerifier(tsVerify);
-        txtFridayStart.setInputVerifier(tsVerify);
-        txtFridayEnd.setInputVerifier(tsVerify);
-        txtSaturdayStart.setInputVerifier(tsVerify);
-        txtSaturdayEnd.setInputVerifier(tsVerify);
+//        txtMondayStart.setInputVerifier(tsVerify);
+//        txtMondayEnd.setInputVerifier(tsVerify);
+//        txtTuesdayStart.setInputVerifier(tsVerify);
+//        txtTuesdayEnd.setInputVerifier(tsVerify);
+//        txtWednesdayStart.setInputVerifier(tsVerify);
+//        txtWednesdayEnd.setInputVerifier(tsVerify);
+//        txtThursdayStart.setInputVerifier(tsVerify);
+//        txtThursdayEnd.setInputVerifier(tsVerify);
+//        txtFridayStart.setInputVerifier(tsVerify);
+//        txtFridayEnd.setInputVerifier(tsVerify);
+//        txtSaturdayStart.setInputVerifier(tsVerify);
+//        txtSaturdayEnd.setInputVerifier(tsVerify);
         dtm = new DefaultTableModel(0, 3);
         dtm.setColumnIdentifiers(new String[]{"Course", "Professor", "Timeslot"});
         tableSchedule.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -843,6 +844,75 @@ public class GUIForm extends javax.swing.JFrame {
         txtTSGeneratedID.setText("");
     }
 
+    private void RepairSchedule(HashMap<String, ArrayList<String>> sectionProf, HashMap<String, ArrayList<String>> sectionTimeslot) {
+        int retry = 0;
+        do {
+            BalanceProfLoad();
+            UpdateTabooList();
+            for (int currentSection = 0; currentSection < courseListData.size(); currentSection++) {
+                Course current = courseList.get(courseListData.get(currentSection));
+                for (int otherSection = currentSection + 1; otherSection < courseListData.size(); otherSection++) {
+                    if (current.hasIncomp(courseListData.get(otherSection)) || scheduledCoursesList.get(current.getID() + "(1)").prof.equals(scheduledCoursesList.get(courseListData.get(otherSection) + "(1)").prof)) {
+                        if (scheduledCoursesList.get(current.getID() + "(1)").time.equals(scheduledCoursesList.get(courseListData.get(otherSection) + "(1)").time)) {
+                            String potentialTime;
+
+                        }
+                    }
+                }
+            }
+        } while (!validateSchedule(false).isEmpty() && ++retry < 50);
+    }
+
+    private void BalanceProfLoad() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    private void UpdateTabooList() {
+        sectionTabooList = new ArrayList<>();
+        //Course based for random init schedule repair        
+        for(int i = 0; i < courseListData.size(); i++){
+            sectionTabooList.add(new ArrayList<>());
+        }
+        
+    }
+
+    private void FillEmpty(HashMap<String, ArrayList<String>> sectionProf, HashMap<String, ArrayList<String>> sectionTimeslot) {
+        Random random = new Random();
+        int compTimes, compProfs;
+        String timeID, profID;
+        for (String course : unscheduledCourses) {
+            course = course.split("\\(")[0];
+            compProfs = sectionProf.get(course).size();
+            compTimes = sectionTimeslot.get(course).size();
+
+            timeID = sectionTimeslot.get(course).get(random.nextInt(compTimes));
+            profID = sectionProf.get(course).get(random.nextInt(compProfs));
+            Schedule s = new Schedule();
+            course = course + "(1)";
+            s.course = course;
+            s.prof = profID;
+            s.time = timeID;
+            scheduledCoursesList.put(course, s);
+            scheduledCoursesListBackup.put(course, s);
+
+            dtm.addRow(new String[]{s.course, s.prof, s.time});
+        }
+        unscheduledCourses.removeAllElements();
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+        sorter.setSortsOnUpdates(true);
+        tableSchedule.setRowSorter(sorter);
+
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        int columnIndexToSort = 0;
+        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+
+        listUnscheduledCourses.setListData(unscheduledCourses);
+        spUnscheduledCourses.revalidate();
+        spUnscheduledCourses.repaint();
+    }
+
     private static class ScheduleReplace {
 
         Schedule original;
@@ -999,46 +1069,58 @@ public class GUIForm extends javax.swing.JFrame {
         pnlScheduleDays = new javax.swing.JPanel();
         pnlMonday = new javax.swing.JPanel();
         lblMondayStart = new javax.swing.JLabel();
-        txtMondayStart = new javax.swing.JTextField();
         lblMondayEnd = new javax.swing.JLabel();
-        txtMondayEnd = new javax.swing.JTextField();
         tsMondayStartHH = new javax.swing.JSpinner();
         tsMondayStartMM = new javax.swing.JSpinner();
         tsMondayStartAMPM = new javax.swing.JSpinner();
-        tsMondayEndtHH = new javax.swing.JSpinner();
+        tsMondayEndHH = new javax.swing.JSpinner();
         tsMondayEndMM = new javax.swing.JSpinner();
         tsMondayEndAMPM = new javax.swing.JSpinner();
         pnlTuesday = new javax.swing.JPanel();
         lblTuesdayStart = new javax.swing.JLabel();
-        txtTuesdayStart = new javax.swing.JTextField();
         lblTuesdayEnd = new javax.swing.JLabel();
-        txtTuesdayEnd = new javax.swing.JTextField();
-        jSpinner1 = new javax.swing.JSpinner();
-        jSpinner2 = new javax.swing.JSpinner();
-        jSpinner3 = new javax.swing.JSpinner();
-        jSpinner4 = new javax.swing.JSpinner();
-        jSpinner5 = new javax.swing.JSpinner();
-        jSpinner6 = new javax.swing.JSpinner();
+        tsTuesdayStartHH = new javax.swing.JSpinner();
+        tsTuesdayStartMM = new javax.swing.JSpinner();
+        tsTuesdayStartAMPM = new javax.swing.JSpinner();
+        tsTuesdayEndHH = new javax.swing.JSpinner();
+        tsTuesdayEndMM = new javax.swing.JSpinner();
+        tsTuesdayEndAMPM = new javax.swing.JSpinner();
         pnlWednesday = new javax.swing.JPanel();
         lblWednesdayStart = new javax.swing.JLabel();
-        txtWednesdayStart = new javax.swing.JTextField();
         lblWednesdayEnd = new javax.swing.JLabel();
-        txtWednesdayEnd = new javax.swing.JTextField();
+        tsWednesdayStartHH = new javax.swing.JSpinner();
+        tsWednesdayStartMM = new javax.swing.JSpinner();
+        tsWednesdayStartAMPM = new javax.swing.JSpinner();
+        tsWednesdayEndHH = new javax.swing.JSpinner();
+        tsWednesdayEndMM = new javax.swing.JSpinner();
+        tsWednesdayEndAMPM = new javax.swing.JSpinner();
         pnlThursday = new javax.swing.JPanel();
         lbThursdayStart = new javax.swing.JLabel();
-        txtThursdayStart = new javax.swing.JTextField();
         lblThursdayEnd = new javax.swing.JLabel();
-        txtThursdayEnd = new javax.swing.JTextField();
+        tsThursdayEndHH = new javax.swing.JSpinner();
+        tsThursdayEndMM = new javax.swing.JSpinner();
+        tsThursdayEndAMPM = new javax.swing.JSpinner();
+        tsThursdayStartHH = new javax.swing.JSpinner();
+        tsThursdayStartMM = new javax.swing.JSpinner();
+        tsThursdayStartAMPM = new javax.swing.JSpinner();
         pnlFriday = new javax.swing.JPanel();
         lbFridayStart = new javax.swing.JLabel();
-        txtFridayStart = new javax.swing.JTextField();
         lblFridayEnd = new javax.swing.JLabel();
-        txtFridayEnd = new javax.swing.JTextField();
+        tsFridayEndHH = new javax.swing.JSpinner();
+        tsFridayEndMM = new javax.swing.JSpinner();
+        tsFridayEndAMPM = new javax.swing.JSpinner();
+        tsFridayStartHH = new javax.swing.JSpinner();
+        tsFridayStartMM = new javax.swing.JSpinner();
+        tsFridayStartAMPM = new javax.swing.JSpinner();
         pnlSaturday = new javax.swing.JPanel();
         lbSaturdayStart = new javax.swing.JLabel();
-        txtSaturdayStart = new javax.swing.JTextField();
         lblSaturdayEnd = new javax.swing.JLabel();
-        txtSaturdayEnd = new javax.swing.JTextField();
+        tsSaturdayEndHH = new javax.swing.JSpinner();
+        tsSaturdayEndMM = new javax.swing.JSpinner();
+        tsSaturdayEndAMPM = new javax.swing.JSpinner();
+        tsSaturdayStartHH = new javax.swing.JSpinner();
+        tsSaturdayStartMM = new javax.swing.JSpinner();
+        tsSaturdayStartAMPM = new javax.swing.JSpinner();
         txtTimeSlotCreditValue = new javax.swing.JTextField();
         txtTSGeneratedID = new javax.swing.JTextField();
         lblGeneratedTSID = new javax.swing.JLabel();
@@ -1153,6 +1235,8 @@ public class GUIForm extends javax.swing.JFrame {
         miAnalysis_RestrictInitial = new javax.swing.JMenuItem();
         miAnalysis_RandomCourses = new javax.swing.JMenuItem();
         miAnalysis_RandomProfessors = new javax.swing.JMenuItem();
+        miAnalysis_RandomInitSchedule = new javax.swing.JMenuItem();
+        miAnalysis_Credits = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(800, 800));
@@ -1952,10 +2036,8 @@ public class GUIForm extends javax.swing.JFrame {
 
         pnlMonday.setBorder(javax.swing.BorderFactory.createTitledBorder("Monday"));
 
-        lblMondayStart.setLabelFor(txtMondayStart);
         lblMondayStart.setText("Start Time");
 
-        lblMondayEnd.setLabelFor(txtMondayEnd);
         lblMondayEnd.setText("End Time");
 
         tsMondayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
@@ -1970,9 +2052,9 @@ public class GUIForm extends javax.swing.JFrame {
         tsMondayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
         tsMondayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
-        tsMondayEndtHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
-        tsMondayEndtHH.setMinimumSize(new java.awt.Dimension(40, 20));
-        tsMondayEndtHH.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsMondayEndHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsMondayEndHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsMondayEndHH.setPreferredSize(new java.awt.Dimension(40, 20));
 
         tsMondayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
         tsMondayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
@@ -1990,72 +2072,64 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblMondayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(5, 5, 5)
                 .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblMondayEnd)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtMondayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(tsMondayEndtHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(tsMondayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(99, Short.MAX_VALUE))
+                .addContainerGap())
         );
         pnlMondayLayout.setVerticalGroup(
             pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(tsMondayEndtHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lblMondayStart)
-                .addComponent(txtMondayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblMondayEnd)
-                .addComponent(txtMondayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsMondayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblMondayEnd)))
         );
 
         pnlTuesday.setBorder(javax.swing.BorderFactory.createTitledBorder("Tuesday"));
 
-        lblTuesdayStart.setLabelFor(txtTuesdayStart);
         lblTuesdayStart.setText("Start Time");
 
-        lblTuesdayEnd.setLabelFor(txtTuesdayEnd);
         lblTuesdayEnd.setText("End Time");
 
-        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
-        jSpinner1.setMinimumSize(new java.awt.Dimension(40, 20));
-        jSpinner1.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsTuesdayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsTuesdayStartHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsTuesdayStartHH.setPreferredSize(new java.awt.Dimension(40, 20));
 
-        jSpinner2.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
-        jSpinner2.setMinimumSize(new java.awt.Dimension(40, 20));
-        jSpinner2.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsTuesdayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsTuesdayStartMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsTuesdayStartMM.setPreferredSize(new java.awt.Dimension(40, 20));
 
-        jSpinner3.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
-        jSpinner3.setMinimumSize(new java.awt.Dimension(40, 20));
-        jSpinner3.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsTuesdayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsTuesdayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsTuesdayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
-        jSpinner4.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
-        jSpinner4.setMinimumSize(new java.awt.Dimension(40, 20));
-        jSpinner4.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsTuesdayEndHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsTuesdayEndHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsTuesdayEndHH.setPreferredSize(new java.awt.Dimension(40, 20));
 
-        jSpinner5.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
-        jSpinner5.setMinimumSize(new java.awt.Dimension(40, 20));
-        jSpinner5.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsTuesdayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsTuesdayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsTuesdayEndMM.setPreferredSize(new java.awt.Dimension(40, 20));
 
-        jSpinner6.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
-        jSpinner6.setMinimumSize(new java.awt.Dimension(40, 20));
-        jSpinner6.setPreferredSize(new java.awt.Dimension(40, 20));
+        tsTuesdayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsTuesdayEndAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsTuesdayEndAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout pnlTuesdayLayout = new javax.swing.GroupLayout(pnlTuesday);
         pnlTuesday.setLayout(pnlTuesdayLayout);
@@ -2065,47 +2139,63 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblTuesdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtTuesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(3, 3, 3)
-                .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(tsTuesdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 244, Short.MAX_VALUE)
                 .addComponent(lblTuesdayEnd)
-                .addGap(10, 10, 10)
-                .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(tsTuesdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSpinner6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlTuesdayLayout.setVerticalGroup(
             pnlTuesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlTuesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lblTuesdayStart)
-                .addComponent(txtTuesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(lblTuesdayEnd)
-                .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(jSpinner6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(tsTuesdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsTuesdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pnlWednesday.setBorder(javax.swing.BorderFactory.createTitledBorder("Wednesday"));
 
-        lblWednesdayStart.setLabelFor(txtWednesdayStart);
         lblWednesdayStart.setText("Start Time");
 
-        lblWednesdayEnd.setLabelFor(txtWednesdayEnd);
         lblWednesdayEnd.setText("End Time");
+
+        tsWednesdayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsWednesdayStartHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsWednesdayStartHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsWednesdayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsWednesdayStartMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsWednesdayStartMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsWednesdayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsWednesdayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsWednesdayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsWednesdayEndHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsWednesdayEndHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsWednesdayEndHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsWednesdayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsWednesdayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsWednesdayEndMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsWednesdayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsWednesdayEndAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsWednesdayEndAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout pnlWednesdayLayout = new javax.swing.GroupLayout(pnlWednesday);
         pnlWednesday.setLayout(pnlWednesdayLayout);
@@ -2115,29 +2205,64 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lblWednesdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtWednesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tsWednesdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsWednesdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsWednesdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblWednesdayEnd)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtWednesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(tsWednesdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsWednesdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsWednesdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlWednesdayLayout.setVerticalGroup(
             pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lblWednesdayStart)
-                .addComponent(txtWednesdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblWednesdayEnd)
-                .addComponent(txtWednesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(tsWednesdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsWednesdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsWednesdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsWednesdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsWednesdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsWednesdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblWednesdayEnd)))
         );
 
         pnlThursday.setBorder(javax.swing.BorderFactory.createTitledBorder("Thursday"));
 
-        lbThursdayStart.setLabelFor(txtThursdayStart);
         lbThursdayStart.setText("Start Time");
 
-        lblThursdayEnd.setLabelFor(txtThursdayEnd);
         lblThursdayEnd.setText("End Time");
+
+        tsThursdayEndHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsThursdayEndHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsThursdayEndHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsThursdayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsThursdayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsThursdayEndMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsThursdayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsThursdayEndAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsThursdayEndAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsThursdayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsThursdayStartHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsThursdayStartHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsThursdayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsThursdayStartMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsThursdayStartMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsThursdayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsThursdayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsThursdayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout pnlThursdayLayout = new javax.swing.GroupLayout(pnlThursday);
         pnlThursday.setLayout(pnlThursdayLayout);
@@ -2147,29 +2272,65 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lbThursdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtThursdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tsThursdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsThursdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsThursdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblThursdayEnd)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtThursdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(tsThursdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsThursdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsThursdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlThursdayLayout.setVerticalGroup(
             pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lbThursdayStart)
-                .addComponent(txtThursdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblThursdayEnd)
-                .addComponent(txtThursdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsThursdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsThursdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsThursdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblThursdayEnd))
+                .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsThursdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsThursdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsThursdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         pnlFriday.setBorder(javax.swing.BorderFactory.createTitledBorder("Friday"));
 
-        lbFridayStart.setLabelFor(txtFridayStart);
         lbFridayStart.setText("Start Time");
 
-        lblFridayEnd.setLabelFor(txtFridayEnd);
         lblFridayEnd.setText("End Time");
+
+        tsFridayEndHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsFridayEndHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsFridayEndHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsFridayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsFridayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsFridayEndMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsFridayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsFridayEndAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsFridayEndAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsFridayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsFridayStartHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsFridayStartHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsFridayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsFridayStartMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsFridayStartMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsFridayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsFridayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsFridayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout pnlFridayLayout = new javax.swing.GroupLayout(pnlFriday);
         pnlFriday.setLayout(pnlFridayLayout);
@@ -2179,29 +2340,65 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lbFridayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtFridayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tsFridayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsFridayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsFridayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblFridayEnd)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtFridayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(tsFridayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsFridayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsFridayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlFridayLayout.setVerticalGroup(
             pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lbFridayStart)
-                .addComponent(txtFridayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblFridayEnd)
-                .addComponent(txtFridayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsFridayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsFridayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsFridayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblFridayEnd))
+                .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsFridayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsFridayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsFridayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         pnlSaturday.setBorder(javax.swing.BorderFactory.createTitledBorder("Saturday"));
 
-        lbSaturdayStart.setLabelFor(txtSaturdayStart);
         lbSaturdayStart.setText("Start Time");
 
-        lblSaturdayEnd.setLabelFor(txtSaturdayEnd);
         lblSaturdayEnd.setText("End Time");
+
+        tsSaturdayEndHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsSaturdayEndHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsSaturdayEndHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsSaturdayEndMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsSaturdayEndMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsSaturdayEndMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsSaturdayEndAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsSaturdayEndAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsSaturdayEndAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsSaturdayStartHH.setModel(new javax.swing.SpinnerNumberModel(1, 1, 12, 1));
+        tsSaturdayStartHH.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsSaturdayStartHH.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsSaturdayStartMM.setModel(new javax.swing.SpinnerNumberModel(0, 0, 55, 5));
+        tsSaturdayStartMM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsSaturdayStartMM.setPreferredSize(new java.awt.Dimension(40, 20));
+
+        tsSaturdayStartAMPM.setModel(new javax.swing.SpinnerListModel(new String[] {"AM", "PM"}));
+        tsSaturdayStartAMPM.setMinimumSize(new java.awt.Dimension(40, 20));
+        tsSaturdayStartAMPM.setPreferredSize(new java.awt.Dimension(40, 20));
 
         javax.swing.GroupLayout pnlSaturdayLayout = new javax.swing.GroupLayout(pnlSaturday);
         pnlSaturday.setLayout(pnlSaturdayLayout);
@@ -2211,20 +2408,34 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(lbSaturdayStart)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtSaturdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(tsSaturdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsSaturdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsSaturdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(lblSaturdayEnd)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(txtSaturdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(tsSaturdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsSaturdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tsSaturdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         pnlSaturdayLayout.setVerticalGroup(
             pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lbSaturdayStart)
-                .addComponent(txtSaturdayStart, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(lblSaturdayEnd)
-                .addComponent(txtSaturdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsSaturdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsSaturdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsSaturdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblSaturdayEnd))
+                .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tsSaturdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsSaturdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tsSaturdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
         javax.swing.GroupLayout pnlScheduleDaysLayout = new javax.swing.GroupLayout(pnlScheduleDays);
@@ -3204,6 +3415,11 @@ public class GUIForm extends javax.swing.JFrame {
         menuImport.add(miImport_Professor);
 
         miImport_Timeslot.setText("Timeslot List");
+        miImport_Timeslot.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miImport_TimeslotActionPerformed(evt);
+            }
+        });
         menuImport.add(miImport_Timeslot);
 
         menuBar.add(menuImport);
@@ -3259,6 +3475,11 @@ public class GUIForm extends javax.swing.JFrame {
         menuExportTimeslot.setText("Timeslot");
 
         miExport_Timeslot.setText("Timeslot Detailed List");
+        miExport_Timeslot.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miExport_TimeslotActionPerformed(evt);
+            }
+        });
         menuExportTimeslot.add(miExport_Timeslot);
 
         miExport_Timeslot_Daytime.setText("Daytime List");
@@ -3307,6 +3528,22 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
         menuAnalysis.add(miAnalysis_RandomProfessors);
+
+        miAnalysis_RandomInitSchedule.setText("Generate Random Initial Schedule");
+        miAnalysis_RandomInitSchedule.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_RandomInitScheduleActionPerformed(evt);
+            }
+        });
+        menuAnalysis.add(miAnalysis_RandomInitSchedule);
+
+        miAnalysis_Credits.setText("Credit Analysis");
+        miAnalysis_Credits.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_CreditsActionPerformed(evt);
+            }
+        });
+        menuAnalysis.add(miAnalysis_Credits);
 
         menuBar.add(menuAnalysis);
 
@@ -3878,16 +4115,18 @@ public class GUIForm extends javax.swing.JFrame {
         } else {
             txtTimeSlotCreditValue.setBorder(new LineBorder(Color.lightGray));
         }
-        if (txtMondayStart.getText().isEmpty() && txtMondayEnd.getText().isEmpty()
-                && txtTuesdayStart.getText().isEmpty() && txtTuesdayStart.getText().isEmpty()
-                && txtWednesdayStart.getText().isEmpty() && txtWednesdayEnd.getText().isEmpty()
-                && txtThursdayStart.getText().isEmpty() && txtThursdayEnd.getText().isEmpty()
-                && txtFridayStart.getText().isEmpty() && txtFridayEnd.getText().isEmpty()
-                && txtSaturdayStart.getText().isEmpty() && txtSaturdayEnd.getText().isEmpty()) {
-            JOptionPane.showMessageDialog(pnlContainer, "At least one time is required for the timeslot.", "Timeslot empty", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        if ((!txtMondayStart.getText().isEmpty() && txtMondayEnd.getText().isEmpty()) || (txtMondayStart.getText().isEmpty() && !txtMondayEnd.getText().isEmpty())) {
+//        if (txtMondayStart.getText().isEmpty() && txtMondayEnd.getText().isEmpty()
+//                && txtTuesdayStart.getText().isEmpty() && txtTuesdayStart.getText().isEmpty()
+//                && txtWednesdayStart.getText().isEmpty() && txtWednesdayEnd.getText().isEmpty()
+//                && txtThursdayStart.getText().isEmpty() && txtThursdayEnd.getText().isEmpty()
+//                && txtFridayStart.getText().isEmpty() && txtFridayEnd.getText().isEmpty()
+//                && txtSaturdayStart.getText().isEmpty() && txtSaturdayEnd.getText().isEmpty()) {
+//            JOptionPane.showMessageDialog(pnlContainer, "At least one time is required for the timeslot.", "Timeslot empty", JOptionPane.ERROR_MESSAGE);
+//            return;
+//        }
+        //if ((!txtMondayStart.getText().isEmpty() && txtMondayEnd.getText().isEmpty()) || (txtMondayStart.getText().isEmpty() && !txtMondayEnd.getText().isEmpty())) {
+        if (((int) tsMondayStartHH.getValue() != 1 && (int) tsMondayStartMM.getValue() != 0)
+                && (int) tsMondayStartHH.getValue() == (int) tsMondayEndHH.getValue() && (int) tsMondayStartMM.getValue() == (int) tsMondayEndMM.getValue()) {
             pnlMonday.setBackground(Color.red);
             JOptionPane.showMessageDialog(pnlContainer, "Monday time slot not complete.", "Incomplete Timeslot", JOptionPane.ERROR_MESSAGE);
             return;
@@ -3895,7 +4134,8 @@ public class GUIForm extends javax.swing.JFrame {
             pnlMonday.setBackground(null);
         }
 
-        if ((!txtTuesdayStart.getText().isEmpty() && txtTuesdayEnd.getText().isEmpty()) || (txtTuesdayStart.getText().isEmpty() && !txtTuesdayEnd.getText().isEmpty())) {
+        if (((int) tsTuesdayStartHH.getValue() != 1 && (int) tsTuesdayStartMM.getValue() != 0)
+                && (int) tsTuesdayStartHH.getValue() == (int) tsTuesdayEndHH.getValue() && (int) tsTuesdayStartMM.getValue() == (int) tsTuesdayEndMM.getValue()) {
             pnlTuesday.setBackground(Color.red);
             JOptionPane.showMessageDialog(pnlContainer, "Tuesday time slot not complete.", "Incomplete Timeslot", JOptionPane.ERROR_MESSAGE);
             return;
@@ -3903,7 +4143,8 @@ public class GUIForm extends javax.swing.JFrame {
             pnlTuesday.setBackground(null);
         }
 
-        if ((!txtWednesdayStart.getText().isEmpty() && txtWednesdayEnd.getText().isEmpty()) || (txtWednesdayStart.getText().isEmpty() && !txtWednesdayEnd.getText().isEmpty())) {
+        if (((int) tsWednesdayStartHH.getValue() != 1 && (int) tsWednesdayStartMM.getValue() != 0)
+                && (int) tsWednesdayStartHH.getValue() == (int) tsWednesdayEndHH.getValue() && (int) tsWednesdayStartMM.getValue() == (int) tsWednesdayEndMM.getValue()) {
             pnlWednesday.setBackground(Color.red);
             JOptionPane.showMessageDialog(pnlContainer, "Wednesday time slot not complete.", "Incomplete Timeslot", JOptionPane.ERROR_MESSAGE);
             return;
@@ -3911,7 +4152,8 @@ public class GUIForm extends javax.swing.JFrame {
             pnlWednesday.setBackground(null);
         }
 
-        if ((!txtThursdayStart.getText().isEmpty() && txtThursdayEnd.getText().isEmpty()) || (txtThursdayStart.getText().isEmpty() && !txtThursdayEnd.getText().isEmpty())) {
+        if (((int) tsThursdayStartHH.getValue() != 1 && (int) tsThursdayStartMM.getValue() != 0)
+                && (int) tsThursdayStartHH.getValue() == (int) tsThursdayEndHH.getValue() && (int) tsThursdayStartMM.getValue() == (int) tsThursdayEndMM.getValue()) {
             pnlThursday.setBackground(Color.red);
             JOptionPane.showMessageDialog(pnlContainer, "Thursday time slot not complete.", "Incomplete Timeslot", JOptionPane.ERROR_MESSAGE);
             return;
@@ -3919,7 +4161,8 @@ public class GUIForm extends javax.swing.JFrame {
             pnlThursday.setBackground(null);
         }
 
-        if ((!txtFridayStart.getText().isEmpty() && txtFridayEnd.getText().isEmpty()) || (txtFridayStart.getText().isEmpty() && !txtFridayEnd.getText().isEmpty())) {
+        if (((int) tsFridayStartHH.getValue() != 1 && (int) tsFridayStartMM.getValue() != 0)
+                && (int) tsFridayStartHH.getValue() == (int) tsFridayEndHH.getValue() && (int) tsFridayStartMM.getValue() == (int) tsFridayEndMM.getValue()) {
             pnlFriday.setBackground(Color.red);
             JOptionPane.showMessageDialog(pnlContainer, "Friday time slot not complete.", "Incomplete Timeslot", JOptionPane.ERROR_MESSAGE);
             return;
@@ -3927,7 +4170,8 @@ public class GUIForm extends javax.swing.JFrame {
             pnlFriday.setBackground(null);
         }
 
-        if ((!txtSaturdayStart.getText().isEmpty() && txtSaturdayEnd.getText().isEmpty()) || (txtSaturdayStart.getText().isEmpty() && !txtSaturdayEnd.getText().isEmpty())) {
+        if (((int) tsSaturdayStartHH.getValue() != 1 && (int) tsSaturdayStartMM.getValue() != 0)
+                && (int) tsSaturdayStartHH.getValue() == (int) tsSaturdayEndHH.getValue() && (int) tsSaturdayStartMM.getValue() == (int) tsSaturdayEndMM.getValue()) {
             pnlSaturday.setBackground(Color.red);
             JOptionPane.showMessageDialog(pnlContainer, "Saturday time slot not complete.", "Incomplete Timeslot", JOptionPane.ERROR_MESSAGE);
             return;
@@ -3954,66 +4198,148 @@ public class GUIForm extends javax.swing.JFrame {
         if (!fresh) {
             currentListing = currentTimeslot.toString();
         }
-        if (!txtMondayStart.getText().isEmpty()) {
+        if ((int) tsMondayStartHH.getValue() != 1 && (int) tsMondayStartMM.getValue() != 0 && !tsMondayStartAMPM.getValue().toString().equals("AM")) {
             try {
-                int start = Integer.parseInt(txtMondayStart.getText().replaceAll(":", ""));
-                int end = Integer.parseInt(txtMondayEnd.getText().replaceAll(":", ""));
+                int start = ((int) tsMondayStartHH.getValue() * 100) + (int) tsMondayStartMM.getValue();//Integer.parseInt(txtMondayStart.getText().replaceAll(":", ""));
+                if (tsMondayStartAMPM.getValue().toString().equals("PM") && (int) tsMondayStartHH.getValue() != 12) {
+                    start += 1200;
+                }
+                int end = ((int) tsMondayStartHH.getValue() * 100) + (int) tsMondayStartMM.getValue();//Integer.parseInt(txtMondayStart.getText().replaceAll(":", ""));
+                if (tsMondayStartAMPM.getValue().toString().equals("PM") && (int) tsMondayStartHH.getValue() != 12) {
+                    end += 1200;
+                }
                 currentTimeslot.SetTime(0, start, end);
             } catch (NumberFormatException n) {
                 System.err.println(n.getMessage());
             }
         }
 
-        if (!txtTuesdayStart.getText().isEmpty()) {
+//        if (!txtTuesdayStart.getText().isEmpty()) {
+//            try {
+//                int start = Integer.parseInt(txtTuesdayStart.getText().replaceAll(":", ""));
+//                int end = Integer.parseInt(txtTuesdayEnd.getText().replaceAll(":", ""));
+//                currentTimeslot.SetTime(1, start, end);
+//            } catch (NumberFormatException n) {
+//                System.err.println(n.getMessage());
+//            }
+//        }
+//        if (!txtWednesdayStart.getText().isEmpty()) {
+//            try {
+//                int start = Integer.parseInt(txtWednesdayStart.getText().replaceAll(":", ""));
+//                int end = Integer.parseInt(txtWednesdayEnd.getText().replaceAll(":", ""));
+//                currentTimeslot.SetTime(2, start, end);
+//            } catch (NumberFormatException n) {
+//                System.err.println(n.getMessage());
+//            }
+//        }
+//
+//        if (!txtThursdayStart.getText().isEmpty()) {
+//            try {
+//                int start = Integer.parseInt(txtThursdayStart.getText().replaceAll(":", ""));
+//                int end = Integer.parseInt(txtThursdayEnd.getText().replaceAll(":", ""));
+//                currentTimeslot.SetTime(3, start, end);
+//            } catch (NumberFormatException n) {
+//                System.err.println(n.getMessage());
+//            }
+//        }
+//
+//        if (!txtFridayStart.getText().isEmpty()) {
+//            try {
+//                int start = Integer.parseInt(txtFridayStart.getText().replaceAll(":", ""));
+//                int end = Integer.parseInt(txtFridayEnd.getText().replaceAll(":", ""));
+//                currentTimeslot.SetTime(4, start, end);
+//            } catch (NumberFormatException n) {
+//                System.err.println(n.getMessage());
+//            }
+//        }
+//
+//        if (!txtSaturdayStart.getText().isEmpty()) {
+//            try {
+//                int start = Integer.parseInt(txtSaturdayStart.getText().replaceAll(":", ""));
+//                int end = Integer.parseInt(txtSaturdayEnd.getText().replaceAll(":", ""));
+//                currentTimeslot.SetTime(5, start, end);
+//            } catch (NumberFormatException n) {
+//                System.err.println(n.getMessage());
+//            }
+//        }
+        if ((int) tsTuesdayStartHH.getValue() != 1 && (int) tsTuesdayStartMM.getValue() != 0 && !tsTuesdayStartAMPM.getValue().toString().equals("AM")) {
             try {
-                int start = Integer.parseInt(txtTuesdayStart.getText().replaceAll(":", ""));
-                int end = Integer.parseInt(txtTuesdayEnd.getText().replaceAll(":", ""));
-                currentTimeslot.SetTime(1, start, end);
+                int start = ((int) tsTuesdayStartHH.getValue() * 100) + (int) tsTuesdayStartMM.getValue();//Integer.parseInt(txtTuesdayStart.getText().replaceAll(":", ""));
+                if (tsTuesdayStartAMPM.getValue().toString().equals("PM") && (int) tsTuesdayStartHH.getValue() != 12) {
+                    start += 1200;
+                }
+                int end = ((int) tsTuesdayStartHH.getValue() * 100) + (int) tsTuesdayStartMM.getValue();//Integer.parseInt(txtTuesdayStart.getText().replaceAll(":", ""));
+                if (tsTuesdayStartAMPM.getValue().toString().equals("PM") && (int) tsTuesdayStartHH.getValue() != 12) {
+                    end += 1200;
+                }
+                currentTimeslot.SetTime(0, start, end);
             } catch (NumberFormatException n) {
                 System.err.println(n.getMessage());
             }
         }
 
-        if (!txtWednesdayStart.getText().isEmpty()) {
+        if ((int) tsWednesdayStartHH.getValue() != 1 && (int) tsWednesdayStartMM.getValue() != 0 && !tsWednesdayStartAMPM.getValue().toString().equals("AM")) {
             try {
-                int start = Integer.parseInt(txtWednesdayStart.getText().replaceAll(":", ""));
-                int end = Integer.parseInt(txtWednesdayEnd.getText().replaceAll(":", ""));
-                currentTimeslot.SetTime(2, start, end);
+                int start = ((int) tsWednesdayStartHH.getValue() * 100) + (int) tsWednesdayStartMM.getValue();//Integer.parseInt(txtWednesdayStart.getText().replaceAll(":", ""));
+                if (tsWednesdayStartAMPM.getValue().toString().equals("PM") && (int) tsWednesdayStartHH.getValue() != 12) {
+                    start += 1200;
+                }
+                int end = ((int) tsWednesdayStartHH.getValue() * 100) + (int) tsWednesdayStartMM.getValue();//Integer.parseInt(txtWednesdayStart.getText().replaceAll(":", ""));
+                if (tsWednesdayStartAMPM.getValue().toString().equals("PM") && (int) tsWednesdayStartHH.getValue() != 12) {
+                    end += 1200;
+                }
+                currentTimeslot.SetTime(0, start, end);
             } catch (NumberFormatException n) {
                 System.err.println(n.getMessage());
             }
         }
 
-        if (!txtThursdayStart.getText().isEmpty()) {
+        if ((int) tsThursdayStartHH.getValue() != 1 && (int) tsThursdayStartMM.getValue() != 0 && !tsThursdayStartAMPM.getValue().toString().equals("AM")) {
             try {
-                int start = Integer.parseInt(txtThursdayStart.getText().replaceAll(":", ""));
-                int end = Integer.parseInt(txtThursdayEnd.getText().replaceAll(":", ""));
-                currentTimeslot.SetTime(3, start, end);
+                int start = ((int) tsThursdayStartHH.getValue() * 100) + (int) tsThursdayStartMM.getValue();//Integer.parseInt(txtThursdayStart.getText().replaceAll(":", ""));
+                if (tsThursdayStartAMPM.getValue().toString().equals("PM") && (int) tsThursdayStartHH.getValue() != 12) {
+                    start += 1200;
+                }
+                int end = ((int) tsThursdayStartHH.getValue() * 100) + (int) tsThursdayStartMM.getValue();//Integer.parseInt(txtThursdayStart.getText().replaceAll(":", ""));
+                if (tsThursdayStartAMPM.getValue().toString().equals("PM") && (int) tsThursdayStartHH.getValue() != 12) {
+                    end += 1200;
+                }
+                currentTimeslot.SetTime(0, start, end);
             } catch (NumberFormatException n) {
                 System.err.println(n.getMessage());
             }
         }
 
-        if (!txtFridayStart.getText().isEmpty()) {
+        if ((int) tsFridayStartHH.getValue() != 1 && (int) tsFridayStartMM.getValue() != 0 && !tsFridayStartAMPM.getValue().toString().equals("AM")) {
             try {
-                int start = Integer.parseInt(txtFridayStart.getText().replaceAll(":", ""));
-                int end = Integer.parseInt(txtFridayEnd.getText().replaceAll(":", ""));
-                currentTimeslot.SetTime(4, start, end);
+                int start = ((int) tsFridayStartHH.getValue() * 100) + (int) tsFridayStartMM.getValue();//Integer.parseInt(txtFridayStart.getText().replaceAll(":", ""));
+                if (tsFridayStartAMPM.getValue().toString().equals("PM") && (int) tsFridayStartHH.getValue() != 12) {
+                    start += 1200;
+                }
+                int end = ((int) tsFridayStartHH.getValue() * 100) + (int) tsFridayStartMM.getValue();//Integer.parseInt(txtFridayStart.getText().replaceAll(":", ""));
+                if (tsFridayStartAMPM.getValue().toString().equals("PM") && (int) tsFridayStartHH.getValue() != 12) {
+                    end += 1200;
+                }
+                currentTimeslot.SetTime(0, start, end);
             } catch (NumberFormatException n) {
                 System.err.println(n.getMessage());
             }
         }
-
-        if (!txtSaturdayStart.getText().isEmpty()) {
+        if ((int) tsSaturdayStartHH.getValue() != 1 && (int) tsSaturdayStartMM.getValue() != 0 && !tsSaturdayStartAMPM.getValue().toString().equals("AM")) {
             try {
-                int start = Integer.parseInt(txtSaturdayStart.getText().replaceAll(":", ""));
-                int end = Integer.parseInt(txtSaturdayEnd.getText().replaceAll(":", ""));
-                currentTimeslot.SetTime(5, start, end);
+                int start = ((int) tsSaturdayStartHH.getValue() * 100) + (int) tsSaturdayStartMM.getValue();//Integer.parseInt(txtSaturdayStart.getText().replaceAll(":", ""));
+                if (tsSaturdayStartHH.getValue().toString().equals("PM") && (int) tsSaturdayStartHH.getValue() != 12) {
+                    start += 1200;
+                }
+                int end = ((int) tsSaturdayStartHH.getValue() * 100) + (int) tsSaturdayStartMM.getValue();//Integer.parseInt(txtSaturdayStart.getText().replaceAll(":", ""));
+                if (tsSaturdayStartAMPM.getValue().toString().equals("PM") && (int) tsSaturdayStartHH.getValue() != 12) {
+                    end += 1200;
+                }
+                currentTimeslot.SetTime(0, start, end);
             } catch (NumberFormatException n) {
                 System.err.println(n.getMessage());
             }
         }
-
         if (fresh || !currentListing.equals(currentTimeslot.toString())) {
             timeslotListData.removeElement(currentListing);
             if (!timeslotListData.contains(currentListing)) {
@@ -4041,57 +4367,255 @@ public class GUIForm extends javax.swing.JFrame {
                 for (int i = 0; i < 6; i++) {
                     String currentTime = currentTimeslot.GetTimeOnDay(i);
                     if (!currentTime.equals("(-1:-1)")) {
+                        currentTime = currentTime.replace('(', ' ');
+                        currentTime = currentTime.replace(')', ' ');
+                        currentTime = currentTime.trim();
+                        String[] times = currentTime.split(":");
+                        int start = Integer.parseInt(times[0]);
+                        int end = Integer.parseInt(times[1]);
                         switch (i) {
                             case 0:
-                                txtMondayStart.setText(currentTime.substring(1, currentTime.indexOf(':')));
-                                txtMondayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
+
+                                if (start < 1300) {
+                                    tsMondayStartHH.setValue(start / 100);
+                                    tsMondayStartAMPM.setValue("AM");
+                                } else {
+                                    start -= 1200;
+                                    tsMondayStartHH.setValue(start / 100);
+                                    tsMondayStartAMPM.setValue("PM");
+                                }
+
+                                if (start / 100 == 12) {
+                                    tsMondayStartAMPM.setValue("PM");
+                                }
+
+                                tsMondayStartMM.setValue(start % 100);
+
+                                if (end < 1300) {
+                                    tsMondayEndHH.setValue(end / 100);
+                                    tsMondayEndAMPM.setValue("AM");
+                                } else {
+                                    end -= 1200;
+                                    tsMondayEndHH.setValue(end / 100);
+                                    tsMondayEndAMPM.setValue("PM");
+                                }
+
+                                if (end / 100 == 12) {
+                                    tsMondayEndAMPM.setValue("PM");
+                                }
+
+                                tsMondayEndMM.setValue(end % 100);
                                 break;
                             case 1:
-                                txtTuesdayStart.setText(currentTime.substring(1, currentTime.indexOf(':')));
-                                txtTuesdayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
+                                if (start < 1300) {
+                                    tsTuesdayStartHH.setValue(start / 100);
+                                    tsTuesdayStartAMPM.setValue("AM");
+                                } else {
+                                    start -= 1200;
+                                    tsTuesdayStartHH.setValue(start / 100);
+                                    tsTuesdayStartAMPM.setValue("PM");
+                                }
+
+                                if (start / 100 == 12) {
+                                    tsTuesdayStartAMPM.setValue("PM");
+                                }
+
+                                tsTuesdayStartMM.setValue(start % 100);
+
+                                if (end < 1300) {
+                                    tsTuesdayEndHH.setValue(end / 100);
+                                    tsTuesdayEndAMPM.setValue("AM");
+                                } else {
+                                    end -= 1200;
+                                    tsTuesdayEndHH.setValue(end / 100);
+                                    tsTuesdayEndAMPM.setValue("PM");
+                                }
+
+                                if (end / 100 == 12) {
+                                    tsTuesdayEndAMPM.setValue("PM");
+                                }
+
+                                tsTuesdayEndMM.setValue(end % 100);
                                 break;
                             case 2:
-                                txtWednesdayStart.setText(currentTime.substring(1, currentTime.indexOf(':')));
-                                txtWednesdayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
+                                if (start < 1300) {
+                                    tsWednesdayStartHH.setValue(start / 100);
+                                    tsWednesdayStartAMPM.setValue("AM");
+                                } else {
+                                    start -= 1200;
+                                    tsWednesdayStartHH.setValue(start / 100);
+                                    tsWednesdayStartAMPM.setValue("PM");
+                                }
+
+                                if (start / 100 == 12) {
+                                    tsWednesdayStartAMPM.setValue("PM");
+                                }
+
+                                tsWednesdayStartMM.setValue(start % 100);
+
+                                if (end < 1300) {
+                                    tsWednesdayEndHH.setValue(end / 100);
+                                    tsWednesdayEndAMPM.setValue("AM");
+                                } else {
+                                    end -= 1200;
+                                    tsWednesdayEndHH.setValue(end / 100);
+                                    tsWednesdayEndAMPM.setValue("PM");
+                                }
+
+                                if (end / 100 == 12) {
+                                    tsWednesdayEndAMPM.setValue("PM");
+                                }
+
+                                tsWednesdayEndMM.setValue(end % 100);
                                 break;
                             case 3:
-                                txtThursdayStart.setText(currentTime.substring(1, currentTime.indexOf(':')));
-                                txtThursdayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
+                                if (start < 1300) {
+                                    tsThursdayStartHH.setValue(start / 100);
+                                    tsThursdayStartAMPM.setValue("AM");
+                                } else {
+                                    start -= 1200;
+                                    tsThursdayStartHH.setValue(start / 100);
+                                    tsThursdayStartAMPM.setValue("PM");
+                                }
+
+                                if (start / 100 == 12) {
+                                    tsThursdayStartAMPM.setValue("PM");
+                                }
+
+                                tsThursdayStartMM.setValue(start % 100);
+
+                                if (end < 1300) {
+                                    tsThursdayEndHH.setValue(end / 100);
+                                    tsThursdayEndAMPM.setValue("AM");
+                                } else {
+                                    end -= 1200;
+                                    tsThursdayEndHH.setValue(end / 100);
+                                    tsThursdayEndAMPM.setValue("PM");
+                                }
+
+                                if (end / 100 == 12) {
+                                    tsThursdayEndAMPM.setValue("PM");
+                                }
+
+                                tsThursdayEndMM.setValue(end % 100);
                                 break;
                             case 4:
-                                txtFridayStart.setText(currentTime.substring(1, currentTime.indexOf(':')));
-                                txtFridayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
+                                if (start < 1300) {
+                                    tsFridayStartHH.setValue(start / 100);
+                                    tsFridayStartAMPM.setValue("AM");
+                                } else {
+                                    start -= 1200;
+                                    tsFridayStartHH.setValue(start / 100);
+                                    tsFridayStartAMPM.setValue("PM");
+                                }
+
+                                if (start / 100 == 12) {
+                                    tsFridayStartAMPM.setValue("PM");
+                                }
+
+                                tsFridayStartMM.setValue(start % 100);
+
+                                if (end < 1300) {
+                                    tsFridayEndHH.setValue(end / 100);
+                                    tsFridayEndAMPM.setValue("AM");
+                                } else {
+                                    end -= 1200;
+                                    tsFridayEndHH.setValue(end / 100);
+                                    tsFridayEndAMPM.setValue("PM");
+                                }
+
+                                if (end / 100 == 12) {
+                                    tsFridayEndAMPM.setValue("PM");
+                                }
+
+                                tsFridayEndMM.setValue(end % 100);
                                 break;
                             case 5:
-                                txtSaturdayStart.setText(currentTime.substring(1, currentTime.indexOf(':')));
-                                txtSaturdayEnd.setText(currentTime.substring(currentTime.indexOf(':') + 1, currentTime.length() - 1));
+                                if (start < 1300) {
+                                    tsSaturdayStartHH.setValue(start / 100);
+                                    tsSaturdayStartAMPM.setValue("AM");
+                                } else {
+                                    start -= 1200;
+                                    tsSaturdayStartHH.setValue(start / 100);
+                                    tsSaturdayStartAMPM.setValue("PM");
+                                }
+
+                                if (start / 100 == 12) {
+                                    tsSaturdayStartAMPM.setValue("PM");
+                                }
+
+                                tsSaturdayStartMM.setValue(start % 100);
+
+                                if (end < 1300) {
+                                    tsSaturdayEndHH.setValue(end / 100);
+                                    tsSaturdayEndAMPM.setValue("AM");
+                                } else {
+                                    end -= 1200;
+                                    tsSaturdayEndHH.setValue(end / 100);
+                                    tsSaturdayEndAMPM.setValue("PM");
+                                }
+
+                                if (end / 100 == 12) {
+                                    tsSaturdayEndAMPM.setValue("PM");
+                                }
+
+                                tsSaturdayEndMM.setValue(end % 100);
                                 break;
                         }
                     } else {
                         switch (i) {
                             case 0:
-                                txtMondayStart.setText("");
-                                txtMondayEnd.setText("");
+                                tsMondayStartHH.setValue(1);
+                                tsMondayStartAMPM.setValue("AM");
+                                tsMondayStartMM.setValue(0);
+
+                                tsMondayEndHH.setValue(1);
+                                tsMondayEndAMPM.setValue("AM");
+                                tsMondayEndMM.setValue(0);
                                 break;
                             case 1:
-                                txtTuesdayStart.setText("");
-                                txtTuesdayEnd.setText("");
+                                tsTuesdayStartHH.setValue(1);
+                                tsTuesdayStartAMPM.setValue("AM");
+                                tsTuesdayStartMM.setValue(0);
+                                tsTuesdayEndHH.setValue(1);
+                                tsTuesdayEndAMPM.setValue("AM");
+                                tsTuesdayEndMM.setValue(0);
                                 break;
                             case 2:
-                                txtWednesdayStart.setText("");
-                                txtWednesdayEnd.setText("");
+                                tsWednesdayStartHH.setValue(1);
+                                tsWednesdayStartAMPM.setValue("AM");
+                                tsWednesdayStartMM.setValue(0);
+
+                                tsWednesdayEndHH.setValue(1);
+                                tsWednesdayEndAMPM.setValue("AM");
+                                tsWednesdayEndMM.setValue(0);
                                 break;
                             case 3:
-                                txtThursdayStart.setText("");
-                                txtThursdayEnd.setText("");
+                                tsThursdayStartHH.setValue(1);
+                                tsThursdayStartAMPM.setValue("AM");
+                                tsThursdayStartMM.setValue(0);
+
+                                tsThursdayEndHH.setValue(1);
+                                tsThursdayEndAMPM.setValue("AM");
+                                tsThursdayEndMM.setValue(0);
                                 break;
                             case 4:
-                                txtFridayStart.setText("");
-                                txtFridayEnd.setText("");
+                                tsFridayStartHH.setValue(1);
+                                tsFridayStartAMPM.setValue("AM");
+                                tsFridayStartMM.setValue(0);
+
+                                tsFridayEndHH.setValue(1);
+                                tsFridayEndAMPM.setValue("AM");
+                                tsFridayEndMM.setValue(0);
                                 break;
                             case 5:
-                                txtSaturdayStart.setText("");
-                                txtSaturdayEnd.setText("");
+                                tsSaturdayStartHH.setValue(1);
+                                tsSaturdayStartAMPM.setValue("AM");
+                                tsSaturdayStartMM.setValue(0);
+
+                                tsSaturdayEndHH.setValue(1);
+                                tsSaturdayEndAMPM.setValue("AM");
+                                tsSaturdayEndMM.setValue(0);
                                 break;
                         }
                     }
@@ -4109,18 +4633,18 @@ public class GUIForm extends javax.swing.JFrame {
         txtTSGeneratedID.setText(String.valueOf(newID));
         String empty = "";
         txtTimeSlotCreditValue.setText(empty);
-        txtMondayEnd.setText(empty);
-        txtMondayStart.setText(empty);
-        txtTuesdayEnd.setText(empty);
-        txtTuesdayStart.setText(empty);
-        txtWednesdayEnd.setText(empty);
-        txtWednesdayStart.setText(empty);
-        txtThursdayEnd.setText(empty);
-        txtThursdayStart.setText(empty);
-        txtFridayEnd.setText(empty);
-        txtFridayStart.setText(empty);
-        txtSaturdayEnd.setText(empty);
-        txtSaturdayStart.setText(empty);
+//        txtMondayEnd.setText(empty);
+//        txtMondayStart.setText(empty);
+//        txtTuesdayEnd.setText(empty);
+//        txtTuesdayStart.setText(empty);
+//        txtWednesdayEnd.setText(empty);
+//        txtWednesdayStart.setText(empty);
+//        txtThursdayEnd.setText(empty);
+//        txtThursdayStart.setText(empty);
+//        txtFridayEnd.setText(empty);
+//        txtFridayStart.setText(empty);
+//        txtSaturdayEnd.setText(empty);
+//        txtSaturdayStart.setText(empty);
         currentTimeslot = null;
         btnSaveTimeSlot.setEnabled(true);
     }//GEN-LAST:event_btnNewTimeslotActionPerformed
@@ -5527,7 +6051,7 @@ public class GUIForm extends javax.swing.JFrame {
          1.2 Set course preference. 
          2. Set incompatible courses at random.
          */
-        int digits = String.valueOf(courseCount).length();
+        int digits = String.valueOf(courseCount - 1).length();
         Random rand = new Random();
         for (int i = 0; i < courseCount; i++) {
             String cID = String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
@@ -5562,6 +6086,8 @@ public class GUIForm extends javax.swing.JFrame {
             }
             courseList.put(cID, nCourse);
             courseListData.addElement(nCourse.getID());
+            unscheduledCourses.add(cID + "(1)");
+            courseSectionListData.add(cID + "(1)");
         }
 
         for (int i = 0; i < courseCount; i++) {
@@ -5605,16 +6131,16 @@ public class GUIForm extends javax.swing.JFrame {
         DataInputDialog rid = new DataInputDialog(this, "Generate Random Professors", "Number of Professors to Generate", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
         rid.setVisible(true);
         int profCount = rid.getData();
-        int digits = String.valueOf(profCount).length();
+        int digits = String.valueOf(profCount - 1).length();
         Vector<String> untaughtCourses = new Vector<>(courseListData);
         Random random = new Random();
         for (int i = 0; i < profCount; i++) {
             String pID = "p" + String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
             double creds = 0.0;
             double rVal = random.nextDouble();
-            if (rVal <= 0.2) {
+            if (rVal <= 0.02) {
                 creds = 3.0;
-            } else if (rVal > 0.2 && rVal <= .1) {
+            } else if (rVal > 0.02 && rVal <= .1) {
                 creds = 6.0;
             } else if (rVal > 0.1 && rVal <= 0.85) {
                 creds = 9.0;
@@ -5638,7 +6164,9 @@ public class GUIForm extends javax.swing.JFrame {
             }
 
             rVal = random.nextDouble();
-            pr.addCourseTaught(untaughtCourses.get(random.nextInt(untaughtCourses.size())));
+            int randomUntaught = random.nextInt(untaughtCourses.size());
+            pr.addCourseTaught(untaughtCourses.get(randomUntaught));
+            untaughtCourses.remove(randomUntaught);
             if (rVal > 0.4 && rVal <= 0.49) {
                 do {
                     pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
@@ -5660,15 +6188,207 @@ public class GUIForm extends javax.swing.JFrame {
                     pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
                 } while (pr.getCoursesTaught().length < 6);
             }
+            if (pr.getCredits() == 6.0 && pr.getCoursesTaught().length < 2) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 2);
+            } else if (pr.getCredits() == 9.0 && pr.getCoursesTaught().length < 3) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 3);
+            } else if (pr.getCredits() == 12.0 && pr.getCoursesTaught().length < 4) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 4);
+            } 
+            
             profList.put(pID, pr);
             profListData.add(pID);
         }
-
+        while (!untaughtCourses.isEmpty()) {
+            int randomUntaught = random.nextInt(untaughtCourses.size());
+            int randomProf = random.nextInt(profListData.size());
+            profList.get(profListData.get(randomProf)).addCourseTaught(untaughtCourses.get(randomUntaught));
+            untaughtCourses.remove(randomUntaught);
+        }
         Collections.sort(profListData);
         listProfs.setListData(profListData);
         spProfList.revalidate();
         spProfList.repaint();
     }//GEN-LAST:event_miAnalysis_RandomProfessorsActionPerformed
+
+    private void miExport_TimeslotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_TimeslotActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+        int returnVal = fc.showSaveDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            String fileName = fc.getSelectedFile().getAbsolutePath();
+            if (!fileName.endsWith(".txt")) {
+                fileName += ".txt";
+            }
+            BufferedWriter writer = null;
+            try {
+                File outFile = new File(fileName);
+                writer = new BufferedWriter(new FileWriter(outFile));
+
+                for (String timeslot : timeslotList.keySet()) {
+                    writer.write(timeslot);
+                    writer.write(",");
+                    writer.write(String.valueOf(timeslotList.get(timeslot).getCredits()));
+                    writer.write("\n");
+                }
+
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }//GEN-LAST:event_miExport_TimeslotActionPerformed
+
+    private void miImport_TimeslotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miImport_TimeslotActionPerformed
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+
+        int returnVal = fc.showOpenDialog(pnlContainer);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            try (
+                    FileReader inFile = new FileReader(fc.getSelectedFile());
+                    BufferedReader br = new BufferedReader(inFile);) {
+                String currLine;
+                while ((currLine = br.readLine()) != null) {
+                    String time = currLine.split(",")[0];
+                    double cred = Double.parseDouble(currLine.split(",")[1]);
+                    TimeSlot t = new TimeSlot(timeslotList.size(), cred);
+                    String[] dayTimes = time.replaceAll("\\(", "").replaceAll("\\)", "").split(" ");
+                    for (int i = 0; i < dayTimes.length; i += 2) {
+                        int start = Integer.parseInt(dayTimes[i + 1].trim().split(":")[0]);
+                        int end = Integer.parseInt(dayTimes[i + 1].trim().split(":")[1]);
+                        for (int day = 0; day < dayTimes[i].length(); day++) {
+                            switch (dayTimes[i].charAt(day)) {
+                                case 'M':
+                                    t.SetTime(0, start, end);
+                                    break;
+                                case 'T':
+                                    t.SetTime(1, start, end);
+                                    break;
+                                case 'W':
+                                    t.SetTime(2, start, end);
+                                    break;
+                                case 'R':
+                                    t.SetTime(3, start, end);
+                                    break;
+                                case 'F':
+                                    t.SetTime(4, start, end);
+                                    break;
+                                case 'S':
+                                    t.SetTime(5, start, end);
+                                    break;
+                            }
+                        }
+                    }
+                    timeslotList.put(t.toString(), t);
+                    timeslotListData.add(t.toString());
+                }
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+            }
+
+            listTimeslots.setListData(timeslotListData);
+            spTimeslotList.revalidate();
+            spTimeslotList.repaint();
+        }
+    }//GEN-LAST:event_miImport_TimeslotActionPerformed
+
+    private void miAnalysis_CreditsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_CreditsActionPerformed
+        double courseCredits = 0.0, profCredits = 0.0;
+        HashMap<Double, Integer> courseCreditDistribution = new HashMap<>();
+        HashMap<Double, Integer> profCreditDistribution = new HashMap<>();
+        for (String cr : courseList.keySet()) {
+            courseCredits += courseList.get(cr).getCreditValue();
+            if (!courseCreditDistribution.containsKey(courseList.get(cr).getCreditValue())) {
+                courseCreditDistribution.put(courseList.get(cr).getCreditValue(), 0);
+            }
+            int count = courseCreditDistribution.get(courseList.get(cr).getCreditValue()) + 1;
+            courseCreditDistribution.put(courseList.get(cr).getCreditValue(), count);
+        }
+
+        for (String pr : profList.keySet()) {
+            profCredits += profList.get(pr).getCredits();
+            if (!profCreditDistribution.containsKey(profList.get(pr).getCredits())) {
+                profCreditDistribution.put(profList.get(pr).getCredits(), 0);
+            }
+            int count = profCreditDistribution.get(profList.get(pr).getCredits()) + 1;
+            profCreditDistribution.put(profList.get(pr).getCredits(), count);
+        }
+        DecimalFormat df = new DecimalFormat("#.#");
+        String message = "<html>Course Credits: " + df.format(courseCredits) + "<br />Professor Credits:" + df.format(profCredits);
+        if (Math.abs(profCredits - courseCredits) > 0) {
+            if (profCredits > courseCredits) {
+                message += "<br />" + "Professor exceeds by: " + df.format(profCredits - courseCredits);
+            } else {
+                message += "<br />" + "Course exceeds by: " + df.format(courseCredits - profCredits);
+            }
+        }
+        message += "<br/>Course Credit Distribution: ";
+        for (Double key : courseCreditDistribution.keySet()) {
+            message += "<br />" + String.valueOf(key) + ": " + courseCreditDistribution.get(key) + "(" + Math.round((100.0 * courseCreditDistribution.get(key)) / courseList.size()) + "%)";
+        }
+
+        message += "<br/>Prof Credit Distribution: ";
+        for (Double key : profCreditDistribution.keySet()) {
+            message += "<br />" + String.valueOf(key) + ": " + profCreditDistribution.get(key) + "(" + Math.round((100.0 * profCreditDistribution.get(key)) / profList.size()) + "%)";
+        }
+
+        JOptionPane.showMessageDialog(this, message, "Credit Analysis", JOptionPane.INFORMATION_MESSAGE);
+    }//GEN-LAST:event_miAnalysis_CreditsActionPerformed
+
+    private void miAnalysis_RandomInitScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomInitScheduleActionPerformed
+        HashMap<String, ArrayList<String>> sectionProf = new HashMap<>();
+        for (String prof : profList.keySet()) {
+            Professor p = profList.get(prof);
+            Object[] taught = p.getCoursesTaught();
+            for (int i = 0; i < taught.length; i++) {
+                String courseID = taught[i].toString();
+                if (!sectionProf.containsKey(courseID)) {
+                    sectionProf.put(courseID, new ArrayList<>());
+                }
+                sectionProf.get(courseID).add(prof);
+            }
+        }
+        HashMap<Double, ArrayList<String>> creditTimeslotList = new HashMap<>();
+        for (String t : timeslotList.keySet()) {
+            if (!creditTimeslotList.containsKey(timeslotList.get(t).getCredits())) {
+                creditTimeslotList.put(timeslotList.get(t).getCredits(), new ArrayList<>());
+            }
+            creditTimeslotList.get(timeslotList.get(t).getCredits()).add(t);
+        }
+
+        HashMap<String, ArrayList<String>> sectionTimeslot = new HashMap<>();
+        for (String course : courseList.keySet()) {
+            Course c = courseList.get(course);
+            if (!sectionTimeslot.containsKey(course)) {
+                sectionTimeslot.put(course, new ArrayList<>());
+            }
+            sectionTimeslot.put(course, creditTimeslotList.get(c.getCreditValue()));
+        }
+
+        if (incompatibleSectionList.isEmpty()) {
+            incompatibleSectionList = GenerateIncompatibleSectionArray();
+        }
+        FillEmpty(sectionProf, sectionTimeslot);
+        RepairSchedule(sectionProf, sectionTimeslot);
+    }//GEN-LAST:event_miAnalysis_RandomInitScheduleActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
@@ -6132,12 +6852,6 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> dropIncompCourses;
     private javax.swing.JComboBox dropTimeslotConstraint;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JSpinner jSpinner1;
-    private javax.swing.JSpinner jSpinner2;
-    private javax.swing.JSpinner jSpinner3;
-    private javax.swing.JSpinner jSpinner4;
-    private javax.swing.JSpinner jSpinner5;
-    private javax.swing.JSpinner jSpinner6;
     private javax.swing.JLabel lbFridayStart;
     private javax.swing.JLabel lbSaturdayStart;
     private javax.swing.JLabel lbSetupFileName;
@@ -6214,7 +6928,9 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JMenu menuExportTimeslot;
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuImport;
+    private javax.swing.JMenuItem miAnalysis_Credits;
     private javax.swing.JMenuItem miAnalysis_RandomCourses;
+    private javax.swing.JMenuItem miAnalysis_RandomInitSchedule;
     private javax.swing.JMenuItem miAnalysis_RandomProfessors;
     private javax.swing.JMenuItem miAnalysis_RestrictInitial;
     private javax.swing.JMenuItem miExport_Course;
@@ -6293,36 +7009,54 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JSpinner spinnerSections;
     private javax.swing.JTabbedPane tabbedPanels;
     private javax.swing.JTable tableSchedule;
+    private javax.swing.JSpinner tsFridayEndAMPM;
+    private javax.swing.JSpinner tsFridayEndHH;
+    private javax.swing.JSpinner tsFridayEndMM;
+    private javax.swing.JSpinner tsFridayStartAMPM;
+    private javax.swing.JSpinner tsFridayStartHH;
+    private javax.swing.JSpinner tsFridayStartMM;
     private javax.swing.JSpinner tsMondayEndAMPM;
+    private javax.swing.JSpinner tsMondayEndHH;
     private javax.swing.JSpinner tsMondayEndMM;
-    private javax.swing.JSpinner tsMondayEndtHH;
     private javax.swing.JSpinner tsMondayStartAMPM;
     private javax.swing.JSpinner tsMondayStartHH;
     private javax.swing.JSpinner tsMondayStartMM;
+    private javax.swing.JSpinner tsSaturdayEndAMPM;
+    private javax.swing.JSpinner tsSaturdayEndHH;
+    private javax.swing.JSpinner tsSaturdayEndMM;
+    private javax.swing.JSpinner tsSaturdayStartAMPM;
+    private javax.swing.JSpinner tsSaturdayStartHH;
+    private javax.swing.JSpinner tsSaturdayStartMM;
+    private javax.swing.JSpinner tsThursdayEndAMPM;
+    private javax.swing.JSpinner tsThursdayEndHH;
+    private javax.swing.JSpinner tsThursdayEndMM;
+    private javax.swing.JSpinner tsThursdayStartAMPM;
+    private javax.swing.JSpinner tsThursdayStartHH;
+    private javax.swing.JSpinner tsThursdayStartMM;
+    private javax.swing.JSpinner tsTuesdayEndAMPM;
+    private javax.swing.JSpinner tsTuesdayEndHH;
+    private javax.swing.JSpinner tsTuesdayEndMM;
+    private javax.swing.JSpinner tsTuesdayStartAMPM;
+    private javax.swing.JSpinner tsTuesdayStartHH;
+    private javax.swing.JSpinner tsTuesdayStartMM;
+    private javax.swing.JSpinner tsWednesdayEndAMPM;
+    private javax.swing.JSpinner tsWednesdayEndHH;
+    private javax.swing.JSpinner tsWednesdayEndMM;
+    private javax.swing.JSpinner tsWednesdayStartAMPM;
+    private javax.swing.JSpinner tsWednesdayStartHH;
+    private javax.swing.JSpinner tsWednesdayStartMM;
     private javax.swing.JTextField txtCourseCreditValue;
     private javax.swing.JTextField txtCourseGeneratedID;
     private javax.swing.JTextField txtCourseID;
     private javax.swing.JTextField txtCourseTitle;
-    private javax.swing.JTextField txtFridayEnd;
-    private javax.swing.JTextField txtFridayStart;
     private javax.swing.JTextField txtGeneratedFileName;
-    private javax.swing.JTextField txtMondayEnd;
-    private javax.swing.JTextField txtMondayStart;
     private javax.swing.JTextField txtProfGeneratedID;
     private javax.swing.JTextField txtProfName;
     private javax.swing.JTextField txtResultPath;
     private javax.swing.JTextField txtResultStatus;
-    private javax.swing.JTextField txtSaturdayEnd;
-    private javax.swing.JTextField txtSaturdayStart;
     private javax.swing.JTextField txtSetupFileName;
     private javax.swing.JTextField txtTSGeneratedID;
-    private javax.swing.JTextField txtThursdayEnd;
-    private javax.swing.JTextField txtThursdayStart;
     private javax.swing.JTextField txtTimeSlotCreditValue;
-    private javax.swing.JTextField txtTuesdayEnd;
-    private javax.swing.JTextField txtTuesdayStart;
-    private javax.swing.JTextField txtWednesdayEnd;
-    private javax.swing.JTextField txtWednesdayStart;
     private javax.swing.ButtonGroup viewByGroup;
     // End of variables declaration//GEN-END:variables
 }

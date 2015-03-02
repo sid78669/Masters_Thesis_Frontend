@@ -225,12 +225,38 @@ public class TimeSlot implements Serializable {
 
     @Override
     public String toString() {
+//        HashMap<String, String> byTime = new HashMap<>();
+//        char[] dayChar = {'M', 'T', 'W', 'R', 'F', 'S'};
+//        for (int i = 0; i < 6; i++) {
+//            String today = GetTimeOnDay(i);
+//            if (today.equals("(-1:-1)")) {
+//                continue;
+//            }
+//            if (byTime.containsKey(today)) {
+//                byTime.put(today, byTime.get(today) + dayChar[i]);
+//            } else {
+//                byTime.put(today, String.valueOf(dayChar[i]));
+//            }
+//        }
+//
+//        String rtn = "";
+//        for (String s : byTime.keySet()) {
+//            rtn += " " + byTime.get(s) + " " + s;
+//        }
+//
+//        return rtn.trim();
+        //return GetPrettyTime();
         HashMap<String, String> byTime = new HashMap<>();
-        char[] dayChar = {'M', 'T', 'W', 'R', 'F', 'S'};
+        char[] dayChar = {'G', 'H', 'I', 'J', 'K', 'L'};
         for (int i = 0; i < 6; i++) {
             String today = GetTimeOnDay(i);
             if (today.equals("(-1:-1)")) {
                 continue;
+            } else {
+                today = today.replace("(", "").replace(")", "");
+                String start = today.split(":")[0];
+                String end = today.split(":")[1];
+                today = "(" + ConvertToRegularTime(start) + "-" + ConvertToRegularTime(end) + ")";
             }
             if (byTime.containsKey(today)) {
                 byTime.put(today, byTime.get(today) + dayChar[i]);
@@ -239,12 +265,22 @@ public class TimeSlot implements Serializable {
             }
         }
 
-        String rtn = "";
+        StringBuilder output = new StringBuilder();
         for (String s : byTime.keySet()) {
-            rtn += " " + byTime.get(s) + " " + s;
+            output.append(byTime.get(s));
+            output.append(s);
+            output.append(" ");
         }
 
-        return rtn.trim();
+        String rtnVal = output.toString().trim();
+        rtnVal = rtnVal.replaceAll("G", "M");
+        rtnVal = rtnVal.replaceAll("H", "T");
+        rtnVal = rtnVal.replaceAll("I", "W");
+        rtnVal = rtnVal.replaceAll("J", "R");
+        rtnVal = rtnVal.replaceAll("K", "F");
+        rtnVal = rtnVal.replaceAll("L", "S");
+        rtnVal = rtnVal.replaceAll(" ", " ");
+        return rtnVal;
     }
 
     public String GetPrettyTime() {

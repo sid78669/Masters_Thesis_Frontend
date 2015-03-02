@@ -79,6 +79,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Timeslot List"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miImport_TimeslotActionPerformed"/>
+              </Events>
             </MenuItem>
           </SubComponents>
         </Menu>
@@ -152,6 +155,9 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Timeslot Detailed List"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miExport_TimeslotActionPerformed"/>
+                  </Events>
                 </MenuItem>
                 <MenuItem class="javax.swing.JMenuItem" name="miExport_Timeslot_Daytime">
                   <Properties>
@@ -203,6 +209,22 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RandomProfessorsActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomInitSchedule">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Generate Random Initial Schedule"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RandomInitScheduleActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_Credits">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Credit Analysis"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_CreditsActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
@@ -1611,42 +1633,36 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="lblMondayStart" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtMondayStart" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
                                       <Component id="tsMondayStartHH" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartMM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="tsMondayStartAMPM" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
                                       <Component id="lblMondayEnd" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtMondayEnd" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="tsMondayEndtHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="tsMondayEndHH" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="tsMondayEndMM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="tsMondayEndAMPM" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace pref="99" max="32767" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                             </DimensionLayout>
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                                      <Component id="tsMondayEndtHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="tsMondayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="tsMondayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  </Group>
                                   <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="lblMondayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtMondayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblMondayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtMondayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsMondayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsMondayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsMondayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="lblMondayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -1655,22 +1671,18 @@
                             <Component class="javax.swing.JLabel" name="lblMondayStart">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtMondayStart"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtMondayStart">
-                            </Component>
                             <Component class="javax.swing.JLabel" name="lblMondayEnd">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtMondayEnd"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
-                            </Component>
-                            <Component class="javax.swing.JTextField" name="txtMondayEnd">
                             </Component>
                             <Component class="javax.swing.JSpinner" name="tsMondayStartHH">
                               <Properties>
@@ -1714,7 +1726,7 @@
                                 </Property>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JSpinner" name="tsMondayEndtHH">
+                            <Component class="javax.swing.JSpinner" name="tsMondayEndHH">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
@@ -1773,24 +1785,20 @@
                                   <Group type="102" alignment="0" attributes="0">
                                       <EmptySpace min="-2" max="-2" attributes="0"/>
                                       <Component id="lblTuesdayStart" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtTuesdayStart" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="jSpinner1" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
-                                      <Component id="jSpinner2" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="jSpinner3" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                                      <Component id="lblTuesdayEnd" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                                      <Component id="txtTuesdayEnd" min="-2" pref="65" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="jSpinner4" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayStartHH" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="jSpinner5" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayStartMM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="jSpinner6" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayStartAMPM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace pref="244" max="32767" attributes="0"/>
+                                      <Component id="lblTuesdayEnd" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayEndHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayEndMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayEndAMPM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -1799,15 +1807,13 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                                       <Component id="lblTuesdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtTuesdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="lblTuesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtTuesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jSpinner1" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jSpinner2" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jSpinner3" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jSpinner4" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jSpinner5" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jSpinner6" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsTuesdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -1816,24 +1822,20 @@
                             <Component class="javax.swing.JLabel" name="lblTuesdayStart">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtTuesdayStart"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtTuesdayStart">
-                            </Component>
                             <Component class="javax.swing.JLabel" name="lblTuesdayEnd">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtTuesdayEnd"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtTuesdayEnd">
-                            </Component>
-                            <Component class="javax.swing.JSpinner" name="jSpinner1">
+                            <Component class="javax.swing.JSpinner" name="tsTuesdayStartHH">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
@@ -1846,7 +1848,7 @@
                                 </Property>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JSpinner" name="jSpinner2">
+                            <Component class="javax.swing.JSpinner" name="tsTuesdayStartMM">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
@@ -1859,7 +1861,7 @@
                                 </Property>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JSpinner" name="jSpinner3">
+                            <Component class="javax.swing.JSpinner" name="tsTuesdayStartAMPM">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel type="list">
@@ -1875,7 +1877,7 @@
                                 </Property>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JSpinner" name="jSpinner4">
+                            <Component class="javax.swing.JSpinner" name="tsTuesdayEndHH">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
@@ -1888,7 +1890,7 @@
                                 </Property>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JSpinner" name="jSpinner5">
+                            <Component class="javax.swing.JSpinner" name="tsTuesdayEndMM">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
@@ -1901,7 +1903,7 @@
                                 </Property>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JSpinner" name="jSpinner6">
+                            <Component class="javax.swing.JSpinner" name="tsTuesdayEndAMPM">
                               <Properties>
                                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                                   <SpinnerModel type="list">
@@ -1935,11 +1937,19 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="lblWednesdayStart" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtWednesdayStart" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayStartHH" min="-2" pref="40" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayStartMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayStartAMPM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
                                       <Component id="lblWednesdayEnd" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtWednesdayEnd" min="-2" pref="65" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayEndHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayEndMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayEndAMPM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -1948,9 +1958,15 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                                       <Component id="lblWednesdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtWednesdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblWednesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtWednesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsWednesdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsWednesdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsWednesdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="lblWednesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -1959,22 +1975,102 @@
                             <Component class="javax.swing.JLabel" name="lblWednesdayStart">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtWednesdayStart"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtWednesdayStart">
-                            </Component>
                             <Component class="javax.swing.JLabel" name="lblWednesdayEnd">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtWednesdayEnd"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtWednesdayEnd">
+                            <Component class="javax.swing.JSpinner" name="tsWednesdayStartHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsWednesdayStartMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsWednesdayStartAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsWednesdayEndHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsWednesdayEndMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsWednesdayEndAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
                             </Component>
                           </SubComponents>
                         </Container>
@@ -1994,11 +2090,19 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="lbThursdayStart" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtThursdayStart" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="tsThursdayStartHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsThursdayStartMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsThursdayStartAMPM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
                                       <Component id="lblThursdayEnd" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtThursdayEnd" min="-2" pref="65" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="tsThursdayEndHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsThursdayEndMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsThursdayEndAMPM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -2007,9 +2111,17 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                                       <Component id="lbThursdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtThursdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblThursdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtThursdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsThursdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsThursdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsThursdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="lblThursdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsThursdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsThursdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsThursdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -2018,22 +2130,102 @@
                             <Component class="javax.swing.JLabel" name="lbThursdayStart">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtThursdayStart"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtThursdayStart">
-                            </Component>
                             <Component class="javax.swing.JLabel" name="lblThursdayEnd">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtThursdayEnd"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtThursdayEnd">
+                            <Component class="javax.swing.JSpinner" name="tsThursdayEndHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsThursdayEndMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsThursdayEndAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsThursdayStartHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsThursdayStartMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsThursdayStartAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
                             </Component>
                           </SubComponents>
                         </Container>
@@ -2053,11 +2245,19 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="lbFridayStart" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtFridayStart" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="tsFridayStartHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsFridayStartMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsFridayStartAMPM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
                                       <Component id="lblFridayEnd" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtFridayEnd" min="-2" pref="65" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="tsFridayEndHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsFridayEndMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsFridayEndAMPM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -2066,9 +2266,17 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                                       <Component id="lbFridayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtFridayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblFridayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtFridayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsFridayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsFridayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsFridayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="lblFridayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsFridayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsFridayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsFridayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -2077,22 +2285,102 @@
                             <Component class="javax.swing.JLabel" name="lbFridayStart">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtFridayStart"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtFridayStart">
-                            </Component>
                             <Component class="javax.swing.JLabel" name="lblFridayEnd">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtFridayEnd"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtFridayEnd">
+                            <Component class="javax.swing.JSpinner" name="tsFridayEndHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsFridayEndMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsFridayEndAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsFridayStartHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsFridayStartMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsFridayStartAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
                             </Component>
                           </SubComponents>
                         </Container>
@@ -2112,11 +2400,19 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="lbSaturdayStart" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtSaturdayStart" min="-2" pref="65" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayStartHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayStartMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayStartAMPM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="32767" attributes="0"/>
                                       <Component id="lblSaturdayEnd" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="txtSaturdayEnd" min="-2" pref="65" max="-2" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayEndHH" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayEndMM" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayEndAMPM" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
@@ -2125,9 +2421,17 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                                       <Component id="lbSaturdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtSaturdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="lblSaturdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="txtSaturdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsSaturdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsSaturdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsSaturdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="lblSaturdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                                          <Component id="tsSaturdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsSaturdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="tsSaturdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -2136,22 +2440,102 @@
                             <Component class="javax.swing.JLabel" name="lbSaturdayStart">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtSaturdayStart"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtSaturdayStart">
-                            </Component>
                             <Component class="javax.swing.JLabel" name="lblSaturdayEnd">
                               <Properties>
                                 <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="txtSaturdayEnd"/>
+                                  <ComponentRef name="default"/>
                                 </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
-                            <Component class="javax.swing.JTextField" name="txtSaturdayEnd">
+                            <Component class="javax.swing.JSpinner" name="tsSaturdayEndHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsSaturdayEndMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsSaturdayEndAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsSaturdayStartHH">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="1" maximum="12" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsSaturdayStartMM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel initial="0" maximum="55" minimum="0" numberType="java.lang.Integer" stepSize="5" type="number"/>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
+                            </Component>
+                            <Component class="javax.swing.JSpinner" name="tsSaturdayStartAMPM">
+                              <Properties>
+                                <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+                                  <SpinnerModel type="list">
+                                    <ListItem value="AM"/>
+                                    <ListItem value="PM"/>
+                                  </SpinnerModel>
+                                </Property>
+                                <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                                <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+                                  <Dimension value="[40, 20]"/>
+                                </Property>
+                              </Properties>
                             </Component>
                           </SubComponents>
                         </Container>

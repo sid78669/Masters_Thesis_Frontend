@@ -6,6 +6,7 @@
 package clientgui;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashSet;
 
 /**
@@ -95,7 +96,7 @@ public class Professor implements Serializable {
     Object[] getCoursesTaught() {
         return courseTaught.toArray();
     }
-
+    
     boolean hasCourse(String selectedCourse) {
         return courseTaught.contains(selectedCourse);
     }
