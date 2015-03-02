@@ -20,7 +20,7 @@ import javax.swing.SpinnerNumberModel;
  *
  * @author Siddharth
  */
-public class RestrictInitialDialog extends JDialog {
+public class DataInputDialog extends JDialog {
 
     JSpinner spPercentage;
     Container cp;
@@ -28,12 +28,12 @@ public class RestrictInitialDialog extends JDialog {
     JButton btnDone;
     GroupLayout layout;
 
-    public RestrictInitialDialog(JFrame fr) {
-        super(fr, "Restrict Initial Schedule", true);
+    public DataInputDialog(JFrame fr, String title, String message, SpinnerNumberModel model) {
+        super(fr, title, true);
 
         cp = getContentPane();
-        spPercentage = new JSpinner(new SpinnerNumberModel(75, 0, 100, 1));
-        lblDialog = new JLabel("Please enter the percentage of schedule to keep.");
+        spPercentage = new JSpinner(model);
+        lblDialog = new JLabel(message);
         btnDone = new JButton("OK");
         btnDone.addActionListener(new ActionListener() {
 
@@ -53,7 +53,7 @@ public class RestrictInitialDialog extends JDialog {
         setLocationRelativeTo(fr);
     }
 
-    public int getPercentage() {
+    public int getData() {
         return (Integer) spPercentage.getValue();
     }
 }

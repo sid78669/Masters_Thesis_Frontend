@@ -52,8 +52,10 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.ProgressMonitor;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -2070,11 +2072,11 @@ public class GUIForm extends javax.swing.JFrame {
                 .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSpinner3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30)
+                .addGap(18, 18, 18)
                 .addComponent(lblTuesdayEnd)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(10, 10, 10)
                 .addComponent(txtTuesdayEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSpinner4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSpinner5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -3291,9 +3293,19 @@ public class GUIForm extends javax.swing.JFrame {
         menuAnalysis.add(miAnalysis_RestrictInitial);
 
         miAnalysis_RandomCourses.setText("Generate Random Courses");
+        miAnalysis_RandomCourses.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_RandomCoursesActionPerformed(evt);
+            }
+        });
         menuAnalysis.add(miAnalysis_RandomCourses);
 
         miAnalysis_RandomProfessors.setText("Generate Random Professors");
+        miAnalysis_RandomProfessors.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_RandomProfessorsActionPerformed(evt);
+            }
+        });
         menuAnalysis.add(miAnalysis_RandomProfessors);
 
         menuBar.add(menuAnalysis);
@@ -4137,18 +4149,18 @@ public class GUIForm extends javax.swing.JFrame {
             cbProfCourseTaught.addItem(it.next().toString());
         }
         listCourseTaught.setListData(new Vector<>());
-//        cbProfHighestMorning.setEnabled(false);
-//        cbProfHighestAfternoon.setEnabled(false);
-//        cbProfHighestEvening.setEnabled(false);
-//        cbProfNormalMorning.setEnabled(false);
-//        cbProfNormalAfternoon.setEnabled(false);
-//        cbProfNormalEvening.setEnabled(false);
-//        cbProfLeastMorning.setEnabled(false);
-//        cbProfLeastAfternoon.setEnabled(false);
-//        cbProfLeastEvening.setEnabled(false);
-//        cbProfNA_Morning.setEnabled(false);
-//        cbProfNA_Afternoon.setEnabled(false);
-//        cbProfNA_Evening.setEnabled(false);
+        cbProfHighestMorning.setEnabled(false);
+        cbProfHighestAfternoon.setEnabled(false);
+        cbProfHighestEvening.setEnabled(false);
+        cbProfNormalMorning.setEnabled(false);
+        cbProfNormalAfternoon.setEnabled(false);
+        cbProfNormalEvening.setEnabled(false);
+        cbProfLeastMorning.setEnabled(false);
+        cbProfLeastAfternoon.setEnabled(false);
+        cbProfLeastEvening.setEnabled(false);
+        cbProfNA_Morning.setEnabled(false);
+        cbProfNA_Afternoon.setEnabled(false);
+        cbProfNA_Evening.setEnabled(false);
     }//GEN-LAST:event_btnNewProfActionPerformed
 
     private void btnSaveProfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveProfActionPerformed
@@ -5191,9 +5203,9 @@ public class GUIForm extends javax.swing.JFrame {
          from the backup at random. If the number is lower, just see how many schedules need to be removed and
          remove those schedules.
          */
-        RestrictInitialDialog rid = new RestrictInitialDialog(this);
+        DataInputDialog rid = new DataInputDialog(this, "Restrict Initial Schedule", "Please enter the percentage of schedule to keep.", new SpinnerNumberModel(75, 0, 100, 1));
         rid.setVisible(true);
-        int percentage = rid.getPercentage();
+        int percentage = rid.getData();
         int schedulesToShow = (int) Math.rint((percentage * scheduledCoursesListBackup.size()) / 100.0);
         Random r = new Random();
         if (schedulesToShow > scheduledCoursesList.size()) {
@@ -5397,7 +5409,7 @@ public class GUIForm extends javax.swing.JFrame {
             try {
                 File outFile = new File(fileName);
                 writer = new BufferedWriter(new FileWriter(outFile));
-                
+
                 for (String crs : courseList.keySet()) {
                     writer.write(crs);
                     Vector<String> incomps = courseList.get(crs).getIncompCourses();
@@ -5436,16 +5448,16 @@ public class GUIForm extends javax.swing.JFrame {
             try {
                 File outFile = new File(fileName);
                 writer = new BufferedWriter(new FileWriter(outFile));
-                
+
                 for (String ts : timeslotList.keySet()) {
                     writer.write(ts + ", ");
-                    if(timeslotList.get(ts).isMorning()){
+                    if (timeslotList.get(ts).isMorning()) {
                         writer.write("M");
-                    } else if(timeslotList.get(ts).isAfternoon()){
+                    } else if (timeslotList.get(ts).isAfternoon()) {
                         writer.write("A");
                     } else {
                         writer.write("E");
-                    } 
+                    }
                     writer.write("\n");
                 }
 
@@ -5478,7 +5490,7 @@ public class GUIForm extends javax.swing.JFrame {
             try {
                 File outFile = new File(fileName);
                 writer = new BufferedWriter(new FileWriter(outFile));
-                
+
                 for (String prof : profList.keySet()) {
                     writer.write(prof);
                     Object[] ct = profList.get(prof).getCoursesTaught();
@@ -5502,6 +5514,161 @@ public class GUIForm extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_miExport_Professor_CoursesTaughtActionPerformed
+
+    private void miAnalysis_RandomCoursesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomCoursesActionPerformed
+        DataInputDialog rid = new DataInputDialog(this, "Generate Random Courses", "Number of Courses to Generate", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+        rid.setVisible(true);
+        int courseCount = rid.getData();
+
+        /*
+         Now that we have the number of courses to generate,
+         1. Create that many courses
+         1.1 Set course names and titles
+         1.2 Set course preference. 
+         2. Set incompatible courses at random.
+         */
+        int digits = String.valueOf(courseCount).length();
+        Random rand = new Random();
+        for (int i = 0; i < courseCount; i++) {
+            String cID = String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
+            cID = "c" + cID;
+            double randValue = rand.nextDouble();
+            double cCreds = 3.0;
+            if (randValue <= 0.6) {
+                cCreds = 3.0;
+            } else if (randValue > 0.6 && randValue <= 0.95) {
+                cCreds = 4.0;
+            } else if (randValue > 0.95) {
+                cCreds = 2.0;
+            }
+            Course nCourse = new Course(cID, cID, courseList.size(), cCreds, 1);
+            //Set Preferences
+            randValue = rand.nextDouble();
+            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}, {1, 2, 0}, {0, 0, 0}};
+            if (randValue <= 0.41) {
+                nCourse.setPreferences(prefs[0]);
+            } else if (randValue > 0.41 && randValue <= 0.63) {
+                nCourse.setPreferences(prefs[1]);
+            } else if (randValue > 0.63 && randValue <= 0.85) {
+                nCourse.setPreferences(prefs[2]);
+            } else if (randValue > 0.85 && randValue <= 0.95) {
+                nCourse.setPreferences(prefs[3]);
+            } else if (randValue > 0.95 && randValue <= 0.97) {
+                nCourse.setPreferences(prefs[4]);
+            } else if (randValue > 0.97 && randValue <= 0.99) {
+                nCourse.setPreferences(prefs[5]);
+            } else {
+                nCourse.setPreferences(prefs[6]);
+            }
+            courseList.put(cID, nCourse);
+            courseListData.addElement(nCourse.getID());
+        }
+
+        for (int i = 0; i < courseCount; i++) {
+            double randValue = rand.nextDouble();
+            int incompCount = 0;
+            if (randValue <= 0.05) {
+                incompCount = 1;
+            } else if (randValue > 0.05 && randValue <= 0.1) {
+                incompCount = 2;
+            } else if (randValue > 0.1 && randValue <= 0.14) {
+                incompCount = 3;
+            } else if (randValue > 0.14 && randValue <= 0.18) {
+                incompCount = 4;
+            }
+
+            if (incompCount > 0) {
+                String cID = String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
+                cID = "c" + cID;
+                HashSet<Integer> usedCourses = new HashSet<>();
+                for (int j = 0; j < incompCount; j++) {
+                    int course;
+                    do {
+                        course = rand.nextInt(courseList.size() - 1);
+                    } while (usedCourses.contains(course));
+                    usedCourses.add(course);
+                    String incompID = String.format("%" + digits + "s", String.valueOf(course)).replace(' ', '0');
+                    incompID = "c" + incompID;
+                    courseList.get(cID).addIncompatibleCourse(incompID);
+                    courseList.get(incompID).addIncompatibleCourse(cID);
+                }
+            }
+
+        }
+        Collections.sort(courseListData);
+        listCourses.setListData(courseListData);
+        spCourseList.revalidate();
+        spCourseList.repaint();
+    }//GEN-LAST:event_miAnalysis_RandomCoursesActionPerformed
+
+    private void miAnalysis_RandomProfessorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomProfessorsActionPerformed
+        DataInputDialog rid = new DataInputDialog(this, "Generate Random Professors", "Number of Professors to Generate", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+        rid.setVisible(true);
+        int profCount = rid.getData();
+        int digits = String.valueOf(profCount).length();
+        Vector<String> untaughtCourses = new Vector<>(courseListData);
+        Random random = new Random();
+        for (int i = 0; i < profCount; i++) {
+            String pID = "p" + String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
+            double creds = 0.0;
+            double rVal = random.nextDouble();
+            if (rVal <= 0.2) {
+                creds = 3.0;
+            } else if (rVal > 0.2 && rVal <= .1) {
+                creds = 6.0;
+            } else if (rVal > 0.1 && rVal <= 0.85) {
+                creds = 9.0;
+            } else if (rVal > 0.85) {
+                creds = 12.0;
+            }
+
+            Professor pr = new Professor(i, pID, creds);
+            rVal = random.nextDouble();
+            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}};
+            if (rVal <= 0.03) {
+                pr.setPreference(prefs[4]);
+            } else if (rVal > 0.03 && rVal <= 0.06) {
+                pr.setPreference(prefs[3]);
+            } else if (rVal > 0.06 && rVal <= 0.14) {
+                pr.setPreference(prefs[1]);
+            } else if (rVal > 0.14 && rVal <= 0.53) {
+                pr.setPreference(prefs[0]);
+            } else if (rVal > 0.53) {
+                pr.setPreference(prefs[2]);
+            }
+
+            rVal = random.nextDouble();
+            pr.addCourseTaught(untaughtCourses.get(random.nextInt(untaughtCourses.size())));
+            if (rVal > 0.4 && rVal <= 0.49) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 2);
+            } else if (rVal > 0.49 && rVal <= 0.66) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 3);
+            } else if (rVal > 0.66 && rVal <= 0.85) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 4);
+            } else if (rVal > 0.85 && rVal <= 0.91) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 5);
+            } else if (rVal > 0.91) {
+                do {
+                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
+                } while (pr.getCoursesTaught().length < 6);
+            }
+            profList.put(pID, pr);
+            profListData.add(pID);
+        }
+
+        Collections.sort(profListData);
+        listProfs.setListData(profListData);
+        spProfList.revalidate();
+        spProfList.repaint();
+    }//GEN-LAST:event_miAnalysis_RandomProfessorsActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
@@ -5606,108 +5773,107 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void updateProfTimePreferenceBoxes() {
         if (chkProfNoPreference.isSelected()) {
-//            cbProfHighestMorning.setEnabled(false);
-//            cbProfHighestAfternoon.setEnabled(false);
-//            cbProfHighestEvening.setEnabled(false);
-//            cbProfNormalMorning.setEnabled(false);
-//            cbProfNormalAfternoon.setEnabled(false);
-//            cbProfNormalEvening.setEnabled(false);
-//            cbProfLeastMorning.setEnabled(false);
-//            cbProfLeastAfternoon.setEnabled(false);
-//            cbProfLeastEvening.setEnabled(false);
-//            cbProfNA_Morning.setEnabled(false);
-//            cbProfNA_Afternoon.setEnabled(false);
-//            cbProfNA_Evening.setEnabled(false);
+            cbProfHighestMorning.setEnabled(false);
+            cbProfHighestAfternoon.setEnabled(false);
+            cbProfHighestEvening.setEnabled(false);
+            cbProfNormalMorning.setEnabled(false);
+            cbProfNormalAfternoon.setEnabled(false);
+            cbProfNormalEvening.setEnabled(false);
+            cbProfLeastMorning.setEnabled(false);
+            cbProfLeastAfternoon.setEnabled(false);
+            cbProfLeastEvening.setEnabled(false);
+            cbProfNA_Morning.setEnabled(false);
+            cbProfNA_Afternoon.setEnabled(false);
+            cbProfNA_Evening.setEnabled(false);
         } else {
             if (!cbProfHighestAfternoon.isSelected() && !cbProfHighestEvening.isSelected() && !cbProfNormalMorning.isSelected()
                     && !cbProfLeastMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
                 cbProfHighestMorning.setEnabled(true);
             } else {
-//                cbProfHighestMorning.setEnabled(false);
+                cbProfHighestMorning.setEnabled(false);
             }
 
             if (!cbProfHighestMorning.isSelected() && !cbProfHighestEvening.isSelected() && !cbProfNormalAfternoon.isSelected()
                     && !cbProfLeastAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
                 cbProfHighestAfternoon.setEnabled(true);
             } else {
-//                cbProfHighestAfternoon.setEnabled(false);
+                cbProfHighestAfternoon.setEnabled(false);
             }
 
             if (!cbProfHighestAfternoon.isSelected() && !cbProfHighestMorning.isSelected() && !cbProfNormalEvening.isSelected()
                     && !cbProfLeastEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
                 cbProfHighestEvening.setEnabled(true);
             } else {
-//                cbProfHighestEvening.setEnabled(false);
+                cbProfHighestEvening.setEnabled(false);
             }
 
             if (!cbProfNormalAfternoon.isSelected() && !cbProfNormalEvening.isSelected() && !cbProfHighestMorning.isSelected()
                     && !cbProfLeastMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
                 cbProfNormalMorning.setEnabled(true);
             } else {
-//                cbProfNormalMorning.setEnabled(false);
+                cbProfNormalMorning.setEnabled(false);
             }
 
             if (!cbProfNormalMorning.isSelected() && !cbProfNormalEvening.isSelected() && !cbProfHighestAfternoon.isSelected()
                     && !cbProfLeastAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
                 cbProfNormalAfternoon.setEnabled(true);
             } else {
-//                cbProfNormalAfternoon.setEnabled(false);
+                cbProfNormalAfternoon.setEnabled(false);
             }
 
             if (!cbProfNormalAfternoon.isSelected() && !cbProfNormalMorning.isSelected() && !cbProfHighestEvening.isSelected()
                     && !cbProfLeastEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
                 cbProfNormalEvening.setEnabled(true);
             } else {
-//                cbProfNormalEvening.setEnabled(false);
+                cbProfNormalEvening.setEnabled(false);
             }
 
             if (!cbProfLeastAfternoon.isSelected() && !cbProfLeastEvening.isSelected() && !cbProfNormalMorning.isSelected()
                     && !cbProfHighestMorning.isSelected() && !cbProfNA_Morning.isSelected()) {
                 cbProfLeastMorning.setEnabled(true);
             } else {
-//                cbProfLeastMorning.setEnabled(false);
+                cbProfLeastMorning.setEnabled(false);
             }
 
             if (!cbProfLeastMorning.isSelected() && !cbProfLeastEvening.isSelected() && !cbProfNormalAfternoon.isSelected()
                     && !cbProfHighestAfternoon.isSelected() && !cbProfNA_Afternoon.isSelected()) {
                 cbProfLeastAfternoon.setEnabled(true);
             } else {
-//                cbProfLeastAfternoon.setEnabled(false);
+                cbProfLeastAfternoon.setEnabled(false);
             }
 
             if (!cbProfLeastAfternoon.isSelected() && !cbProfLeastMorning.isSelected() && !cbProfNormalEvening.isSelected()
                     && !cbProfHighestEvening.isSelected() && !cbProfNA_Evening.isSelected()) {
                 cbProfLeastEvening.setEnabled(true);
             } else {
-//                cbProfLeastEvening.setEnabled(false);
+                cbProfLeastEvening.setEnabled(false);
             }
 
             if (!cbProfNA_Afternoon.isSelected() && !cbProfNA_Evening.isSelected() && !cbProfNormalMorning.isSelected()
                     && !cbProfLeastMorning.isSelected() && !cbProfHighestMorning.isSelected()) {
                 cbProfNA_Morning.setEnabled(true);
             } else {
-//                cbProfNA_Morning.setEnabled(false);
+                cbProfNA_Morning.setEnabled(false);
             }
 
             if (!cbProfNA_Morning.isSelected() && !cbProfNA_Evening.isSelected() && !cbProfNormalAfternoon.isSelected()
                     && !cbProfLeastAfternoon.isSelected() && !cbProfHighestAfternoon.isSelected()) {
                 cbProfNA_Afternoon.setEnabled(true);
             } else {
-//                cbProfNA_Afternoon.setEnabled(false);
+                cbProfNA_Afternoon.setEnabled(false);
             }
 
             if (!cbProfNA_Afternoon.isSelected() && !cbProfNA_Morning.isSelected() && !cbProfNormalEvening.isSelected()
                     && !cbProfLeastEvening.isSelected() && !cbProfHighestEvening.isSelected()) {
                 cbProfNA_Evening.setEnabled(true);
             } else {
-//                cbProfNA_Evening.setEnabled(false);
+                cbProfNA_Evening.setEnabled(false);
             }
         }
     }
 
     private void updateCourseGeneratedIDs() {
-        int arraySize = courseList.size();
-        int leftID = 0, rightID = 0;
+        int rightID = 0;
         HashMap<Integer, Course> updateList = new HashMap<>();
         TreeSet<Integer> ids = new TreeSet<>();
         for (String s : courseList.keySet()) {
