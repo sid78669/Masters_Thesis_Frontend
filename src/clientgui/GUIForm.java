@@ -99,7 +99,6 @@ public class GUIForm extends javax.swing.JFrame {
     private int populationSize;
     private int replacementWait;
     private int mutationProbability;
-    private TimeSlotVerifier tsVerify;
     private DefaultTableModel dtm;
     private int dtmSelectedRow;
     private JPanel[][] timeblocks;
@@ -107,7 +106,16 @@ public class GUIForm extends javax.swing.JFrame {
     private boolean resultCourse;
     private boolean saveAbort;
     private ArrayList<ArrayList<Integer>> incompatibleSectionList;
-    private ArrayList<ArrayList<Integer>> sectionTabooList;
+
+    private enum ScheduleType {
+
+        OVERLOAD, UNDERLOAD, BALANCED
+    }
+
+    private enum ProfessorCourseLoad {
+
+        THREE, SIX, NINE, TWELVE
+    }
 
     /**
      * Creates new form GUIForm
@@ -137,7 +145,7 @@ public class GUIForm extends javax.swing.JFrame {
                     }
                 }
         );
-        
+
         saveAbort = false;
         undoList = new LinkedList<>();
         courseIDs = new HashSet<>();
@@ -220,19 +228,7 @@ public class GUIForm extends javax.swing.JFrame {
         }
         txtCourseCreditValue.setInputVerifier(new DoubleValueInputVerifier());
         txtTimeSlotCreditValue.setInputVerifier(new DoubleValueInputVerifier());
-        tsVerify = new TimeSlotVerifier();
-//        txtMondayStart.setInputVerifier(tsVerify);
-//        txtMondayEnd.setInputVerifier(tsVerify);
-//        txtTuesdayStart.setInputVerifier(tsVerify);
-//        txtTuesdayEnd.setInputVerifier(tsVerify);
-//        txtWednesdayStart.setInputVerifier(tsVerify);
-//        txtWednesdayEnd.setInputVerifier(tsVerify);
-//        txtThursdayStart.setInputVerifier(tsVerify);
-//        txtThursdayEnd.setInputVerifier(tsVerify);
-//        txtFridayStart.setInputVerifier(tsVerify);
-//        txtFridayEnd.setInputVerifier(tsVerify);
-//        txtSaturdayStart.setInputVerifier(tsVerify);
-//        txtSaturdayEnd.setInputVerifier(tsVerify);
+
         dtm = new DefaultTableModel(0, 3);
         dtm.setColumnIdentifiers(new String[]{"Course", "Professor", "Timeslot"});
         tableSchedule.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -819,6 +815,7 @@ public class GUIForm extends javax.swing.JFrame {
         sectionLookup.clear();
         undoList.clear();
         courseListData.clear();
+        incompatibleSectionList.clear();
         courseSectionListData.clear();
         unscheduledCourses.clear();
         profListData.clear();
@@ -842,75 +839,6 @@ public class GUIForm extends javax.swing.JFrame {
         txtCourseGeneratedID.setText("");
         txtProfGeneratedID.setText("");
         txtTSGeneratedID.setText("");
-    }
-
-    private void RepairSchedule(HashMap<String, ArrayList<String>> sectionProf, HashMap<String, ArrayList<String>> sectionTimeslot) {
-        int retry = 0;
-        do {
-            BalanceProfLoad();
-            UpdateTabooList();
-            for (int currentSection = 0; currentSection < courseListData.size(); currentSection++) {
-                Course current = courseList.get(courseListData.get(currentSection));
-                for (int otherSection = currentSection + 1; otherSection < courseListData.size(); otherSection++) {
-                    if (current.hasIncomp(courseListData.get(otherSection)) || scheduledCoursesList.get(current.getID() + "(1)").prof.equals(scheduledCoursesList.get(courseListData.get(otherSection) + "(1)").prof)) {
-                        if (scheduledCoursesList.get(current.getID() + "(1)").time.equals(scheduledCoursesList.get(courseListData.get(otherSection) + "(1)").time)) {
-                            String potentialTime;
-
-                        }
-                    }
-                }
-            }
-        } while (!validateSchedule(false).isEmpty() && ++retry < 50);
-    }
-
-    private void BalanceProfLoad() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    private void UpdateTabooList() {
-        sectionTabooList = new ArrayList<>();
-        //Course based for random init schedule repair        
-        for(int i = 0; i < courseListData.size(); i++){
-            sectionTabooList.add(new ArrayList<>());
-        }
-        
-    }
-
-    private void FillEmpty(HashMap<String, ArrayList<String>> sectionProf, HashMap<String, ArrayList<String>> sectionTimeslot) {
-        Random random = new Random();
-        int compTimes, compProfs;
-        String timeID, profID;
-        for (String course : unscheduledCourses) {
-            course = course.split("\\(")[0];
-            compProfs = sectionProf.get(course).size();
-            compTimes = sectionTimeslot.get(course).size();
-
-            timeID = sectionTimeslot.get(course).get(random.nextInt(compTimes));
-            profID = sectionProf.get(course).get(random.nextInt(compProfs));
-            Schedule s = new Schedule();
-            course = course + "(1)";
-            s.course = course;
-            s.prof = profID;
-            s.time = timeID;
-            scheduledCoursesList.put(course, s);
-            scheduledCoursesListBackup.put(course, s);
-
-            dtm.addRow(new String[]{s.course, s.prof, s.time});
-        }
-        unscheduledCourses.removeAllElements();
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
-        sorter.setSortsOnUpdates(true);
-        tableSchedule.setRowSorter(sorter);
-
-        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-        int columnIndexToSort = 0;
-        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
-        sorter.setSortKeys(sortKeys);
-        sorter.sort();
-
-        listUnscheduledCourses.setListData(unscheduledCourses);
-        spUnscheduledCourses.revalidate();
-        spUnscheduledCourses.repaint();
     }
 
     private static class ScheduleReplace {
@@ -2090,15 +2018,15 @@ public class GUIForm extends javax.swing.JFrame {
         pnlMondayLayout.setVerticalGroup(
             pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(tsMondayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblMondayEnd))
+            .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lblMondayStart)
                 .addComponent(tsMondayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(tsMondayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(pnlMondayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsMondayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsMondayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsMondayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblMondayEnd)))
+                .addComponent(tsMondayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pnlTuesday.setBorder(javax.swing.BorderFactory.createTitledBorder("Tuesday"));
@@ -2223,15 +2151,15 @@ public class GUIForm extends javax.swing.JFrame {
         pnlWednesdayLayout.setVerticalGroup(
             pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(tsWednesdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsWednesdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsWednesdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblWednesdayEnd))
+            .addGroup(pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(lblWednesdayStart)
                 .addComponent(tsWednesdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(tsWednesdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(tsWednesdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGroup(pnlWednesdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsWednesdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsWednesdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsWednesdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblWednesdayEnd)))
+                .addComponent(tsWednesdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pnlThursday.setBorder(javax.swing.BorderFactory.createTitledBorder("Thursday"));
@@ -2290,16 +2218,15 @@ public class GUIForm extends javax.swing.JFrame {
         pnlThursdayLayout.setVerticalGroup(
             pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(lbThursdayStart)
-                .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsThursdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsThursdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsThursdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblThursdayEnd))
-                .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsThursdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsThursdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsThursdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(tsThursdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsThursdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsThursdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblThursdayEnd))
+            .addGroup(pnlThursdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(tsThursdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsThursdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsThursdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(lbThursdayStart)
         );
 
         pnlFriday.setBorder(javax.swing.BorderFactory.createTitledBorder("Friday"));
@@ -2358,16 +2285,15 @@ public class GUIForm extends javax.swing.JFrame {
         pnlFridayLayout.setVerticalGroup(
             pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(lbFridayStart)
-                .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsFridayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsFridayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsFridayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblFridayEnd))
-                .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsFridayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsFridayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsFridayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(tsFridayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsFridayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsFridayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblFridayEnd))
+            .addGroup(pnlFridayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(tsFridayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsFridayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsFridayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(lbFridayStart)
         );
 
         pnlSaturday.setBorder(javax.swing.BorderFactory.createTitledBorder("Saturday"));
@@ -2426,16 +2352,15 @@ public class GUIForm extends javax.swing.JFrame {
         pnlSaturdayLayout.setVerticalGroup(
             pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                .addComponent(lbSaturdayStart)
-                .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsSaturdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsSaturdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsSaturdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblSaturdayEnd))
-                .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(tsSaturdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsSaturdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tsSaturdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addComponent(tsSaturdayEndHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsSaturdayEndMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsSaturdayEndAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblSaturdayEnd))
+            .addGroup(pnlSaturdayLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(tsSaturdayStartHH, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsSaturdayStartMM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tsSaturdayStartAMPM, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(lbSaturdayStart)
         );
 
         javax.swing.GroupLayout pnlScheduleDaysLayout = new javax.swing.GroupLayout(pnlScheduleDays);
@@ -6200,8 +6125,8 @@ public class GUIForm extends javax.swing.JFrame {
                 do {
                     pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
                 } while (pr.getCoursesTaught().length < 4);
-            } 
-            
+            }
+
             profList.put(pID, pr);
             profListData.add(pID);
         }
@@ -6353,19 +6278,66 @@ public class GUIForm extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, message, "Credit Analysis", JOptionPane.INFORMATION_MESSAGE);
     }//GEN-LAST:event_miAnalysis_CreditsActionPerformed
 
-    private void miAnalysis_RandomInitScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomInitScheduleActionPerformed
-        HashMap<String, ArrayList<String>> sectionProf = new HashMap<>();
-        for (String prof : profList.keySet()) {
-            Professor p = profList.get(prof);
-            Object[] taught = p.getCoursesTaught();
-            for (int i = 0; i < taught.length; i++) {
-                String courseID = taught[i].toString();
-                if (!sectionProf.containsKey(courseID)) {
-                    sectionProf.put(courseID, new ArrayList<>());
-                }
-                sectionProf.get(courseID).add(prof);
-            }
+    private Course GenerateRandomCourse(double creditValue) {
+        Random rand = new Random();
+        String cID = "c" + String.valueOf(courseList.size());
+        double randValue = rand.nextDouble();
+        Course nCourse = new Course(cID, cID, courseList.size(), creditValue, 1);
+        //Set Preferences
+        int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}, {1, 2, 0}, {0, 0, 0}};
+        if (randValue <= 0.41) {
+            nCourse.setPreferences(prefs[0]);
+        } else if (randValue > 0.41 && randValue <= 0.63) {
+            nCourse.setPreferences(prefs[1]);
+        } else if (randValue > 0.63 && randValue <= 0.85) {
+            nCourse.setPreferences(prefs[2]);
+        } else if (randValue > 0.85 && randValue <= 0.95) {
+            nCourse.setPreferences(prefs[3]);
+        } else if (randValue > 0.95 && randValue <= 0.97) {
+            nCourse.setPreferences(prefs[4]);
+        } else if (randValue > 0.97 && randValue <= 0.99) {
+            nCourse.setPreferences(prefs[5]);
+        } else {
+            nCourse.setPreferences(prefs[6]);
         }
+        courseList.put(cID, nCourse);
+        //courseListData.addElement(cID);
+        unscheduledCourses.add(cID + "(1)");
+        if (!courseSectionListData.contains(cID + "(1)")) {
+            courseSectionListData.add(cID + "(1)");
+        }
+        return nCourse;
+    }
+
+    private void GenerateAddCourseToProf(Professor pr, double credit, HashMap<Double, ArrayList<String>> creditTimeslotList,
+            Random random, HashMap<String, ArrayList<Schedule>> scheduleByTimeslot, HashMap<String, HashSet<String>> profTimeAssigned) {
+        Course c = GenerateRandomCourse(credit);
+        String timeslot = creditTimeslotList.get(credit).get(random.nextInt(creditTimeslotList.get(credit).size()));
+        if (!profTimeAssigned.containsKey(pr.getProfName())) {
+            profTimeAssigned.put(pr.getProfName(), new HashSet<>());
+            profTimeAssigned.get(pr.getProfName()).add(timeslot);
+        } else {
+            while (profTimeAssigned.get(pr.getProfName()).contains(timeslot)) {
+                timeslot = creditTimeslotList.get(credit).get(random.nextInt(creditTimeslotList.get(credit).size()));
+            }
+            profTimeAssigned.get(pr.getProfName()).add(timeslot);
+        }
+        Schedule nSchedule = new Schedule();
+        pr.addCourseTaught(c.getID());
+        nSchedule.course = c.getID() + "(1)";
+        nSchedule.prof = pr.getProfName();
+        nSchedule.time = timeslot;
+        if (!scheduleByTimeslot.containsKey(timeslot)) {
+            scheduleByTimeslot.put(timeslot, new ArrayList<>());
+        }
+        scheduleByTimeslot.get(timeslot).add(nSchedule);
+
+        unscheduledCourses.remove(nSchedule.course);
+        scheduledCoursesList.put(nSchedule.course, nSchedule);
+        scheduledCoursesListBackup.put(nSchedule.course, nSchedule);
+    }
+
+    private void miAnalysis_RandomInitScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomInitScheduleActionPerformed
         HashMap<Double, ArrayList<String>> creditTimeslotList = new HashMap<>();
         for (String t : timeslotList.keySet()) {
             if (!creditTimeslotList.containsKey(timeslotList.get(t).getCredits())) {
@@ -6374,20 +6346,242 @@ public class GUIForm extends javax.swing.JFrame {
             creditTimeslotList.get(timeslotList.get(t).getCredits()).add(t);
         }
 
-        HashMap<String, ArrayList<String>> sectionTimeslot = new HashMap<>();
-        for (String course : courseList.keySet()) {
-            Course c = courseList.get(course);
-            if (!sectionTimeslot.containsKey(course)) {
-                sectionTimeslot.put(course, new ArrayList<>());
+        HashMap<String, ArrayList<Schedule>> scheduleByTimeslot = new HashMap<>();
+        HashMap<String, HashSet<String>> profTimeAssigned = new HashMap<>();
+        //First get the number of professors to schedule.
+        DataInputDialog did = new DataInputDialog(this, "Professor Count", "Number of Professors to schedule", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+        did.setVisible(true);
+        int profCount = did.getData();
+
+        //Get the maximum number of courses to schedule.
+        String[] options = {"Overloaded", "Underloaded", "Balanced"};
+        ScheduleType scheduleType = ScheduleType.values()[JOptionPane.showOptionDialog(this, "Please select the type of schedule.", "Schedule Type",
+                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2])];
+
+        int delta = 0;
+        if (scheduleType == ScheduleType.OVERLOAD || scheduleType == ScheduleType.UNDERLOAD) {
+            did = new DataInputDialog(this, "Delta Value", "Please enter the delta value", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+            did.setVisible(true);
+            delta = did.getData();
+        }
+        int digits = String.valueOf(profCount - 1).length();
+        Random random = new Random();
+        double totalProfCredits = 0.0, totalCourseCredits = 0.0;
+        int[] profCountDistribution = new int[4];
+        profCountDistribution[0] = (int) Math.round(0.02 * profCount);
+        profCountDistribution[1] = (int) Math.round(0.08 * profCount);
+        profCountDistribution[3] = (int) Math.round(0.15 * profCount);
+        profCountDistribution[2] = profCount - (profCountDistribution[0] + profCountDistribution[1] + profCountDistribution[3]);
+        for (int i = 0; i < profCount; i++) {
+            String pID = "p" + String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
+            double creds;
+            int credLocation = random.nextInt(4);
+            switch (credLocation) {
+                case 0:
+                    if (profCountDistribution[0] > 0) {
+                        profCountDistribution[0]--;
+                        creds = 3.0;
+                        break;
+                    }
+                case 1:
+                    if (profCountDistribution[1] > 0) {
+                        profCountDistribution[1]--;
+                        creds = 6.0;
+                        break;
+                    }
+                case 3:
+                    if (profCountDistribution[3] > 0) {
+                        profCountDistribution[3]--;
+                        creds = 12.0;
+                        break;
+                    }
+                default:
+                    profCountDistribution[2]--;
+                    creds = 9.0;
+                    break;
             }
-            sectionTimeslot.put(course, creditTimeslotList.get(c.getCreditValue()));
+
+            Professor pr = new Professor(i, pID, creds);
+            totalProfCredits += creds;
+            double rVal = random.nextDouble();
+            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}};
+            if (rVal <= 0.03) {
+                pr.setPreference(prefs[4]);
+            } else if (rVal > 0.03 && rVal <= 0.06) {
+                pr.setPreference(prefs[3]);
+            } else if (rVal > 0.06 && rVal <= 0.14) {
+                pr.setPreference(prefs[1]);
+            } else if (rVal > 0.14 && rVal <= 0.53) {
+                pr.setPreference(prefs[0]);
+            } else if (rVal > 0.53) {
+                pr.setPreference(prefs[2]);
+            }
+
+            double credsScheduled = 0.0;
+            //Based on creds, assign courses
+            if (creds == 3.0) {
+                //1. Generate a course
+                //2. Assign the course to the current professor
+                //3. Schedule the course to a given time slot
+                GenerateAddCourseToProf(pr, creds, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                totalCourseCredits += 3.0;
+            } else if (creds == 6.0) {
+                totalCourseCredits += 6.0;
+                if (random.nextDouble() > 0.8) { //do a 2-4 split
+                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else { //do a 3-3 split
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                }
+            } else if (creds == 9.0) {
+                int rand = random.nextInt(3);
+                totalCourseCredits += 9.0;
+                if (rand == 1) { //Do a 2-4-3 split
+                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else { //Do a 3-3-3 split
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                }
+            } else if (creds == 12.0) {
+                totalCourseCredits += 12.0;
+                int rand = random.nextInt(4);
+                if (rand == 0) {//Do a 4-4-4 split
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else if (rand == 1) { //Do a 4-3-3-2 split
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else if (rand >= 2) { //Do a 3-3-3-3 split
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                }
+            }
+
+            credsScheduled += creds;
+
+            //Underload or overload only 10% of the professors
+            if (random.nextDouble() <= 0.05) {
+                if (scheduleType == ScheduleType.OVERLOAD) {
+                    //Add more courses scheduled to pr to get to the delta limit.
+                    while ((credsScheduled - creds) < delta) {
+                        if (random.nextDouble() > 0.8) {//Schedule a 3 credit class
+                            GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                            credsScheduled += 2.0;
+                            totalCourseCredits += 2.0;
+                        } else { //Schedule a 2 credit class
+                            GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                            credsScheduled += 3.0;
+                            totalCourseCredits += 2.0;
+                        }
+                    }
+                }
+            }
+
+            profList.put(pID, pr);
+            profListData.add(pID);
         }
 
-        if (incompatibleSectionList.isEmpty()) {
-            incompatibleSectionList = GenerateIncompatibleSectionArray();
+        if (scheduleType == ScheduleType.UNDERLOAD) {
+            //Remove a random course
+            while ((totalProfCredits - totalCourseCredits) < (delta * profCount / 4)) {
+                Vector<String> temp = new Vector<>(courseList.keySet());
+                String cID = temp.get(random.nextInt(temp.size()));
+                String sID = cID + "(1)";
+                currentCourse = courseList.get(cID);
+                courseList.remove(cID);
+                courseSectionListData.removeElement(sID);
+                unscheduledCourses.removeElement(sID);
+                scheduleByTimeslot.get(scheduledCoursesList.get(sID).time).remove(scheduledCoursesList.get(sID));
+                profList.get(scheduledCoursesList.get(sID).prof).removeCourseTaught(cID);
+                scheduledCoursesList.remove(sID);
+                scheduledCoursesListBackup.remove(sID);
+                totalCourseCredits -= currentCourse.getCreditValue();
+                currentCourse = null;
+            }
         }
-        FillEmpty(sectionProf, sectionTimeslot);
-        RepairSchedule(sectionProf, sectionTimeslot);
+
+        courseListData = new Vector<>(courseList.keySet());
+        int courseCount = courseListData.size();
+        for (String pID : profList.keySet()) {
+            Professor pr = profList.get(pID);
+            int newCourseCount = random.nextInt(5);
+            for (int i = 1; i < newCourseCount; i++) {
+                pr.addCourseTaught(courseListData.get(random.nextInt(courseCount)));
+            }
+        }
+
+        for (int i = 0; i < courseListData.size(); i++) {
+            String cID = courseListData.get(i);
+            String sID = cID + "(1)";
+            String timeAssigned = scheduledCoursesList.get(sID).time;
+            dtm.addRow(new String[]{scheduledCoursesList.get(sID).course, scheduledCoursesList.get(sID).prof, scheduledCoursesList.get(sID).time});
+            for (int times = 0; times < timeslotListData.size(); times++) {
+                if (!timeslotList.get(timeAssigned).isConflict(timeslotList.get(timeslotListData.get(times))) && scheduleByTimeslot.containsKey(timeslotListData.get(times))) {
+                    double probability = random.nextDouble();
+                    if (probability <= 0.02) {
+                        //pick a random course scheduled for the second slot
+                        ArrayList<Schedule> schedules = scheduleByTimeslot.get(timeslotListData.get(times));
+                        int randomIndex = random.nextInt(schedules.size());
+                        String altCID = schedules.get(randomIndex).course;
+                        altCID = altCID.replace("(1)", " ").trim();
+                        courseList.get(cID).addIncompatibleCourse(altCID);
+                        courseList.get(altCID).addIncompatibleCourse(cID);
+                    }
+                }
+            }
+        }
+        listCourses.setListData(courseListData);
+        listProfs.setListData(profListData);
+        spCourseList.revalidate();
+        spCourseList.repaint();
+
+        spProfList.revalidate();
+        spProfList.repaint();
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+        sorter.setSortsOnUpdates(true);
+        tableSchedule.setRowSorter(sorter);
+
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        int columnIndexToSort = 0;
+        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+
+//        HashMap<String, ArrayList<String>> sectionProf = new HashMap<>();
+//        for (String prof : profList.keySet()) {
+//            Professor p = profList.get(prof);
+//            Object[] taught = p.getCoursesTaught(); 
+//            for (int i = 0; i < taught.length; i++) {
+//                String courseID = taught[i].toString();
+//                if (!sectionProf.containsKey(courseID)) {
+//                    sectionProf.put(courseID, new ArrayList<>());
+//                }
+//                sectionProf.get(courseID).add(prof);
+//            }
+//        }
+//
+//        HashMap<String, ArrayList<String>> sectionTimeslot = new HashMap<>();
+//        for (String course : courseList.keySet()) {
+//            Course c = courseList.get(course);
+//            if (!sectionTimeslot.containsKey(course)) {
+//                sectionTimeslot.put(course, new ArrayList<>());
+//            }
+//            sectionTimeslot.put(course, creditTimeslotList.get(c.getCreditValue()));
+//        }
+//
+//        if (incompatibleSectionList.isEmpty()) {
+//            incompatibleSectionList = GenerateIncompatibleSectionArray();
+//        }
+//        FillEmpty(sectionProf, sectionTimeslot);
     }//GEN-LAST:event_miAnalysis_RandomInitScheduleActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
@@ -6667,6 +6861,7 @@ public class GUIForm extends javax.swing.JFrame {
         HashMap<String, Double> profCreditsAssigned = new HashMap<>();
         ArrayList<Schedule> schedulesToValidate;
 
+        int errorCount = 0;
         if (isResult) {
             schedulesToValidate = new ArrayList<>(resultListBySections.values());
         } else {
@@ -6676,9 +6871,15 @@ public class GUIForm extends javax.swing.JFrame {
         for (Schedule s : schedulesToValidate) {
             if (assignmentVerifier.containsKey(s.prof) && assignmentVerifier.get(s.prof).contains(s.time)) {
                 invalid = true;
+                errorCount++;
                 errors.append("<li>");
-                errors.append("ERROR! Prof. ").append(s.prof).append(" is assigned at ").append(s.time).append(" twice!");
+                errors.append("ERROR! Prof. ").append(s.prof).append(" is assigned at ").append(s.time).append(" more than once!");
                 errors.append("</li>");
+                if (errorCount > 10) {
+                    errors.append("<li> And many more....</li>");
+                    errors.append("</ul>");
+                    return errors.toString();
+                }
             } else {
                 if (!assignmentVerifier.containsKey(s.prof)) {
                     assignmentVerifier.put(s.prof, new ArrayList<>());
@@ -6701,6 +6902,7 @@ public class GUIForm extends javax.swing.JFrame {
             creditsAvailable -= profCreditsAssigned.get(s);
             if (creditsAvailable < DELTA_MAX || creditsAvailable > DELTA_MIN) {
                 invalid = true;
+                errorCount++;
                 errors.append("<li>");
                 errors.append("WARNING! Prof. ").append(s).append(" is scheduled for about ");
                 if (creditsAvailable < DELTA_MAX) {
@@ -6711,6 +6913,11 @@ public class GUIForm extends javax.swing.JFrame {
                     errors.append(" less credits than allocated.");
                 }
                 errors.append("</li>");
+                if (errorCount > 10) {
+                    errors.append("<li> And many more....</li>");
+                    errors.append("</ul>");
+                    return errors.toString();
+                }
             }
         }
 
@@ -6729,6 +6936,7 @@ public class GUIForm extends javax.swing.JFrame {
                 for (int i = 0; i < incompatibleSectionList.get(currentSectionIndex).size(); i++) {
                     if (incompChecklist.get(s.time).contains(incompatibleSectionList.get(currentSectionIndex).get(i))) {
                         invalid = true;
+                        errorCount++;
                         errors.append("<li>");
                         errors.append("Error! Incompatible sections ");
                         errors.append(sectionLookup.get(currentSectionIndex));
@@ -6736,6 +6944,11 @@ public class GUIForm extends javax.swing.JFrame {
                         errors.append(sectionLookup.get(incompatibleSectionList.get(currentSectionIndex).get(i)));
                         errors.append(" are scheduled for the same time!");
                         errors.append("</li>");
+                        if (errorCount > 10) {
+                            errors.append("<li> And many more....</li>");
+                            errors.append("</ul>");
+                            return errors.toString();
+                        }
                     }
                 }
             }

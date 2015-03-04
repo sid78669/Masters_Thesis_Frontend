@@ -1652,17 +1652,17 @@
                             </DimensionLayout>
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                      <Component id="tsMondayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsMondayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsMondayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblMondayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
                                   <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="lblMondayStart" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsMondayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsMondayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsMondayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsMondayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="lblMondayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -1670,17 +1670,11 @@
                           <SubComponents>
                             <Component class="javax.swing.JLabel" name="lblMondayStart">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
                             <Component class="javax.swing.JLabel" name="lblMondayEnd">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
@@ -1821,17 +1815,11 @@
                           <SubComponents>
                             <Component class="javax.swing.JLabel" name="lblTuesdayStart">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
                             <Component class="javax.swing.JLabel" name="lblTuesdayEnd">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
@@ -1957,16 +1945,16 @@
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                      <Component id="tsWednesdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsWednesdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblWednesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="lblWednesdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsWednesdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsWednesdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="tsWednesdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsWednesdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsWednesdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsWednesdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="lblWednesdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
                                   </Group>
                               </Group>
                             </DimensionLayout>
@@ -1974,17 +1962,11 @@
                           <SubComponents>
                             <Component class="javax.swing.JLabel" name="lblWednesdayStart">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
                             <Component class="javax.swing.JLabel" name="lblWednesdayEnd">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
@@ -2110,36 +2092,28 @@
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                                      <Component id="lbThursdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsThursdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsThursdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsThursdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="lblThursdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsThursdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsThursdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsThursdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="tsThursdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsThursdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsThursdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblThursdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
+                                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                      <Component id="tsThursdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsThursdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsThursdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="lbThursdayStart" min="-2" max="-2" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                           </Layout>
                           <SubComponents>
                             <Component class="javax.swing.JLabel" name="lbThursdayStart">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
                             <Component class="javax.swing.JLabel" name="lblThursdayEnd">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
@@ -2265,36 +2239,28 @@
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                                      <Component id="lbFridayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsFridayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsFridayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsFridayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="lblFridayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsFridayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsFridayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsFridayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="tsFridayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsFridayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsFridayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblFridayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
+                                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                      <Component id="tsFridayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsFridayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsFridayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="lbFridayStart" min="-2" max="-2" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                           </Layout>
                           <SubComponents>
                             <Component class="javax.swing.JLabel" name="lbFridayStart">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
                             <Component class="javax.swing.JLabel" name="lblFridayEnd">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
@@ -2420,36 +2386,28 @@
                             <DimensionLayout dim="1">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                                      <Component id="lbSaturdayStart" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsSaturdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsSaturdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsSaturdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="lblSaturdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <Group type="103" alignment="3" groupAlignment="3" attributes="0">
-                                          <Component id="tsSaturdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsSaturdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="tsSaturdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
+                                      <Component id="tsSaturdayEndHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayEndMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayEndAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lblSaturdayEnd" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
+                                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                                      <Component id="tsSaturdayStartHH" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayStartMM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tsSaturdayStartAMPM" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="lbSaturdayStart" min="-2" max="-2" attributes="0"/>
                               </Group>
                             </DimensionLayout>
                           </Layout>
                           <SubComponents>
                             <Component class="javax.swing.JLabel" name="lbSaturdayStart">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="Start Time"/>
                               </Properties>
                             </Component>
                             <Component class="javax.swing.JLabel" name="lblSaturdayEnd">
                               <Properties>
-                                <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                                  <ComponentRef name="default"/>
-                                </Property>
                                 <Property name="text" type="java.lang.String" value="End Time"/>
                               </Properties>
                             </Component>
