@@ -195,22 +195,6 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RestrictInitialActionPerformed"/>
               </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomCourses">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Generate Random Courses"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RandomCoursesActionPerformed"/>
-              </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomProfessors">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Generate Random Professors"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RandomProfessorsActionPerformed"/>
-              </Events>
-            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomInitSchedule">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Generate Random Initial Schedule"/>

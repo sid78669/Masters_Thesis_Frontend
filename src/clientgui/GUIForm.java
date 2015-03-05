@@ -40,6 +40,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -85,11 +86,11 @@ public class GUIForm extends javax.swing.JFrame {
     private HashMap<Integer, String> profLookup;
     private HashMap<Integer, String> sectionLookup;
     private LinkedList<ScheduleReplace> undoList;
-    protected Vector<String> courseListData;
-    protected Vector<String> courseSectionListData;
-    protected Vector<String> unscheduledCourses;
-    protected Vector<String> profListData;
-    protected Vector<String> timeslotListData;
+    private Vector<String> courseListData;
+    private Vector<String> courseSectionListData;
+    private Vector<String> unscheduledCourses;
+    private Vector<String> profListData;
+    private Vector<String> timeslotListData;
     private Course currentCourse;
     private Professor currentProfessor;
     private TimeSlot currentTimeslot;
@@ -223,6 +224,8 @@ public class GUIForm extends javax.swing.JFrame {
                     case 7:
                         pnlSundayColumn.add(timeblocks[day][time]);
                         break;
+                    default:
+                        break;
                 }
             }
         }
@@ -310,7 +313,7 @@ public class GUIForm extends javax.swing.JFrame {
         updateTimeSlotIDs();
     }
 
-    private void UpdateResultsView(String key, boolean isCourse) {
+    private void updateResultsView(String key, boolean isCourse) {
         resultCourse = isCourse;
         resultKey = key;
         for (int i = 1; i < 8; i++) {
@@ -348,7 +351,7 @@ public class GUIForm extends javax.swing.JFrame {
             toMark = getCellsToLabel(timeslotList.get(s.time));
 
             for (int i = 0; i < toMark.size(); i++) {
-                JLabel course = new JLabel(CleanCourse(s.course));
+                JLabel course = new JLabel(cleanCourse(s.course));
                 course.addMouseListener(new MouseListener() {
 
                     @Override
@@ -381,7 +384,7 @@ public class GUIForm extends javax.swing.JFrame {
 
                     }
                 });
-                course.setToolTipText("<html><u>" + CleanCourse(s.course) + "</u><br/>" + timeslotList.get(s.time).GetPrettyTime());
+                course.setToolTipText("<html><u>" + cleanCourse(s.course) + "</u><br/>" + timeslotList.get(s.time).GetPrettyTime());
                 course.putClientProperty("courseID", s.course);
                 timeblocks[toMark.get(i)[0]][toMark.get(i)[1]].add(course);
                 //}
@@ -477,8 +480,8 @@ public class GUIForm extends javax.swing.JFrame {
         return rtnVal;
     }
 
-    private String CleanCourse(String course) {
-        course = course.toUpperCase();
+    private String cleanCourse(String course) {
+        course = course.toUpperCase(Locale.ENGLISH);
         for (int i = 0; i < course.length(); i++) {
             if (!Character.isAlphabetic(course.charAt(i))) {
                 course = course.substring(0, i) + " " + course.substring(i);
@@ -489,7 +492,7 @@ public class GUIForm extends javax.swing.JFrame {
         return course;
     }
 
-    private ArrayList<ArrayList<Integer>> GenerateIncompatibleSectionArray() {
+    private ArrayList<ArrayList<Integer>> generateIncompatibleSectionArray() {
         ArrayList<ArrayList<Integer>> rtnVal = new ArrayList<>();
         //Use courseSectionListData(Vector<String>), it is already a sorted section list.
         for (int i = 0; i < courseSectionListData.size(); i++) {
@@ -527,7 +530,7 @@ public class GUIForm extends javax.swing.JFrame {
         return rtnVal;
     }
 
-    private ArrayList<Double> GenerateSectionCreditArray() {
+    private ArrayList<Double> generateSectionCreditArray() {
         ArrayList<Double> rtnVal = new ArrayList<>();
         for (int i = 0; i < courseSectionListData.size(); i++) {
             String course = courseSectionListData.get(i);
@@ -854,39 +857,22 @@ public class GUIForm extends javax.swing.JFrame {
 
         @Override
         public boolean verify(JComponent input) {
-            String text = ((JTextField) input).getText();
-            if (text.isEmpty()) {
-                return true;
-            }
             try {
-                Double value = new Double(text);
-                return (value > 0 && value < 20);
-            } catch (NumberFormatException e) {
-                return false;
+                String text = ((JTextField) input).getText();
+                if (text.isEmpty()) {
+                    return true;
+                }
+                try {
+                    Double value = new Double(text);
+                    return (value > 0 && value < 20);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            } catch (ClassCastException c) {
+                System.err.println("Cast error: " + c.getMessage());
             }
+            return false;
         }
-    }
-
-    public class TimeSlotVerifier extends InputVerifier {
-
-        @Override
-        public boolean verify(JComponent input) {
-            String text = ((JTextField) input).getText();
-            if (text.isEmpty()) {
-                return true;
-            }
-
-            text = text.replaceAll(":", "");
-            try {
-                Integer value = new Integer(text);
-                int minute = value % 100;
-                int hour = value / 100;
-                return ((minute >= 0 && minute <= 59) && (hour >= 0 && hour <= 23));
-            } catch (NumberFormatException n) {
-                return false;
-            }
-        }
-
     }
 
     /**
@@ -1161,8 +1147,6 @@ public class GUIForm extends javax.swing.JFrame {
         miExport_InitialSchedule = new javax.swing.JMenuItem();
         menuAnalysis = new javax.swing.JMenu();
         miAnalysis_RestrictInitial = new javax.swing.JMenuItem();
-        miAnalysis_RandomCourses = new javax.swing.JMenuItem();
-        miAnalysis_RandomProfessors = new javax.swing.JMenuItem();
         miAnalysis_RandomInitSchedule = new javax.swing.JMenuItem();
         miAnalysis_Credits = new javax.swing.JMenuItem();
 
@@ -3438,22 +3422,6 @@ public class GUIForm extends javax.swing.JFrame {
         });
         menuAnalysis.add(miAnalysis_RestrictInitial);
 
-        miAnalysis_RandomCourses.setText("Generate Random Courses");
-        miAnalysis_RandomCourses.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                miAnalysis_RandomCoursesActionPerformed(evt);
-            }
-        });
-        menuAnalysis.add(miAnalysis_RandomCourses);
-
-        miAnalysis_RandomProfessors.setText("Generate Random Professors");
-        miAnalysis_RandomProfessors.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                miAnalysis_RandomProfessorsActionPerformed(evt);
-            }
-        });
-        menuAnalysis.add(miAnalysis_RandomProfessors);
-
         miAnalysis_RandomInitSchedule.setText("Generate Random Initial Schedule");
         miAnalysis_RandomInitSchedule.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -3504,7 +3472,7 @@ public class GUIForm extends javax.swing.JFrame {
             spUnscheduledCourses.revalidate();
             spUnscheduledCourses.repaint();
             incompatibleSectionList.clear();
-            incompatibleSectionList = GenerateIncompatibleSectionArray();
+            incompatibleSectionList = generateIncompatibleSectionArray();
         } else if (tabbedPanels.getSelectedIndex() == 5) {
             listViewBySelection.setListData(courseListData);
             if (sectionLookup.isEmpty()) {
@@ -3652,9 +3620,9 @@ public class GUIForm extends javax.swing.JFrame {
             }
             btnGenerateInputFile.setEnabled(false);
             incompatibleSectionList.clear();
-            incompatibleSectionList = GenerateIncompatibleSectionArray();
+            incompatibleSectionList = generateIncompatibleSectionArray();
             ArrayList<String> incompatibleBitString = GenerateIncompatibleSectionBitString();
-            ArrayList<Double> sectionCredit = GenerateSectionCreditArray();
+            ArrayList<Double> sectionCredit = generateSectionCreditArray();
 
             ArrayList<ArrayList<Integer>> profSection = GenerateProfessorSectionArray();
             ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
@@ -5304,7 +5272,7 @@ public class GUIForm extends javax.swing.JFrame {
                 btnResultChangeUpdate.setEnabled(true);
                 btnGenerateResult.setEnabled(true);
                 if (incompatibleSectionList.isEmpty()) {
-                    incompatibleSectionList = GenerateIncompatibleSectionArray();
+                    incompatibleSectionList = generateIncompatibleSectionArray();
                 }
                 String validation = validateSchedule(true);
                 if (validation.isEmpty()) {
@@ -5354,7 +5322,7 @@ public class GUIForm extends javax.swing.JFrame {
                 cbScheduleSection.setSelectedItem(section);
                 cbProfessorSelection.setSelectedItem(resultListBySections.get(section).prof);
                 cbTimeSelection.setSelectedItem(resultListBySections.get(section).time);
-                UpdateResultsView(course, true);
+                updateResultsView(course, true);
             } else {
                 cbProfessorSelection.removeAllItems();
                 cbProfessorSelection.addItem(listViewBySelection.getSelectedValue());
@@ -5365,7 +5333,7 @@ public class GUIForm extends javax.swing.JFrame {
                 for (Schedule s : coursesTaught) {
                     cbScheduleSection.addItem(s.course);
                 }
-                UpdateResultsView(listViewBySelection.getSelectedValue(), false);
+                updateResultsView(listViewBySelection.getSelectedValue(), false);
             }
         }
     }//GEN-LAST:event_listViewBySelectionValueChanged
@@ -5442,7 +5410,7 @@ public class GUIForm extends javax.swing.JFrame {
     }//GEN-LAST:event_btnResultChangeUpdateActionPerformed
 
     private void UpdateResultsView() {
-        UpdateResultsView(resultKey, resultCourse);
+        updateResultsView(resultKey, resultCourse);
     }
 
     private void btnResultChangeUndoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnResultChangeUndoActionPerformed
@@ -5964,184 +5932,6 @@ public class GUIForm extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_miExport_Professor_CoursesTaughtActionPerformed
 
-    private void miAnalysis_RandomCoursesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomCoursesActionPerformed
-        DataInputDialog rid = new DataInputDialog(this, "Generate Random Courses", "Number of Courses to Generate", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
-        rid.setVisible(true);
-        int courseCount = rid.getData();
-
-        /*
-         Now that we have the number of courses to generate,
-         1. Create that many courses
-         1.1 Set course names and titles
-         1.2 Set course preference. 
-         2. Set incompatible courses at random.
-         */
-        int digits = String.valueOf(courseCount - 1).length();
-        Random rand = new Random();
-        for (int i = 0; i < courseCount; i++) {
-            String cID = String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
-            cID = "c" + cID;
-            double randValue = rand.nextDouble();
-            double cCreds = 3.0;
-            if (randValue <= 0.6) {
-                cCreds = 3.0;
-            } else if (randValue > 0.6 && randValue <= 0.95) {
-                cCreds = 4.0;
-            } else if (randValue > 0.95) {
-                cCreds = 2.0;
-            }
-            Course nCourse = new Course(cID, cID, courseList.size(), cCreds, 1);
-            //Set Preferences
-            randValue = rand.nextDouble();
-            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}, {1, 2, 0}, {0, 0, 0}};
-            if (randValue <= 0.41) {
-                nCourse.setPreferences(prefs[0]);
-            } else if (randValue > 0.41 && randValue <= 0.63) {
-                nCourse.setPreferences(prefs[1]);
-            } else if (randValue > 0.63 && randValue <= 0.85) {
-                nCourse.setPreferences(prefs[2]);
-            } else if (randValue > 0.85 && randValue <= 0.95) {
-                nCourse.setPreferences(prefs[3]);
-            } else if (randValue > 0.95 && randValue <= 0.97) {
-                nCourse.setPreferences(prefs[4]);
-            } else if (randValue > 0.97 && randValue <= 0.99) {
-                nCourse.setPreferences(prefs[5]);
-            } else {
-                nCourse.setPreferences(prefs[6]);
-            }
-            courseList.put(cID, nCourse);
-            courseListData.addElement(nCourse.getID());
-            unscheduledCourses.add(cID + "(1)");
-            courseSectionListData.add(cID + "(1)");
-        }
-
-        for (int i = 0; i < courseCount; i++) {
-            double randValue = rand.nextDouble();
-            int incompCount = 0;
-            if (randValue <= 0.05) {
-                incompCount = 1;
-            } else if (randValue > 0.05 && randValue <= 0.1) {
-                incompCount = 2;
-            } else if (randValue > 0.1 && randValue <= 0.14) {
-                incompCount = 3;
-            } else if (randValue > 0.14 && randValue <= 0.18) {
-                incompCount = 4;
-            }
-
-            if (incompCount > 0) {
-                String cID = String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
-                cID = "c" + cID;
-                HashSet<Integer> usedCourses = new HashSet<>();
-                for (int j = 0; j < incompCount; j++) {
-                    int course;
-                    do {
-                        course = rand.nextInt(courseList.size() - 1);
-                    } while (usedCourses.contains(course));
-                    usedCourses.add(course);
-                    String incompID = String.format("%" + digits + "s", String.valueOf(course)).replace(' ', '0');
-                    incompID = "c" + incompID;
-                    courseList.get(cID).addIncompatibleCourse(incompID);
-                    courseList.get(incompID).addIncompatibleCourse(cID);
-                }
-            }
-
-        }
-        Collections.sort(courseListData);
-        listCourses.setListData(courseListData);
-        spCourseList.revalidate();
-        spCourseList.repaint();
-    }//GEN-LAST:event_miAnalysis_RandomCoursesActionPerformed
-
-    private void miAnalysis_RandomProfessorsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomProfessorsActionPerformed
-        DataInputDialog rid = new DataInputDialog(this, "Generate Random Professors", "Number of Professors to Generate", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
-        rid.setVisible(true);
-        int profCount = rid.getData();
-        int digits = String.valueOf(profCount - 1).length();
-        Vector<String> untaughtCourses = new Vector<>(courseListData);
-        Random random = new Random();
-        for (int i = 0; i < profCount; i++) {
-            String pID = "p" + String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
-            double creds = 0.0;
-            double rVal = random.nextDouble();
-            if (rVal <= 0.02) {
-                creds = 3.0;
-            } else if (rVal > 0.02 && rVal <= .1) {
-                creds = 6.0;
-            } else if (rVal > 0.1 && rVal <= 0.85) {
-                creds = 9.0;
-            } else if (rVal > 0.85) {
-                creds = 12.0;
-            }
-
-            Professor pr = new Professor(i, pID, creds);
-            rVal = random.nextDouble();
-            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}};
-            if (rVal <= 0.03) {
-                pr.setPreference(prefs[4]);
-            } else if (rVal > 0.03 && rVal <= 0.06) {
-                pr.setPreference(prefs[3]);
-            } else if (rVal > 0.06 && rVal <= 0.14) {
-                pr.setPreference(prefs[1]);
-            } else if (rVal > 0.14 && rVal <= 0.53) {
-                pr.setPreference(prefs[0]);
-            } else if (rVal > 0.53) {
-                pr.setPreference(prefs[2]);
-            }
-
-            rVal = random.nextDouble();
-            int randomUntaught = random.nextInt(untaughtCourses.size());
-            pr.addCourseTaught(untaughtCourses.get(randomUntaught));
-            untaughtCourses.remove(randomUntaught);
-            if (rVal > 0.4 && rVal <= 0.49) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 2);
-            } else if (rVal > 0.49 && rVal <= 0.66) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 3);
-            } else if (rVal > 0.66 && rVal <= 0.85) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 4);
-            } else if (rVal > 0.85 && rVal <= 0.91) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 5);
-            } else if (rVal > 0.91) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 6);
-            }
-            if (pr.getCredits() == 6.0 && pr.getCoursesTaught().length < 2) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 2);
-            } else if (pr.getCredits() == 9.0 && pr.getCoursesTaught().length < 3) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 3);
-            } else if (pr.getCredits() == 12.0 && pr.getCoursesTaught().length < 4) {
-                do {
-                    pr.addCourseTaught(courseListData.get(random.nextInt(courseListData.size())));
-                } while (pr.getCoursesTaught().length < 4);
-            }
-
-            profList.put(pID, pr);
-            profListData.add(pID);
-        }
-        while (!untaughtCourses.isEmpty()) {
-            int randomUntaught = random.nextInt(untaughtCourses.size());
-            int randomProf = random.nextInt(profListData.size());
-            profList.get(profListData.get(randomProf)).addCourseTaught(untaughtCourses.get(randomUntaught));
-            untaughtCourses.remove(randomUntaught);
-        }
-        Collections.sort(profListData);
-        listProfs.setListData(profListData);
-        spProfList.revalidate();
-        spProfList.repaint();
-    }//GEN-LAST:event_miAnalysis_RandomProfessorsActionPerformed
-
     private void miExport_TimeslotActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_TimeslotActionPerformed
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -6511,14 +6301,27 @@ public class GUIForm extends javax.swing.JFrame {
 
         courseListData = new Vector<>(courseList.keySet());
         int courseCount = courseListData.size();
-        for (String pID : profList.keySet()) {
-            Professor pr = profList.get(pID);
-            int newCourseCount = random.nextInt(5);
-            for (int i = 1; i < newCourseCount; i++) {
-                pr.addCourseTaught(courseListData.get(random.nextInt(courseCount)));
-            }
-        }
+//        for (String pID : profList.keySet()) {
+//            Professor pr = profList.get(pID);
+//            int newCourseCount = random.nextInt(5);
+//            for (int i = 1; i < newCourseCount; i++) {
+//                pr.addCourseTaught(courseListData.get(random.nextInt(courseCount)));
+//            }
+//        }
+        // Add First 50% of courses, to between 70 and 90 % of professors.
+        int percentageOfProfessors = random.nextInt(20) + 70;
+        int percentageOfCourses = 50;
 
+        //Add next 35-40% of courses to 50-70% professors
+        percentageOfProfessors = random.nextInt(20) + 50;
+        percentageOfCourses = random.nextInt(5) + 30;
+
+        //Add the next 10-15% of courses to 10-20% professors
+        percentageOfProfessors = random.nextInt(10) + 10;
+        percentageOfCourses = random.nextInt(5) + 10;
+        
+        
+        
         for (int i = 0; i < courseListData.size(); i++) {
             String cID = courseListData.get(i);
             String sID = cID + "(1)";
@@ -6923,7 +6726,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         //Ensure that no incompatible sections are scheduled at the same time.
         if (incompatibleSectionList.isEmpty()) {
-            incompatibleSectionList = GenerateIncompatibleSectionArray();
+            incompatibleSectionList = generateIncompatibleSectionArray();
         }
 
         HashMap<String, HashSet<Integer>> incompChecklist = new HashMap<>();
@@ -7142,9 +6945,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuImport;
     private javax.swing.JMenuItem miAnalysis_Credits;
-    private javax.swing.JMenuItem miAnalysis_RandomCourses;
     private javax.swing.JMenuItem miAnalysis_RandomInitSchedule;
-    private javax.swing.JMenuItem miAnalysis_RandomProfessors;
     private javax.swing.JMenuItem miAnalysis_RestrictInitial;
     private javax.swing.JMenuItem miExport_Course;
     private javax.swing.JMenuItem miExport_Course_Incompibility;
