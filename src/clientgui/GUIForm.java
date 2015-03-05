@@ -6280,9 +6280,11 @@ public class GUIForm extends javax.swing.JFrame {
             profListData.add(pID);
         }
 
+        double courseCreditDifference = totalProfCredits - totalCourseCredits;
+        double courseCreditLimit = (delta * profCount / 4);
         if (scheduleType == ScheduleType.UNDERLOAD) {
             //Remove a random course
-            while ((totalProfCredits - totalCourseCredits) < (delta * profCount / 4)) {
+            while (courseCreditDifference < courseCreditLimit) {
                 Vector<String> temp = new Vector<>(courseList.keySet());
                 String cID = temp.get(random.nextInt(temp.size()));
                 String sID = cID + "(1)";
@@ -6295,6 +6297,7 @@ public class GUIForm extends javax.swing.JFrame {
                 scheduledCoursesList.remove(sID);
                 scheduledCoursesListBackup.remove(sID);
                 totalCourseCredits -= currentCourse.getCreditValue();
+                courseCreditDifference += currentCourse.getCreditValue();
                 currentCourse = null;
             }
         }
@@ -6311,17 +6314,55 @@ public class GUIForm extends javax.swing.JFrame {
         // Add First 50% of courses, to between 70 and 90 % of professors.
         int percentageOfProfessors = random.nextInt(20) + 70;
         int percentageOfCourses = 50;
+        Vector<String> courses = new Vector<>(courseListData);
+        int maxLimit = (courses.size() * percentageOfCourses) / 100;
+        int profsAddedTo = (profListData.size() * percentageOfProfessors) / 100;
+        while (courses.size() > maxLimit) {
+            String course = courses.get(random.nextInt(courses.size()));
+            int added = 0;
+            while (added < profsAddedTo) {
+                String prof = profListData.get(random.nextInt(profCount));
+                if (!profList.get(prof).hasCourse(course)) {
+                    profList.get(prof).addCourseTaught(course);
+                    added++;
+                }
+            }
+        }
 
         //Add next 35-40% of courses to 50-70% professors
         percentageOfProfessors = random.nextInt(20) + 50;
         percentageOfCourses = random.nextInt(5) + 30;
+        maxLimit = (courses.size() * percentageOfCourses) / 100;
+        profsAddedTo = (profListData.size() * percentageOfProfessors) / 100;
+        while (courses.size() > maxLimit) {
+            String course = courses.get(random.nextInt(courses.size()));
+            int added = 0;
+            while (added < profsAddedTo) {
+                String prof = profListData.get(random.nextInt(profCount));
+                if (!profList.get(prof).hasCourse(course)) {
+                    profList.get(prof).addCourseTaught(course);
+                    added++;
+                }
+            }
+        }
 
         //Add the next 10-15% of courses to 10-20% professors
         percentageOfProfessors = random.nextInt(10) + 10;
         percentageOfCourses = random.nextInt(5) + 10;
-        
-        
-        
+        maxLimit = (courses.size() * percentageOfCourses) / 100;
+        profsAddedTo = (profListData.size() * percentageOfProfessors) / 100;
+        while (courses.size() > maxLimit) {
+            String course = courses.get(random.nextInt(courses.size()));
+            int added = 0;
+            while(added < profsAddedTo){
+                String prof = profListData.get(random.nextInt(profCount));
+                if(!profList.get(prof).hasCourse(course)){
+                    profList.get(prof).addCourseTaught(course);
+                    added++;
+                }
+            }
+        }
+
         for (int i = 0; i < courseListData.size(); i++) {
             String cID = courseListData.get(i);
             String sID = cID + "(1)";
