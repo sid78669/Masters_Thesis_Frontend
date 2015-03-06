@@ -108,6 +108,10 @@ public class GUIForm extends javax.swing.JFrame {
     private boolean saveAbort;
     private ArrayList<ArrayList<Integer>> incompatibleSectionList;
 
+    private int CalculateMaxFitness() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     private enum ScheduleType {
 
         OVERLOAD, UNDERLOAD, BALANCED
@@ -3628,7 +3632,7 @@ public class GUIForm extends javax.swing.JFrame {
             ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
             ArrayList<ArrayList<ArrayList<Integer>>> associatedProf = GenerateAssociatedProfArray(sectionProf, profSection);
             HashMap<Double, ArrayList<Integer>> creditTimeslot = GenerateCreditTimeslotArray();
-
+            int maxFitness = CalculateMaxFitness();
             String inputFile = txtGeneratedFileName.getText();
             File outFile = new File(inputFile);
             writer = new BufferedWriter(new FileWriter(outFile));
@@ -3643,6 +3647,7 @@ public class GUIForm extends javax.swing.JFrame {
             writer.write(profList.size() + "\n"); //professor_count
             writer.write(timeslotList.size() + "\n"); //timeslot_count
             writer.write(creditTimeslot.size() + "\n"); //credit_count
+            writer.write(maxFitness + "\n"); //maxFitness
             writer.write("*END*PARAMETERS\n");
             //Write arrays literally as they need to look like
             //sectionID, incompSize, incompSections
@@ -6303,64 +6308,61 @@ public class GUIForm extends javax.swing.JFrame {
         }
 
         courseListData = new Vector<>(courseList.keySet());
-        int courseCount = courseListData.size();
-//        for (String pID : profList.keySet()) {
-//            Professor pr = profList.get(pID);
-//            int newCourseCount = random.nextInt(5);
-//            for (int i = 1; i < newCourseCount; i++) {
-//                pr.addCourseTaught(courseListData.get(random.nextInt(courseCount)));
-//            }
-//        }
+        
         // Add First 50% of courses, to between 70 and 90 % of professors.
-        int percentageOfProfessors = random.nextInt(20) + 70;
+        double percentageOfProfessors = (random.nextInt(20)/100) + .70;
         int percentageOfCourses = 50;
         Vector<String> courses = new Vector<>(courseListData);
         int maxLimit = (courses.size() * percentageOfCourses) / 100;
-        int profsAddedTo = (profListData.size() * percentageOfProfessors) / 100;
+        int profsAddedTo = (int)Math.round(profListData.size() * percentageOfProfessors);
+        Vector<String> professors = new Vector<>(profListData);
+        while (professors.size() > profsAddedTo) {
+            professors.remove(random.nextInt(professors.size()));
+        }
         while (courses.size() > maxLimit) {
             String course = courses.get(random.nextInt(courses.size()));
-            int added = 0;
-            while (added < profsAddedTo) {
-                String prof = profListData.get(random.nextInt(profCount));
+            for (String prof : professors) {
                 if (!profList.get(prof).hasCourse(course)) {
                     profList.get(prof).addCourseTaught(course);
-                    added++;
                 }
             }
+            courses.remove(course);
         }
 
         //Add next 35-40% of courses to 50-70% professors
         percentageOfProfessors = random.nextInt(20) + 50;
-        percentageOfCourses = random.nextInt(5) + 30;
+        percentageOfCourses = random.nextInt(10) + 70;
         maxLimit = (courses.size() * percentageOfCourses) / 100;
-        profsAddedTo = (profListData.size() * percentageOfProfessors) / 100;
+        profsAddedTo = (int)Math.round(profListData.size() * percentageOfProfessors);
+        professors = new Vector<>(profListData);
+        while (professors.size() > profsAddedTo) {
+            professors.remove(random.nextInt(professors.size()));
+        }
         while (courses.size() > maxLimit) {
             String course = courses.get(random.nextInt(courses.size()));
-            int added = 0;
-            while (added < profsAddedTo) {
-                String prof = profListData.get(random.nextInt(profCount));
+            for (String prof : professors) {
                 if (!profList.get(prof).hasCourse(course)) {
                     profList.get(prof).addCourseTaught(course);
-                    added++;
                 }
             }
+            courses.remove(course);
         }
 
         //Add the next 10-15% of courses to 10-20% professors
         percentageOfProfessors = random.nextInt(10) + 10;
-        percentageOfCourses = random.nextInt(5) + 10;
-        maxLimit = (courses.size() * percentageOfCourses) / 100;
-        profsAddedTo = (profListData.size() * percentageOfProfessors) / 100;
-        while (courses.size() > maxLimit) {
+        profsAddedTo = (int)Math.round(profListData.size() * percentageOfProfessors);
+        professors = new Vector<>(profListData);
+        while (professors.size() > profsAddedTo) {
+            professors.remove(random.nextInt(professors.size()));
+        }
+        while (courses.size() > 0) {
             String course = courses.get(random.nextInt(courses.size()));
-            int added = 0;
-            while(added < profsAddedTo){
-                String prof = profListData.get(random.nextInt(profCount));
-                if(!profList.get(prof).hasCourse(course)){
+            for (String prof : professors) {
+                if (!profList.get(prof).hasCourse(course)) {
                     profList.get(prof).addCourseTaught(course);
-                    added++;
                 }
             }
+            courses.remove(course);
         }
 
         for (int i = 0; i < courseListData.size(); i++) {
