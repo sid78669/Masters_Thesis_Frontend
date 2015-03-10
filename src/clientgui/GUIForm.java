@@ -1153,6 +1153,7 @@ public class GUIForm extends javax.swing.JFrame {
         miAnalysis_RestrictInitial = new javax.swing.JMenuItem();
         miAnalysis_RandomInitSchedule = new javax.swing.JMenuItem();
         miAnalysis_Credits = new javax.swing.JMenuItem();
+        miAnalysis_InitialSchedulePreferenceSelection = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setMinimumSize(new java.awt.Dimension(800, 800));
@@ -3441,6 +3442,14 @@ public class GUIForm extends javax.swing.JFrame {
             }
         });
         menuAnalysis.add(miAnalysis_Credits);
+
+        miAnalysis_InitialSchedulePreferenceSelection.setText("Initial Schedule Preference Satisfaction");
+        miAnalysis_InitialSchedulePreferenceSelection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_InitialSchedulePreferenceSelectionActionPerformed(evt);
+            }
+        });
+        menuAnalysis.add(miAnalysis_InitialSchedulePreferenceSelection);
 
         menuBar.add(menuAnalysis);
 
@@ -6052,7 +6061,9 @@ public class GUIForm extends javax.swing.JFrame {
             profCreditDistribution.put(profList.get(pr).getCredits(), count);
         }
         DecimalFormat df = new DecimalFormat("#.#");
-        String message = "<html>Course Credits: " + df.format(courseCredits) + "<br />Professor Credits:" + df.format(profCredits);
+        String message = "<html>Courses: " + courseList.size() + "<br />Professors: " + profList.size();
+
+        message += "<br />Course Credits: " + df.format(courseCredits) + "<br />Professor Credits:" + df.format(profCredits);
         if (Math.abs(profCredits - courseCredits) > 0) {
             if (profCredits > courseCredits) {
                 message += "<br />" + "Professor exceeds by: " + df.format(profCredits - courseCredits);
@@ -6308,13 +6319,13 @@ public class GUIForm extends javax.swing.JFrame {
         }
 
         courseListData = new Vector<>(courseList.keySet());
-        
+
         // Add First 50% of courses, to between 70 and 90 % of professors.
-        double percentageOfProfessors = (random.nextInt(20)/100) + .70;
+        double percentageOfProfessors = (random.nextInt(20) / 100) + .70;
         int percentageOfCourses = 50;
         Vector<String> courses = new Vector<>(courseListData);
         int maxLimit = (courses.size() * percentageOfCourses) / 100;
-        int profsAddedTo = (int)Math.round(profListData.size() * percentageOfProfessors);
+        int profsAddedTo = (int) Math.round(profListData.size() * percentageOfProfessors);
         Vector<String> professors = new Vector<>(profListData);
         while (professors.size() > profsAddedTo) {
             professors.remove(random.nextInt(professors.size()));
@@ -6333,7 +6344,7 @@ public class GUIForm extends javax.swing.JFrame {
         percentageOfProfessors = random.nextInt(20) + 50;
         percentageOfCourses = random.nextInt(10) + 70;
         maxLimit = (courses.size() * percentageOfCourses) / 100;
-        profsAddedTo = (int)Math.round(profListData.size() * percentageOfProfessors);
+        profsAddedTo = (int) Math.round(profListData.size() * percentageOfProfessors);
         professors = new Vector<>(profListData);
         while (professors.size() > profsAddedTo) {
             professors.remove(random.nextInt(professors.size()));
@@ -6350,7 +6361,7 @@ public class GUIForm extends javax.swing.JFrame {
 
         //Add the next 10-15% of courses to 10-20% professors
         percentageOfProfessors = random.nextInt(10) + 10;
-        profsAddedTo = (int)Math.round(profListData.size() * percentageOfProfessors);
+        profsAddedTo = (int) Math.round(profListData.size() * percentageOfProfessors);
         professors = new Vector<>(profListData);
         while (professors.size() > profsAddedTo) {
             professors.remove(random.nextInt(professors.size()));
@@ -6429,6 +6440,65 @@ public class GUIForm extends javax.swing.JFrame {
 //        }
 //        FillEmpty(sectionProf, sectionTimeslot);
     }//GEN-LAST:event_miAnalysis_RandomInitScheduleActionPerformed
+
+    private void miAnalysis_InitialSchedulePreferenceSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_InitialSchedulePreferenceSelectionActionPerformed
+        if (scheduledCoursesList.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No Schedule to Analyse.");
+            return;
+        }
+
+        int courseHighest = 0;
+        int courseNormal = 0;
+        int courseLeast = 0;
+        int profHighest = 0;
+        int profNormal = 0;
+        int profLeast = 0;
+
+        for (String s : scheduledCoursesList.keySet()) {
+            String course = s.substring(0, s.indexOf('('));
+            int timeOfDay = 0;
+            if (timeslotList.get(scheduledCoursesList.get(s).time).isAfternoon()) {
+                timeOfDay = 1;
+            } else if (timeslotList.get(scheduledCoursesList.get(s).time).isEvening()) {
+                timeOfDay = 2;
+            }
+            switch (courseList.get(course).getPreferences()[timeOfDay]) {
+                case 0:
+                    courseHighest++;
+                    break;
+                case 1:
+                    courseNormal++;
+                    break;
+                case 2:
+                    courseLeast++;
+                    break;
+            }
+            switch (profList.get(scheduledCoursesList.get(s).prof).getPreference()[timeOfDay]) {
+                case 0:
+                    profHighest++;
+                    break;
+                case 1:
+                    profNormal++;
+                    break;
+                case 2:
+                    profLeast++;
+                    break;
+            }
+        }
+
+        String message = "<html>Preference Satisfaction is as follows.<ul>";
+
+        message += "<li>Courses Highest: " + String.valueOf(courseHighest) + "</li>";
+        message += "<li>Courses Normal: " + String.valueOf(courseNormal) + "</li>";
+        message += "<li>Courses Least: " + String.valueOf(courseLeast) + "</li>";
+
+        message += "<li>Professors Highest: " + String.valueOf(profHighest) + "</li>";
+        message += "<li>Professors Normal: " + String.valueOf(profNormal) + "</li>";
+        message += "<li>Professors Least: " + String.valueOf(profLeast) + "</li>";
+        message += "</ul></html>";
+        JOptionPane.showMessageDialog(this, message, "Initial Schedule Preference Analysis", JOptionPane.INFORMATION_MESSAGE);
+
+    }//GEN-LAST:event_miAnalysis_InitialSchedulePreferenceSelectionActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
@@ -6988,6 +7058,7 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuImport;
     private javax.swing.JMenuItem miAnalysis_Credits;
+    private javax.swing.JMenuItem miAnalysis_InitialSchedulePreferenceSelection;
     private javax.swing.JMenuItem miAnalysis_RandomInitSchedule;
     private javax.swing.JMenuItem miAnalysis_RestrictInitial;
     private javax.swing.JMenuItem miExport_Course;

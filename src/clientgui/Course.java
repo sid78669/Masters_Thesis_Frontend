@@ -73,8 +73,7 @@ public class Course implements Serializable {
         if(timeslotConstraints == null) {
             timeslotConstraints = new HashSet<>();
         }
-        return new Vector<String>(timeslotConstraints);
-        
+        return new Vector<>(timeslotConstraints);        
     }
 
     public boolean hasIncomp(String incomp) {
