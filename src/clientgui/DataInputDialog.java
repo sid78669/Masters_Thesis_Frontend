@@ -8,9 +8,6 @@ package clientgui;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -18,8 +15,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 /**
  *
@@ -38,17 +33,15 @@ public class DataInputDialog extends JDialog {
 
         cp = getContentPane();
         spPercentage = new JSpinner(model);
-        spPercentage.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                setVisible(false);
-            }
-        });
+//        spPercentage.addChangeListener(new ChangeListener() {
+//            @Override
+//            public void stateChanged(ChangeEvent e) {
+//                setVisible(false);
+//            }
+//        });
         lblDialog = new JLabel(message);
         btnDone = new JButton("OK");
         btnDone.addActionListener(new ActionListener() {
-
             @Override
             public void actionPerformed(ActionEvent e) {
                 setVisible(false);
@@ -61,7 +54,7 @@ public class DataInputDialog extends JDialog {
         layout.setVerticalGroup(layout.createSequentialGroup().addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER).addComponent(lblDialog).addComponent(spPercentage)).addGap(5).addComponent(btnDone));
 
         cp.setLayout(layout);
-        setSize(375, 100);
+        setSize(600, 100);
         setLocationRelativeTo(fr);
     }
 

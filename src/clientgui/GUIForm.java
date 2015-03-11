@@ -9,6 +9,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -31,8 +34,10 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,6 +87,7 @@ public class GUIForm extends javax.swing.JFrame {
     private HashMap<String, Schedule> resultListBySections;
     private HashMap<String, ArrayList<Schedule>> resultListByProfessor;
     private HashMap<String, ArrayList<Schedule>> resultListByCourses;
+    private HashMap<String, HashSet<String>> profsPerCourse;
     private HashMap<Integer, String> timeslotLookup;
     private HashMap<Integer, String> profLookup;
     private HashMap<Integer, String> sectionLookup;
@@ -107,9 +113,735 @@ public class GUIForm extends javax.swing.JFrame {
     private boolean resultCourse;
     private boolean saveAbort;
     private ArrayList<ArrayList<Integer>> incompatibleSectionList;
+    private double courseCredits;
+    private double profCredits;
 
     private int CalculateMaxFitness() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        int rtnFitness = 0;
+
+        if (profsPerCourse == null || profsPerCourse.isEmpty()) {
+            System.err.println("Not Implemented. Line: 121");
+        }
+
+        for (int left = 0; left < courseListData.size(); left++) {
+            for (int right = left + 1; right < courseListData.size(); right++) {
+                //Set of all professors that can teach course left
+                HashSet<String> leftSet = new HashSet<>(profsPerCourse.get(courseListData.get(left)));
+
+                //Get the set of common professors between left and right course
+                leftSet.retainAll(profsPerCourse.get(courseListData.get(right)));
+
+                //If they have professors in common, the same professor may be 
+                //scheduled at the same time.
+                if (leftSet.size() > 0) {
+                    //Professor Same Time Penalty
+                    rtnFitness += 10;
+                }
+
+                //If left and right courses are incompatible and same credit, 
+                //they can be scheduled at the same time
+                if (courseList.get(courseListData.get(left)).hasIncomp(courseListData.get(right))
+                        && courseList.get(courseListData.get(left)).getCreditValue() == courseList.get(courseListData.get(right)).getCreditValue()) {
+                    //Incomp Same Time Penalty
+                    rtnFitness += 10;
+                }
+            }
+        }
+
+        //Professor Over/Under load.
+        rtnFitness += profList.size() * 20;
+
+        //Professor Preference Penalties
+        rtnFitness += profList.size() * 2 * 5;
+
+        //Course Preference Penalties
+        rtnFitness += courseList.size() * 2 * 5;
+
+        for (int left = 0; left < timeslotListData.size(); left++) {
+            for (int right = left + 1; right < timeslotListData.size(); right++) {
+                //If the timeslot overlap or are consecutive, penalize as a professor may be scheduled over them.
+                if (timeslotList.get(timeslotListData.get(left)).isConflict(timeslotList.get(timeslotListData.get(right)))
+                        || timeslotList.get(timeslotListData.get(left)).isConsecutive(timeslotList.get(timeslotListData.get(right)))) {
+                    rtnFitness += profList.size() * 5; //Consecutive and Conflict Time Slot Penalty
+                }
+            }
+        }
+
+        return rtnFitness;
+    }
+
+    private void GenerateRandomInitialSchedule(int profCount, ScheduleType scheduleType, int delta) {
+        profsPerCourse = new HashMap<>();
+        HashMap<Double, ArrayList<String>> creditTimeslotList = new HashMap<>();
+        for (String t : timeslotList.keySet()) {
+            if (!creditTimeslotList.containsKey(timeslotList.get(t).getCredits())) {
+                creditTimeslotList.put(timeslotList.get(t).getCredits(), new ArrayList<>());
+            }
+            creditTimeslotList.get(timeslotList.get(t).getCredits()).add(t);
+        }
+
+        HashMap<String, ArrayList<Schedule>> scheduleByTimeslot = new HashMap<>();
+        HashMap<String, HashSet<String>> profTimeAssigned = new HashMap<>();
+
+        int digits = String.valueOf(profCount - 1).length();
+        Random random = new Random();
+        double totalProfCredits = 0.0, totalCourseCredits = 0.0;
+        int[] profCountDistribution = new int[4];
+        profCountDistribution[0] = (int) Math.round(0.02 * profCount);
+        profCountDistribution[1] = (int) Math.round(0.08 * profCount);
+        profCountDistribution[3] = (int) Math.round(0.15 * profCount);
+        profCountDistribution[2] = profCount - (profCountDistribution[0] + profCountDistribution[1] + profCountDistribution[3]);
+        for (int i = 0; i < profCount; i++) {
+            String pID = "p" + String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
+            double creds;
+            int credLocation = random.nextInt(4);
+            switch (credLocation) {
+                case 0:
+                    if (profCountDistribution[0] > 0) {
+                        profCountDistribution[0]--;
+                        creds = 3.0;
+                        break;
+                    }
+                case 1:
+                    if (profCountDistribution[1] > 0) {
+                        profCountDistribution[1]--;
+                        creds = 6.0;
+                        break;
+                    }
+                case 3:
+                    if (profCountDistribution[3] > 0) {
+                        profCountDistribution[3]--;
+                        creds = 12.0;
+                        break;
+                    }
+                default:
+                    profCountDistribution[2]--;
+                    creds = 9.0;
+                    break;
+            }
+
+            Professor pr = new Professor(i, pID, creds);
+            totalProfCredits += creds;
+            double rVal = random.nextDouble();
+            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}};
+            if (rVal <= 0.03) {
+                pr.setPreference(prefs[4]);
+            } else if (rVal > 0.03 && rVal <= 0.06) {
+                pr.setPreference(prefs[3]);
+            } else if (rVal > 0.06 && rVal <= 0.14) {
+                pr.setPreference(prefs[1]);
+            } else if (rVal > 0.14 && rVal <= 0.53) {
+                pr.setPreference(prefs[0]);
+            } else if (rVal > 0.53) {
+                pr.setPreference(prefs[2]);
+            }
+
+            double credsScheduled = 0.0;
+            //Based on creds, assign courses
+            if (creds == 3.0) {
+                //1. Generate a course
+                //2. Assign the course to the current professor
+                //3. Schedule the course to a given time slot
+                GenerateAddCourseToProf(pr, creds, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                totalCourseCredits += 3.0;
+            } else if (creds == 6.0) {
+                totalCourseCredits += 6.0;
+                if (random.nextDouble() > 0.8) { //do a 2-4 split
+                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else { //do a 3-3 split
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                }
+            } else if (creds == 9.0) {
+                int rand = random.nextInt(3);
+                totalCourseCredits += 9.0;
+                if (rand == 1) { //Do a 2-4-3 split
+                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else { //Do a 3-3-3 split
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                }
+            } else if (creds == 12.0) {
+                totalCourseCredits += 12.0;
+                int rand = random.nextInt(4);
+                if (rand == 0) {//Do a 4-4-4 split
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else if (rand == 1) { //Do a 4-3-3-2 split
+                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                } else if (rand >= 2) { //Do a 3-3-3-3 split
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                }
+            }
+
+            credsScheduled += creds;
+
+            //Underload or overload only 10% of the professors
+            if (random.nextDouble() <= 0.05) {
+                if (scheduleType == ScheduleType.OVERLOAD) {
+                    //Add more courses scheduled to pr to get to the delta limit.
+                    while ((credsScheduled - creds) < delta) {
+                        if (random.nextDouble() > 0.8) {//Schedule a 3 credit class
+                            GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                            credsScheduled += 2.0;
+                            totalCourseCredits += 2.0;
+                        } else { //Schedule a 2 credit class
+                            GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
+                            credsScheduled += 3.0;
+                            totalCourseCredits += 2.0;
+                        }
+                    }
+                }
+            }
+
+            profList.put(pID, pr);
+            profListData.add(pID);
+        }
+
+        double courseCreditDifference = totalProfCredits - totalCourseCredits;
+        double courseCreditLimit = (delta * profCount / 4);
+        if (scheduleType == ScheduleType.UNDERLOAD) {
+            //Remove a random course
+            while (courseCreditDifference < courseCreditLimit) {
+                Vector<String> temp = new Vector<>(courseList.keySet());
+                String cID = temp.get(random.nextInt(temp.size()));
+                String sID = cID + "(1)";
+                profsPerCourse.remove(cID);
+                currentCourse = courseList.get(cID);
+                courseList.remove(cID);
+                courseSectionListData.removeElement(sID);
+                unscheduledCourses.removeElement(sID);
+                scheduleByTimeslot.get(scheduledCoursesList.get(sID).time).remove(scheduledCoursesList.get(sID));
+                profList.get(scheduledCoursesList.get(sID).prof).removeCourseTaught(cID);
+                scheduledCoursesList.remove(sID);
+                scheduledCoursesListBackup.remove(sID);
+                totalCourseCredits -= currentCourse.getCreditValue();
+                courseCreditDifference += currentCourse.getCreditValue();
+                currentCourse = null;
+            }
+        }
+
+        profCredits = totalProfCredits;
+        courseCredits = totalCourseCredits;
+
+        courseListData = new Vector<>(courseList.keySet());
+
+        Vector<String> professors = new Vector<>(profListData);
+        for (String prof : professors) {
+            int maxCoursesToTeach = ((random.nextInt(10) + 10) * courseList.size()) / 100;
+            Professor p = profList.get(prof);
+            while (p.getCoursesTaught().length < maxCoursesToTeach) {
+                int randomCourseID = random.nextInt(courseList.size());
+                if (!p.hasCourse(courseListData.get(randomCourseID))) {
+                    p.addCourseTaught(courseListData.get(randomCourseID));
+                    profsPerCourse.get(courseListData.get(randomCourseID)).add(prof);
+                }
+            }
+            profList.put(prof, p);
+        }
+
+        for (int i = 0; i < courseListData.size(); i++) {
+            String cID = courseListData.get(i);
+            String sID = cID + "(1)";
+            String timeAssigned = scheduledCoursesList.get(sID).time;
+            dtm.addRow(new String[]{scheduledCoursesList.get(sID).course, scheduledCoursesList.get(sID).prof, scheduledCoursesList.get(sID).time});
+            int incompatibleSize = random.nextInt(10);
+            for (int times = 0; times < timeslotListData.size() && courseList.get(cID).getIncompCourses().size() < incompatibleSize; times++) {
+                if (!timeslotList.get(timeAssigned).isConflict(timeslotList.get(timeslotListData.get(times))) && scheduleByTimeslot.containsKey(timeslotListData.get(times))) {
+                    //pick a random course scheduled for the second slot
+                    ArrayList<Schedule> schedules = scheduleByTimeslot.get(timeslotListData.get(times));
+                    if (schedules.size() > 0) {
+                        String[] courses = new String[schedules.size()];
+
+                        for (int x = 0; x < schedules.size(); x++) {
+                            courses[x] = schedules.get(x).course;
+                        }
+
+                        Collections.shuffle(Arrays.asList(courses));
+                        for (int randomIndex = 0; randomIndex < courses.length; randomIndex++) {
+                            String altCID = courses[randomIndex];
+                            altCID = altCID.replace("(1)", " ").trim();
+                            if (courseList.get(altCID).getIncompCourses().size() < 10) {
+                                courseList.get(cID).addIncompatibleCourse(altCID);
+                                courseList.get(altCID).addIncompatibleCourse(cID);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        listCourses.setListData(courseListData);
+        listProfs.setListData(profListData);
+        spCourseList.revalidate();
+        spCourseList.repaint();
+
+        spProfList.revalidate();
+        spProfList.repaint();
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+        sorter.setSortsOnUpdates(true);
+        tableSchedule.setRowSorter(sorter);
+
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+        int columnIndexToSort = 0;
+        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+    }
+
+    private void RestrictInitialSchedule(int percentage) {
+        int schedulesToShow = (int) Math.rint((percentage * scheduledCoursesListBackup.size()) / 100.0);
+        Random r = new Random();
+        if (schedulesToShow > scheduledCoursesList.size()) {
+            while (schedulesToShow > dtm.getRowCount()) {
+                //Retrieve schedule
+                int randomUnscheduledIndex = r.nextInt(unscheduledCourses.size());
+                currentSchedule = scheduledCoursesListBackup.get(unscheduledCourses.get(randomUnscheduledIndex));
+
+                dtm.addRow(new String[]{currentSchedule.course, currentSchedule.prof, currentSchedule.time});
+                scheduledCoursesList.put(currentSchedule.course, currentSchedule);
+                unscheduledCourses.removeElement(currentSchedule.course);
+            }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
+            sorter.setSortsOnUpdates(true);
+            tableSchedule.setRowSorter(sorter);
+
+            List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+            int columnIndexToSort = 0;
+            sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
+            sorter.setSortKeys(sortKeys);
+            sorter.sort();
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
+        } else if (schedulesToShow < scheduledCoursesList.size()) {
+            //Remove some schedules
+            while (dtm.getRowCount() > schedulesToShow) {
+                int rawIndex = r.nextInt(dtm.getRowCount());
+                int rowToRemove = tableSchedule.convertRowIndexToModel(rawIndex);
+                String courseTitle = dtm.getValueAt(rowToRemove, 0).toString();
+                unscheduledCourses.add(courseTitle);
+                dtm.removeRow(rowToRemove);
+                scheduledCoursesList.remove(courseTitle);
+            }
+            Collections.sort(unscheduledCourses);
+            listUnscheduledCourses.setListData(unscheduledCourses);
+            spUnscheduledCourses.revalidate();
+            spUnscheduledCourses.repaint();
+        } else {
+            String message = "<html>You have chosen to keep " + percentage + "% of the schedule.<br />This will keep "
+                    + schedulesToShow + " of the " + scheduledCoursesList.size() + " schedules.<br />Hence, no changes have been made.";
+            JOptionPane.showMessageDialog(this, message, "No Changes Made", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void ImportTimeslots(String timeslotFile) {
+        try (
+                FileReader inFile = new FileReader(timeslotFile);
+                BufferedReader br = new BufferedReader(inFile);) {
+            String currLine;
+            while ((currLine = br.readLine()) != null) {
+                String time = currLine.split(",")[0];
+                double cred = Double.parseDouble(currLine.split(",")[1]);
+                TimeSlot t = new TimeSlot(timeslotList.size(), cred);
+                String[] dayTimes = time.replaceAll("\\(", "").replaceAll("\\)", "").split(" ");
+                for (int i = 0; i < dayTimes.length; i += 2) {
+                    int start = Integer.parseInt(dayTimes[i + 1].trim().split(":")[0]);
+                    int end = Integer.parseInt(dayTimes[i + 1].trim().split(":")[1]);
+                    for (int day = 0; day < dayTimes[i].length(); day++) {
+                        switch (dayTimes[i].charAt(day)) {
+                            case 'M':
+                                t.SetTime(0, start, end);
+                                break;
+                            case 'T':
+                                t.SetTime(1, start, end);
+                                break;
+                            case 'W':
+                                t.SetTime(2, start, end);
+                                break;
+                            case 'R':
+                                t.SetTime(3, start, end);
+                                break;
+                            case 'F':
+                                t.SetTime(4, start, end);
+                                break;
+                            case 'S':
+                                t.SetTime(5, start, end);
+                                break;
+                        }
+                    }
+                }
+                timeslotList.put(t.toString(), t);
+                timeslotListData.add(t.toString());
+            }
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+
+        listTimeslots.setListData(timeslotListData);
+        spTimeslotList.revalidate();
+        spTimeslotList.repaint();
+    }
+
+    private boolean GenerateInputFile() {
+        BufferedWriter writer = null;
+        DecimalFormat df = new DecimalFormat("#.##");
+        try {
+            fixIDs();
+            TreeSet<String> courses = new TreeSet<>();
+            for (String c : courseList.keySet()) {
+                courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
+            }
+            if (sectionLookup.isEmpty()) {
+                for (String s : courses) {
+                    String[] parts = s.split(",");
+                    for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
+                        sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
+                    }
+                }
+            }
+            btnGenerateInputFile.setEnabled(false);
+            incompatibleSectionList.clear();
+            incompatibleSectionList = generateIncompatibleSectionArray();
+            ArrayList<String> incompatibleBitString = GenerateIncompatibleSectionBitString();
+            ArrayList<Double> sectionCredit = generateSectionCreditArray();
+
+            ArrayList<ArrayList<Integer>> profSection = GenerateProfessorSectionArray();
+            ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
+            ArrayList<ArrayList<ArrayList<Integer>>> associatedProf = GenerateAssociatedProfArray(sectionProf, profSection);
+            HashMap<Double, ArrayList<Integer>> creditTimeslot = GenerateCreditTimeslotArray();
+            int maxFitness = CalculateMaxFitness();
+            String inputFile = txtFileNameInput.getText();
+            File outFile = new File(inputFile);
+            writer = new BufferedWriter(new FileWriter(outFile));
+
+            //Write Parameters
+            writer.write("//START*PARAMETERS*\n");
+            writer.write(spinnerGenerations.getValue().toString() + "\n");//generation_count
+            writer.write(spinnerPopulationSize.getValue().toString() + "\n"); //population_size
+            writer.write(spinnerReplacementWait.getValue().toString() + "\n"); //replacement_wait
+            writer.write(spinnerMutationProbabilty.getValue().toString() + "\n"); //mutation_probability
+            writer.write(courseSectionListData.size() + "\n"); //section_count
+            writer.write(profList.size() + "\n"); //professor_count
+            writer.write(timeslotList.size() + "\n"); //timeslot_count
+            writer.write(creditTimeslot.size() + "\n"); //credit_count
+            writer.write(maxFitness + "\n"); //maxFitness
+            writer.write("*END*PARAMETERS\n");
+            //Write arrays literally as they need to look like
+            //sectionID, incompSize, incompSections
+            writer.write("//*START*SECTION*\n");
+            writer.write("//sectionID, incompSize[, incompSections]\n");
+            for (int i = 0; i < incompatibleSectionList.size(); i++) {
+                writer.write(i + "," + incompatibleBitString.get(i) + " ");
+                writer.write(("\n"));
+            }
+            writer.write("*END*SECTION*\n");
+
+            writer.write("//*START*SECTIONCREDIT*\n");
+            for (int i = 0; i < sectionCredit.size(); i++) {
+                writer.write(i + "," + df.format(sectionCredit.get(i)) + "\n");
+            }
+            writer.write("*END*SECTIONCREDIT*\n");
+
+            writer.write("//*START*PROFCREDIT*\n");
+            for (Professor p : profList.values()) {
+                writer.write(p.getProfID() + "," + df.format(p.getCredits()) + "\n");
+            }
+            writer.write("*END*PROFCREDIT*\n");
+
+            writer.write("//*START*SECTION*PROF*\n");
+            writer.write("//sectionID, profSize, profs\n");
+            for (int i = 0; i < sectionProf.size(); i++) {
+                writer.write(i + "," + sectionProf.get(i).size());
+                for (int z = 0; z < sectionProf.get(i).size(); z++) {
+                    writer.write("," + sectionProf.get(i).get(z));
+                }
+                writer.write(("\n"));
+            }
+            writer.write("*END*SECTION*PROF*\n");
+            writer.write("//*START*SECTION*TIMESLOT*\n");
+            HashMap<Double, ArrayList<Integer>> creditTimeslotMap = GenerateCreditTimeslotMap();
+            for (int i = 0; i < sectionLookup.size(); i++) {
+                writer.write(i + ",");
+                String course = sectionLookup.get(i);
+                course = course.substring(0, course.indexOf("("));
+                if (courseList.get(course).getTimeslotConstraints().isEmpty()) {
+                    double credit = courseList.get(course).getCreditValue();
+                    writer.write(String.valueOf(creditTimeslotMap.get(credit).size()));
+                    for (Integer time : creditTimeslotMap.get(credit)) {
+                        writer.write("," + time);
+                    }
+                } else {
+                    Vector<String> times = courseList.get(course).getTimeslotConstraints();
+                    writer.write(String.valueOf(times.size()));
+                    for (String t : times) {
+                        writer.write("," + String.valueOf(timeslotList.get(t).getID()));
+                    }
+                }
+                writer.write("\n");
+            }
+            writer.write("*END*SECTION*TIMESLOT*\n");
+            writer.write("//*START*PROF*SECTION*\n");
+            writer.write("//profID, sectionSize, sections\n");
+            for (int i = 0; i < profSection.size(); i++) {
+                writer.write(i + "," + profSection.get(i).size());
+                Collections.sort(profSection.get(i));
+                for (int z = 0; z < profSection.get(i).size(); z++) {
+                    writer.write("," + profSection.get(i).get(z));
+                }
+                writer.write(("\n"));
+            }
+            writer.write("*END*PROF*SECTION*\n");
+            writer.write("//*START*PROF*ASSOCIATE*\n");
+            writer.write("//profID, assocaiteSize, [associatesID, sectionsSize, sectionList]\n");
+            for (int i = 0; i < associatedProf.size(); i++) {
+                writer.write(i + "," + associatedProf.get(i).size());
+                for (int z = 0; z < associatedProf.get(i).size(); z++) {
+                    for (int y = 0; y < associatedProf.get(i).get(z).size(); y++) {
+                        writer.write("," + associatedProf.get(i).get(z).get(y));
+                    }
+                }
+                writer.write(("\n"));
+            }
+            writer.write("*END*PROF*ASSOCIATE*\n");
+
+            writer.write("//*START*COURSEPREF*\n");
+            writer.write("//sectionID, m, a, e\n");
+            for (int i = 0; i < courseSectionListData.size(); i++) {
+                writer.write(i + ",");
+                String course = sectionLookup.get(i);
+                course = course.substring(0, course.indexOf("("));
+                Course c = courseList.get(course);
+                writer.write(c.getPreferences()[0] + "," + c.getPreferences()[1] + "," + c.getPreferences()[2] + "\n");
+            }
+            writer.write("*END*COURSEPREF*\n");
+
+            writer.write("//START*PROFPREF*\n");
+            writer.write("//profID, pref(m-a-e)\n");
+            for (Professor p : profList.values()) {
+                writer.write(p.getProfID() + "," + p.getPreference()[0] + "," + p.getPreference()[1] + "," + p.getPreference()[2] + "\n");
+            }
+            writer.write("*END*PROFPREF*\n");
+
+            writer.write("//*START*TIME*CREDIT*LEGEND*\n");
+            StringBuilder cts = new StringBuilder();
+            int creditCounter = 0;
+            for (Double d : creditTimeslot.keySet()) {
+                writer.write(creditCounter + "," + df.format(d) + "\n");
+                cts.append(creditCounter++).append(",").append(creditTimeslot.get(d).size());
+                for (int i = 0; i < creditTimeslot.get(d).size(); i++) {
+                    cts.append(",").append(creditTimeslot.get(d).get(i));
+                }
+                cts.append("\n");
+            }
+            writer.write("*END*TIME*CREDIT*LEGEND*\n");
+
+            writer.write("//*START*CREDIT*TIMESLOT*\n");
+            writer.write(cts.toString());
+            writer.write("*END*CREDIT*TIMESLOT*\n");
+
+            writer.write("//*START*TIMESLOT*\n");
+            writer.write("//timeslot_id	, credit rating, isMorning, isAfternoon, isEvening, overlap, consecutive, spreadout\n");
+            for (TimeSlot t : timeslotList.values()) {
+                writer.write(t.getID() + "," + df.format(t.getCredits()) + ",");
+                if (t.isMorning()) {
+                    writer.write("1");
+                } else {
+                    writer.write("0");
+                }
+                writer.write(",");
+                if (t.isAfternoon()) {
+                    writer.write("1");
+                } else {
+                    writer.write("0");
+                }
+
+                writer.write(",");
+                if (t.isEvening()) {
+                    writer.write("1");
+                } else {
+                    writer.write("0");
+                }
+                writer.write(",");
+                char[] overlap = new char[timeslotList.size()];
+                char[] consecutive = new char[timeslotList.size()];
+                char[] spreadOut = new char[timeslotList.size()];
+
+                for (TimeSlot ot : timeslotList.values()) {
+                    if (t.isConflict(ot)) {
+                        overlap[ot.getID()] = '1';
+                    } else {
+                        overlap[ot.getID()] = '0';
+                    }
+
+                    if (t.isConsecutive(ot)) {
+                        consecutive[ot.getID()] = '1';
+                    } else {
+                        consecutive[ot.getID()] = '0';
+                    }
+
+                    if (t.isSpreadOut(ot)) {
+                        spreadOut[ot.getID()] = '1';
+                    } else {
+                        spreadOut[ot.getID()] = '0';
+                    }
+                }
+                writer.write(new String(overlap) + "," + new String(consecutive) + "," + new String(spreadOut));
+                writer.write("\n");
+            }
+            writer.write("*END*TIMESLOT*\n");
+
+            writer.write("//*START*INITIAL*\n");
+            for (Schedule s : scheduledCoursesList.values()) {
+                writer.write(courseSectionListData.indexOf(s.course) + ",");
+                writer.write(profList.get(s.prof).getProfID() + ",");
+                writer.write(timeslotList.get(s.time).getID() + "\n");
+            }
+
+            writer.write("*END*INITIAL*\n");
+            //OUTPUT KEY
+            writer.write("*START*KEY*\n");
+            //Output section: sxx%SectionID
+            for (int s : sectionLookup.keySet()) {
+                writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
+            }
+
+            if (profLookup.isEmpty()) {
+                for (String prof : profList.keySet()) {
+                    profLookup.put(profList.get(prof).getProfID(), prof);
+                }
+            }
+            for (int p : profLookup.keySet()) {
+                writer.write("p" + p + "%" + profLookup.get(p) + "\n");
+            }
+
+            if (timeslotLookup.isEmpty()) {
+                for (String ti : timeslotList.keySet()) {
+                    timeslotLookup.put(timeslotList.get(ti).getID(), ti);
+                }
+            }
+            for (int t : timeslotLookup.keySet()) {
+                writer.write("t" + t + "%" + timeslotLookup.get(t) + "," + timeslotList.get(timeslotLookup.get(t)).TimeOfDay() + "\n");
+            }
+
+            writer.write("*END*KEY*\n");
+            tabbedPanels.setEnabledAt(5, true);
+            btnGenerateInputFile.setEnabled(true);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (writer != null) {
+                    writer.close();
+                }
+            } catch (IOException e) {
+
+            }
+        }
+        return true;
+    }
+
+    private boolean SaveSetupFile() {
+        try (
+                OutputStream oFile = new FileOutputStream(txtFileNameSetup.getText());
+                OutputStream buffer = new BufferedOutputStream(oFile);
+                ObjectOutput output = new ObjectOutputStream(buffer);) {
+
+            output.writeObject(courseList);
+            output.writeObject(profList);
+            output.writeObject(timeslotList);
+            output.writeObject(scheduledCoursesList);
+            generations = Integer.parseInt(spinnerGenerations.getValue().toString());
+            output.writeObject(generations);
+            populationSize = Integer.parseInt(spinnerPopulationSize.getValue().toString());
+            output.writeObject(populationSize);
+            replacementWait = Integer.parseInt(spinnerReplacementWait.getValue().toString());
+            output.writeObject(replacementWait);
+            output.writeObject(mutationProbability);
+            output.writeObject(courseListData);
+            output.writeObject(profListData);
+            output.writeObject(timeslotListData);
+            output.writeObject(courseIDs);
+            output.writeObject(profIDs);
+            output.writeObject(txtFileNameInput.getText());
+            setTitle("CS:POp - " + (new File(txtFileNameSetup.getText())).getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(pnlContainer, "<html>Following error occured while saving: <br /><p>" + e.getMessage() + "</p></html>", "Save Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        } catch (NumberFormatException n) {
+            n.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    private int GetIncomp(boolean b) {
+        int rtnVal;
+        if (b) {
+            rtnVal = Integer.MAX_VALUE;
+        } else {
+            rtnVal = -1;
+        }
+        for (Course c : courseList.values()) {
+            if (b && c.getIncompCourses().size() < rtnVal) {
+                rtnVal = c.getIncompCourses().size();
+            } else if (!b && c.getIncompCourses().size() > rtnVal) {
+                rtnVal = c.getIncompCourses().size();
+            }
+        }
+
+        return rtnVal;
+    }
+
+    private int GetProfPerCourse(boolean b) {
+        int rtnVal;
+        if (b) {
+            rtnVal = Integer.MAX_VALUE;
+        } else {
+            rtnVal = -1;
+        }
+        for (String s : profsPerCourse.keySet()) {
+            if (b && profsPerCourse.get(s).size() < rtnVal) {
+                rtnVal = profsPerCourse.get(s).size();
+            } else if (!b && profsPerCourse.get(s).size() > rtnVal) {
+                rtnVal = profsPerCourse.get(s).size();
+            }
+        }
+
+        return rtnVal;
+    }
+
+    private int GetCoursePerProf(boolean b) {
+        int rtnVal;
+        if (b) {
+            rtnVal = Integer.MAX_VALUE;
+        } else {
+            rtnVal = -1;
+        }
+        for (Professor p : profList.values()) {
+            if (b && p.getCoursesTaught().length < rtnVal) {
+                rtnVal = p.getCoursesTaught().length;
+            } else if (!b && p.getCoursesTaught().length > rtnVal) {
+                rtnVal = p.getCoursesTaught().length;
+            }
+        }
+
+        return rtnVal;
     }
 
     private enum ScheduleType {
@@ -133,10 +865,10 @@ public class GUIForm extends javax.swing.JFrame {
                     public void windowClosing(WindowEvent evt) {
                         String[] options = {"Yes", "No", "Browse"};
                         String message;
-                        if (txtSetupFileName.getText().isEmpty()) {
+                        if (txtFileNameSetup.getText().isEmpty()) {
                             message = "<html>Would you like to save the current setup?</html>";
                         } else {
-                            message = "<html>Would you like to save the current setup to<br />" + txtSetupFileName.getText() + "?</html>";
+                            message = "<html>Would you like to save the current setup to<br />" + txtFileNameSetup.getText() + "?</html>";
                         }
                         int choice = JOptionPane.showOptionDialog(pnlContainer, message, "Save Setup To File", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, "Yes");
                         if (choice == 0) {
@@ -694,7 +1426,7 @@ public class GUIForm extends javax.swing.JFrame {
                     ObjectInput input = new ObjectInputStream(buffer);) {
                 try {
                     outputFileName = fc.getSelectedFile().getAbsolutePath();
-                    txtSetupFileName.setText(outputFileName);
+                    txtFileNameSetup.setText(outputFileName);
                     courseList = (HashMap<String, Course>) input.readObject();
                     if (courseList != null && courseList.size() > 0) {
                         for (String key : courseList.keySet()) {
@@ -775,7 +1507,7 @@ public class GUIForm extends javax.swing.JFrame {
                     profIDs = (HashSet<Integer>) input.readObject();
                     String generatedFile = (String) input.readObject();
                     if (!generatedFile.isEmpty()) {
-                        txtGeneratedFileName.setText(generatedFile);
+                        txtFileNameInput.setText(generatedFile);
                     }
                 } catch (ClassNotFoundException ex) {
                     System.err.println(ex.getMessage());
@@ -1071,13 +1803,13 @@ public class GUIForm extends javax.swing.JFrame {
         spinnerReplacementWait = new javax.swing.JSpinner();
         spinnerMutationProbabilty = new javax.swing.JSpinner();
         lbSetupFileName = new javax.swing.JLabel();
-        txtSetupFileName = new javax.swing.JTextField();
+        txtFileNameSetup = new javax.swing.JTextField();
         btnBrowseSetupFileName = new javax.swing.JButton();
         btnGenerateInputFile = new javax.swing.JButton();
         btnSaveSetup = new javax.swing.JButton();
         lblGeneratedFileName = new javax.swing.JLabel();
         btnBrowseGeneratedFileName = new javax.swing.JButton();
-        txtGeneratedFileName = new javax.swing.JTextField();
+        txtFileNameInput = new javax.swing.JTextField();
         pnlResults = new javax.swing.JPanel();
         pnlResultContainer = new javax.swing.JPanel();
         lblResultFile = new javax.swing.JLabel();
@@ -1150,8 +1882,8 @@ public class GUIForm extends javax.swing.JFrame {
         miExport_Timeslot_Daytime = new javax.swing.JMenuItem();
         miExport_InitialSchedule = new javax.swing.JMenuItem();
         menuAnalysis = new javax.swing.JMenu();
+        miAnalysis_GenerateAllInputs = new javax.swing.JMenuItem();
         miAnalysis_RestrictInitial = new javax.swing.JMenuItem();
-        miAnalysis_RandomInitSchedule = new javax.swing.JMenuItem();
         miAnalysis_Credits = new javax.swing.JMenuItem();
         miAnalysis_InitialSchedulePreferenceSelection = new javax.swing.JMenuItem();
 
@@ -2659,7 +3391,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        lbSetupFileName.setLabelFor(txtSetupFileName);
+        lbSetupFileName.setLabelFor(txtFileNameSetup);
         lbSetupFileName.setText("Setup File Name");
 
         btnBrowseSetupFileName.setText("Browse");
@@ -2705,13 +3437,13 @@ public class GUIForm extends javax.swing.JFrame {
                     .addGroup(pnlConfigurationLayout.createSequentialGroup()
                         .addComponent(lbSetupFileName, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtSetupFileName)
+                        .addComponent(txtFileNameSetup)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnBrowseSetupFileName))
                     .addGroup(pnlConfigurationLayout.createSequentialGroup()
                         .addComponent(lblGeneratedFileName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(txtGeneratedFileName)
+                        .addComponent(txtFileNameInput)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnBrowseGeneratedFileName)))
                 .addContainerGap())
@@ -2723,7 +3455,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblGeneratedFileName)
                     .addComponent(btnBrowseGeneratedFileName)
-                    .addComponent(txtGeneratedFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtFileNameInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnlAdvancedConfig, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -2732,7 +3464,7 @@ public class GUIForm extends javax.swing.JFrame {
                 .addGroup(pnlConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbSetupFileName)
                     .addComponent(btnBrowseSetupFileName)
-                    .addComponent(txtSetupFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtFileNameSetup, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnSaveSetup, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(335, Short.MAX_VALUE))
@@ -3418,6 +4150,14 @@ public class GUIForm extends javax.swing.JFrame {
 
         menuAnalysis.setText("Analysis");
 
+        miAnalysis_GenerateAllInputs.setText("Generate All Input Files");
+        miAnalysis_GenerateAllInputs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                miAnalysis_GenerateAllInputsActionPerformed(evt);
+            }
+        });
+        menuAnalysis.add(miAnalysis_GenerateAllInputs);
+
         miAnalysis_RestrictInitial.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_R, java.awt.event.InputEvent.CTRL_MASK));
         miAnalysis_RestrictInitial.setText("Restrict Initial Schedule");
         miAnalysis_RestrictInitial.addActionListener(new java.awt.event.ActionListener() {
@@ -3427,15 +4167,7 @@ public class GUIForm extends javax.swing.JFrame {
         });
         menuAnalysis.add(miAnalysis_RestrictInitial);
 
-        miAnalysis_RandomInitSchedule.setText("Generate Random Initial Schedule");
-        miAnalysis_RandomInitSchedule.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                miAnalysis_RandomInitScheduleActionPerformed(evt);
-            }
-        });
-        menuAnalysis.add(miAnalysis_RandomInitSchedule);
-
-        miAnalysis_Credits.setText("Credit Analysis");
+        miAnalysis_Credits.setText("Data Statistics");
         miAnalysis_Credits.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 miAnalysis_CreditsActionPerformed(evt);
@@ -3513,8 +4245,8 @@ public class GUIForm extends javax.swing.JFrame {
 
     private void btnBrowseGeneratedFileNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseGeneratedFileNameActionPerformed
         JFileChooser fc = new JFileChooser();
-        if (!txtGeneratedFileName.getText().isEmpty()) {
-            fc = new JFileChooser(new File(txtGeneratedFileName.getText()));
+        if (!txtFileNameInput.getText().isEmpty()) {
+            fc = new JFileChooser(new File(txtFileNameInput.getText()));
         }
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setFileFilter(new FileNameExtensionFilter("Data File", new String[]{"dat"}));
@@ -3524,12 +4256,12 @@ public class GUIForm extends javax.swing.JFrame {
             if (!fileName.endsWith(".dat")) {
                 fileName += ".dat";
             }
-            txtGeneratedFileName.setText(fileName);
+            txtFileNameInput.setText(fileName);
         }
     }//GEN-LAST:event_btnBrowseGeneratedFileNameActionPerformed
 
     private void btnSaveSetupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveSetupActionPerformed
-        while (txtSetupFileName.getText().isEmpty()) {
+        while (txtFileNameSetup.getText().isEmpty()) {
             saveAbort = false;
             btnBrowseSetupFileNameActionPerformed(evt);
             if (saveAbort) {
@@ -3541,36 +4273,40 @@ public class GUIForm extends javax.swing.JFrame {
                 }
             }
         }
-        try (
-                OutputStream oFile = new FileOutputStream(txtSetupFileName.getText());
-                OutputStream buffer = new BufferedOutputStream(oFile);
-                ObjectOutput output = new ObjectOutputStream(buffer);) {
-
-            output.writeObject(courseList);
-            output.writeObject(profList);
-            output.writeObject(timeslotList);
-            output.writeObject(scheduledCoursesList);
-            generations = Integer.parseInt(spinnerGenerations.getValue().toString());
-            output.writeObject(generations);
-            populationSize = Integer.parseInt(spinnerPopulationSize.getValue().toString());
-            output.writeObject(populationSize);
-            replacementWait = Integer.parseInt(spinnerReplacementWait.getValue().toString());
-            output.writeObject(replacementWait);
-            output.writeObject(mutationProbability);
-            output.writeObject(courseListData);
-            output.writeObject(profListData);
-            output.writeObject(timeslotListData);
-            output.writeObject(courseIDs);
-            output.writeObject(profIDs);
-            output.writeObject(txtGeneratedFileName.getText());
-            setTitle("CS:POp - " + (new File(txtSetupFileName.getText())).getName());
-            JOptionPane.showMessageDialog(pnlContainer, "<html><p>Setup Saved to<br />" + txtSetupFileName.getText() + "</p></html>", "Save Successful", JOptionPane.INFORMATION_MESSAGE);
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(pnlContainer, "<html>Following error occured while saving: <br /><p>" + e.getMessage() + "</p></html>", "Save Failed", JOptionPane.ERROR_MESSAGE);
-        } catch (NumberFormatException n) {
-            n.printStackTrace();
+//        try (
+//                OutputStream oFile = new FileOutputStream(txtFileNameSetup.getText());
+//                OutputStream buffer = new BufferedOutputStream(oFile);
+//                ObjectOutput output = new ObjectOutputStream(buffer);) {
+//
+//            output.writeObject(courseList);
+//            output.writeObject(profList);
+//            output.writeObject(timeslotList);
+//            output.writeObject(scheduledCoursesList);
+//            generations = Integer.parseInt(spinnerGenerations.getValue().toString());
+//            output.writeObject(generations);
+//            populationSize = Integer.parseInt(spinnerPopulationSize.getValue().toString());
+//            output.writeObject(populationSize);
+//            replacementWait = Integer.parseInt(spinnerReplacementWait.getValue().toString());
+//            output.writeObject(replacementWait);
+//            output.writeObject(mutationProbability);
+//            output.writeObject(courseListData);
+//            output.writeObject(profListData);
+//            output.writeObject(timeslotListData);
+//            output.writeObject(courseIDs);
+//            output.writeObject(profIDs);
+//            output.writeObject(txtFileNameInput.getText());
+//            setTitle("CS:POp - " + (new File(txtFileNameSetup.getText())).getName());
+        if (SaveSetupFile()) {
+            JOptionPane.showMessageDialog(pnlContainer, "<html><p>Setup Saved to<br />" + txtFileNameSetup.getText() + "</p></html>", "Save Successful", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Error! Unable to save setup file!");
         }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(pnlContainer, "<html>Following error occured while saving: <br /><p>" + e.getMessage() + "</p></html>", "Save Failed", JOptionPane.ERROR_MESSAGE);
+//        } catch (NumberFormatException n) {
+//            n.printStackTrace();
+//        }
     }//GEN-LAST:event_btnSaveSetupActionPerformed
 
     private HashMap<Double, ArrayList<Integer>> GenerateCreditTimeslotMap() {
@@ -3586,17 +4322,17 @@ public class GUIForm extends javax.swing.JFrame {
     }
 
     private void btnGenerateInputFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerateInputFileActionPerformed
-        while (txtGeneratedFileName.getText().isEmpty()) {
+        while (txtFileNameInput.getText().isEmpty()) {
             btnBrowseGeneratedFileNameActionPerformed(null);
         }
-        double courseCredits = 0, profCredits = 0;
-        for (Course c : courseList.values()) {
-            courseCredits += (c.getCreditValue() * c.getSectionCount());
-        }
-
-        for (Professor p : profList.values()) {
-            profCredits += p.getCredits();
-        }
+        //double courseCredits = 0, profCredits = 0;
+//        for (Course c : courseList.values()) {
+//            courseCredits += (c.getCreditValue() * c.getSectionCount());
+//        }
+//
+//        for (Professor p : profList.values()) {
+//            profCredits += p.getCredits();
+//        }
         DecimalFormat df = new DecimalFormat("#.#");
         if (profCredits < courseCredits) {
             String[] options = {"Yes", "No"};
@@ -3616,266 +4352,270 @@ public class GUIForm extends javax.swing.JFrame {
             }
         }
 
-        BufferedWriter writer = null;
-        try {
-            fixIDs();
-            TreeSet<String> courses = new TreeSet<>();
-            for (String c : courseList.keySet()) {
-                courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
-            }
-            if (sectionLookup.isEmpty()) {
-                for (String s : courses) {
-                    String[] parts = s.split(",");
-                    for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
-                        sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
-                    }
-                }
-            }
-            btnGenerateInputFile.setEnabled(false);
-            incompatibleSectionList.clear();
-            incompatibleSectionList = generateIncompatibleSectionArray();
-            ArrayList<String> incompatibleBitString = GenerateIncompatibleSectionBitString();
-            ArrayList<Double> sectionCredit = generateSectionCreditArray();
-
-            ArrayList<ArrayList<Integer>> profSection = GenerateProfessorSectionArray();
-            ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
-            ArrayList<ArrayList<ArrayList<Integer>>> associatedProf = GenerateAssociatedProfArray(sectionProf, profSection);
-            HashMap<Double, ArrayList<Integer>> creditTimeslot = GenerateCreditTimeslotArray();
-            int maxFitness = CalculateMaxFitness();
-            String inputFile = txtGeneratedFileName.getText();
-            File outFile = new File(inputFile);
-            writer = new BufferedWriter(new FileWriter(outFile));
-
-            //Write Parameters
-            writer.write("//START*PARAMETERS*\n");
-            writer.write(spinnerGenerations.getValue().toString() + "\n");//generation_count
-            writer.write(spinnerPopulationSize.getValue().toString() + "\n"); //population_size
-            writer.write(spinnerReplacementWait.getValue().toString() + "\n"); //replacement_wait
-            writer.write(spinnerMutationProbabilty.getValue().toString() + "\n"); //mutation_probability
-            writer.write(courseSectionListData.size() + "\n"); //section_count
-            writer.write(profList.size() + "\n"); //professor_count
-            writer.write(timeslotList.size() + "\n"); //timeslot_count
-            writer.write(creditTimeslot.size() + "\n"); //credit_count
-            writer.write(maxFitness + "\n"); //maxFitness
-            writer.write("*END*PARAMETERS\n");
-            //Write arrays literally as they need to look like
-            //sectionID, incompSize, incompSections
-            writer.write("//*START*SECTION*\n");
-            writer.write("//sectionID, incompSize[, incompSections]\n");
-            for (int i = 0; i < incompatibleSectionList.size(); i++) {
-                writer.write(i + "," + incompatibleBitString.get(i) + " ");
-                writer.write(("\n"));
-            }
-            writer.write("*END*SECTION*\n");
-
-            writer.write("//*START*SECTIONCREDIT*\n");
-            for (int i = 0; i < sectionCredit.size(); i++) {
-                writer.write(i + "," + df.format(sectionCredit.get(i)) + "\n");
-            }
-            writer.write("*END*SECTIONCREDIT*\n");
-
-            writer.write("//*START*PROFCREDIT*\n");
-            for (Professor p : profList.values()) {
-                writer.write(p.getProfID() + "," + df.format(p.getCredits()) + "\n");
-            }
-            writer.write("*END*PROFCREDIT*\n");
-
-            writer.write("//*START*SECTION*PROF*\n");
-            writer.write("//sectionID, profSize, profs\n");
-            for (int i = 0; i < sectionProf.size(); i++) {
-                writer.write(i + "," + sectionProf.get(i).size());
-                for (int z = 0; z < sectionProf.get(i).size(); z++) {
-                    writer.write("," + sectionProf.get(i).get(z));
-                }
-                writer.write(("\n"));
-            }
-            writer.write("*END*SECTION*PROF*\n");
-            writer.write("//*START*SECTION*TIMESLOT*\n");
-            HashMap<Double, ArrayList<Integer>> creditTimeslotMap = GenerateCreditTimeslotMap();
-            for (int i = 0; i < sectionLookup.size(); i++) {
-                writer.write(i + ",");
-                String course = sectionLookup.get(i);
-                course = course.substring(0, course.indexOf("("));
-                if (courseList.get(course).getTimeslotConstraints().isEmpty()) {
-                    double credit = courseList.get(course).getCreditValue();
-                    writer.write(String.valueOf(creditTimeslotMap.get(credit).size()));
-                    for (Integer time : creditTimeslotMap.get(credit)) {
-                        writer.write("," + time);
-                    }
-                } else {
-                    Vector<String> times = courseList.get(course).getTimeslotConstraints();
-                    writer.write(String.valueOf(times.size()));
-                    for (String t : times) {
-                        writer.write("," + String.valueOf(timeslotList.get(t).getID()));
-                    }
-                }
-                writer.write("\n");
-            }
-            writer.write("*END*SECTION*TIMESLOT*\n");
-            writer.write("//*START*PROF*SECTION*\n");
-            writer.write("//profID, sectionSize, sections\n");
-            for (int i = 0; i < profSection.size(); i++) {
-                writer.write(i + "," + profSection.get(i).size());
-                Collections.sort(profSection.get(i));
-                for (int z = 0; z < profSection.get(i).size(); z++) {
-                    writer.write("," + profSection.get(i).get(z));
-                }
-                writer.write(("\n"));
-            }
-            writer.write("*END*PROF*SECTION*\n");
-            writer.write("//*START*PROF*ASSOCIATE*\n");
-            writer.write("//profID, assocaiteSize, [associatesID, sectionsSize, sectionList]\n");
-            for (int i = 0; i < associatedProf.size(); i++) {
-                writer.write(i + "," + associatedProf.get(i).size());
-                for (int z = 0; z < associatedProf.get(i).size(); z++) {
-                    for (int y = 0; y < associatedProf.get(i).get(z).size(); y++) {
-                        writer.write("," + associatedProf.get(i).get(z).get(y));
-                    }
-                }
-                writer.write(("\n"));
-            }
-            writer.write("*END*PROF*ASSOCIATE*\n");
-
-            writer.write("//*START*COURSEPREF*\n");
-            writer.write("//sectionID, m, a, e\n");
-            for (int i = 0; i < courseSectionListData.size(); i++) {
-                writer.write(i + ",");
-                String course = sectionLookup.get(i);
-                course = course.substring(0, course.indexOf("("));
-                Course c = courseList.get(course);
-                writer.write(c.getPreferences()[0] + "," + c.getPreferences()[1] + "," + c.getPreferences()[2] + "\n");
-            }
-            writer.write("*END*COURSEPREF*\n");
-
-            writer.write("//START*PROFPREF*\n");
-            writer.write("//profID, pref(m-a-e)\n");
-            for (Professor p : profList.values()) {
-                writer.write(p.getProfID() + "," + p.getPreference()[0] + "," + p.getPreference()[1] + "," + p.getPreference()[2] + "\n");
-            }
-            writer.write("*END*PROFPREF*\n");
-
-            writer.write("//*START*TIME*CREDIT*LEGEND*\n");
-            StringBuilder cts = new StringBuilder();
-            int creditCounter = 0;
-            for (Double d : creditTimeslot.keySet()) {
-                writer.write(creditCounter + "," + df.format(d) + "\n");
-                cts.append(creditCounter++).append(",").append(creditTimeslot.get(d).size());
-                for (int i = 0; i < creditTimeslot.get(d).size(); i++) {
-                    cts.append(",").append(creditTimeslot.get(d).get(i));
-                }
-                cts.append("\n");
-            }
-            writer.write("*END*TIME*CREDIT*LEGEND*\n");
-
-            writer.write("//*START*CREDIT*TIMESLOT*\n");
-            writer.write(cts.toString());
-            writer.write("*END*CREDIT*TIMESLOT*\n");
-
-            writer.write("//*START*TIMESLOT*\n");
-            writer.write("//timeslot_id	, credit rating, isMorning, isAfternoon, isEvening, overlap, consecutive, spreadout\n");
-            for (TimeSlot t : timeslotList.values()) {
-                writer.write(t.getID() + "," + df.format(t.getCredits()) + ",");
-                if (t.isMorning()) {
-                    writer.write("1");
-                } else {
-                    writer.write("0");
-                }
-                writer.write(",");
-                if (t.isAfternoon()) {
-                    writer.write("1");
-                } else {
-                    writer.write("0");
-                }
-
-                writer.write(",");
-                if (t.isEvening()) {
-                    writer.write("1");
-                } else {
-                    writer.write("0");
-                }
-                writer.write(",");
-                char[] overlap = new char[timeslotList.size()];
-                char[] consecutive = new char[timeslotList.size()];
-                char[] spreadOut = new char[timeslotList.size()];
-
-                for (TimeSlot ot : timeslotList.values()) {
-                    if (t.isConflict(ot)) {
-                        overlap[ot.getID()] = '1';
-                    } else {
-                        overlap[ot.getID()] = '0';
-                    }
-
-                    if (t.isConsecutive(ot)) {
-                        consecutive[ot.getID()] = '1';
-                    } else {
-                        consecutive[ot.getID()] = '0';
-                    }
-
-                    if (t.isSpreadOut(ot)) {
-                        spreadOut[ot.getID()] = '1';
-                    } else {
-                        spreadOut[ot.getID()] = '0';
-                    }
-                }
-                writer.write(new String(overlap) + "," + new String(consecutive) + "," + new String(spreadOut));
-                writer.write("\n");
-            }
-            writer.write("*END*TIMESLOT*\n");
-
-            writer.write("//*START*INITIAL*\n");
-            for (Schedule s : scheduledCoursesList.values()) {
-                writer.write(courseSectionListData.indexOf(s.course) + ",");
-                writer.write(profList.get(s.prof).getProfID() + ",");
-                writer.write(timeslotList.get(s.time).getID() + "\n");
-            }
-
-            writer.write("*END*INITIAL*\n");
-            //OUTPUT KEY
-            writer.write("*START*KEY*\n");
-            //Output section: sxx%SectionID
-            for (int s : sectionLookup.keySet()) {
-                writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
-            }
-
-            if (profLookup.isEmpty()) {
-                for (String prof : profList.keySet()) {
-                    profLookup.put(profList.get(prof).getProfID(), prof);
-                }
-            }
-            for (int p : profLookup.keySet()) {
-                writer.write("p" + p + "%" + profLookup.get(p) + "\n");
-            }
-
-            if (timeslotLookup.isEmpty()) {
-                for (String ti : timeslotList.keySet()) {
-                    timeslotLookup.put(timeslotList.get(ti).getID(), ti);
-                }
-            }
-            for (int t : timeslotLookup.keySet()) {
-                writer.write("t" + t + "%" + timeslotLookup.get(t) + "," + timeslotList.get(timeslotLookup.get(t)).TimeOfDay() + "\n");
-            }
-
-            writer.write("*END*KEY*\n");
-            JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtGeneratedFileName.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
-            tabbedPanels.setEnabledAt(5, true);
-            btnGenerateInputFile.setEnabled(true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-
-            }
+//        BufferedWriter writer = null;
+//        try {
+//            fixIDs();
+//            TreeSet<String> courses = new TreeSet<>();
+//            for (String c : courseList.keySet()) {
+//                courses.add(c + ", " + String.valueOf(courseList.get(c).getSectionCount()) + "\n");
+//            }
+//            if (sectionLookup.isEmpty()) {
+//                for (String s : courses) {
+//                    String[] parts = s.split(",");
+//                    for (int i = 0; i < courseList.get(parts[0]).getSectionCount(); i++) {
+//                        sectionLookup.put(sectionLookup.size(), parts[0] + "(" + (i + 1) + ")");
+//                    }
+//                }
+//            }
+//            btnGenerateInputFile.setEnabled(false);
+//            incompatibleSectionList.clear();
+//            incompatibleSectionList = generateIncompatibleSectionArray();
+//            ArrayList<String> incompatibleBitString = GenerateIncompatibleSectionBitString();
+//            ArrayList<Double> sectionCredit = generateSectionCreditArray();
+//
+//            ArrayList<ArrayList<Integer>> profSection = GenerateProfessorSectionArray();
+//            ArrayList<ArrayList<Integer>> sectionProf = GenerateSectionProfArray(profSection);
+//            ArrayList<ArrayList<ArrayList<Integer>>> associatedProf = GenerateAssociatedProfArray(sectionProf, profSection);
+//            HashMap<Double, ArrayList<Integer>> creditTimeslot = GenerateCreditTimeslotArray();
+//            int maxFitness = CalculateMaxFitness();
+//            String inputFile = txtFileNameInput.getText();
+//            File outFile = new File(inputFile);
+//            writer = new BufferedWriter(new FileWriter(outFile));
+//
+//            //Write Parameters
+//            writer.write("//START*PARAMETERS*\n");
+//            writer.write(spinnerGenerations.getValue().toString() + "\n");//generation_count
+//            writer.write(spinnerPopulationSize.getValue().toString() + "\n"); //population_size
+//            writer.write(spinnerReplacementWait.getValue().toString() + "\n"); //replacement_wait
+//            writer.write(spinnerMutationProbabilty.getValue().toString() + "\n"); //mutation_probability
+//            writer.write(courseSectionListData.size() + "\n"); //section_count
+//            writer.write(profList.size() + "\n"); //professor_count
+//            writer.write(timeslotList.size() + "\n"); //timeslot_count
+//            writer.write(creditTimeslot.size() + "\n"); //credit_count
+//            writer.write(maxFitness + "\n"); //maxFitness
+//            writer.write("*END*PARAMETERS\n");
+//            //Write arrays literally as they need to look like
+//            //sectionID, incompSize, incompSections
+//            writer.write("//*START*SECTION*\n");
+//            writer.write("//sectionID, incompSize[, incompSections]\n");
+//            for (int i = 0; i < incompatibleSectionList.size(); i++) {
+//                writer.write(i + "," + incompatibleBitString.get(i) + " ");
+//                writer.write(("\n"));
+//            }
+//            writer.write("*END*SECTION*\n");
+//
+//            writer.write("//*START*SECTIONCREDIT*\n");
+//            for (int i = 0; i < sectionCredit.size(); i++) {
+//                writer.write(i + "," + df.format(sectionCredit.get(i)) + "\n");
+//            }
+//            writer.write("*END*SECTIONCREDIT*\n");
+//
+//            writer.write("//*START*PROFCREDIT*\n");
+//            for (Professor p : profList.values()) {
+//                writer.write(p.getProfID() + "," + df.format(p.getCredits()) + "\n");
+//            }
+//            writer.write("*END*PROFCREDIT*\n");
+//
+//            writer.write("//*START*SECTION*PROF*\n");
+//            writer.write("//sectionID, profSize, profs\n");
+//            for (int i = 0; i < sectionProf.size(); i++) {
+//                writer.write(i + "," + sectionProf.get(i).size());
+//                for (int z = 0; z < sectionProf.get(i).size(); z++) {
+//                    writer.write("," + sectionProf.get(i).get(z));
+//                }
+//                writer.write(("\n"));
+//            }
+//            writer.write("*END*SECTION*PROF*\n");
+//            writer.write("//*START*SECTION*TIMESLOT*\n");
+//            HashMap<Double, ArrayList<Integer>> creditTimeslotMap = GenerateCreditTimeslotMap();
+//            for (int i = 0; i < sectionLookup.size(); i++) {
+//                writer.write(i + ",");
+//                String course = sectionLookup.get(i);
+//                course = course.substring(0, course.indexOf("("));
+//                if (courseList.get(course).getTimeslotConstraints().isEmpty()) {
+//                    double credit = courseList.get(course).getCreditValue();
+//                    writer.write(String.valueOf(creditTimeslotMap.get(credit).size()));
+//                    for (Integer time : creditTimeslotMap.get(credit)) {
+//                        writer.write("," + time);
+//                    }
+//                } else {
+//                    Vector<String> times = courseList.get(course).getTimeslotConstraints();
+//                    writer.write(String.valueOf(times.size()));
+//                    for (String t : times) {
+//                        writer.write("," + String.valueOf(timeslotList.get(t).getID()));
+//                    }
+//                }
+//                writer.write("\n");
+//            }
+//            writer.write("*END*SECTION*TIMESLOT*\n");
+//            writer.write("//*START*PROF*SECTION*\n");
+//            writer.write("//profID, sectionSize, sections\n");
+//            for (int i = 0; i < profSection.size(); i++) {
+//                writer.write(i + "," + profSection.get(i).size());
+//                Collections.sort(profSection.get(i));
+//                for (int z = 0; z < profSection.get(i).size(); z++) {
+//                    writer.write("," + profSection.get(i).get(z));
+//                }
+//                writer.write(("\n"));
+//            }
+//            writer.write("*END*PROF*SECTION*\n");
+//            writer.write("//*START*PROF*ASSOCIATE*\n");
+//            writer.write("//profID, assocaiteSize, [associatesID, sectionsSize, sectionList]\n");
+//            for (int i = 0; i < associatedProf.size(); i++) {
+//                writer.write(i + "," + associatedProf.get(i).size());
+//                for (int z = 0; z < associatedProf.get(i).size(); z++) {
+//                    for (int y = 0; y < associatedProf.get(i).get(z).size(); y++) {
+//                        writer.write("," + associatedProf.get(i).get(z).get(y));
+//                    }
+//                }
+//                writer.write(("\n"));
+//            }
+//            writer.write("*END*PROF*ASSOCIATE*\n");
+//
+//            writer.write("//*START*COURSEPREF*\n");
+//            writer.write("//sectionID, m, a, e\n");
+//            for (int i = 0; i < courseSectionListData.size(); i++) {
+//                writer.write(i + ",");
+//                String course = sectionLookup.get(i);
+//                course = course.substring(0, course.indexOf("("));
+//                Course c = courseList.get(course);
+//                writer.write(c.getPreferences()[0] + "," + c.getPreferences()[1] + "," + c.getPreferences()[2] + "\n");
+//            }
+//            writer.write("*END*COURSEPREF*\n");
+//
+//            writer.write("//START*PROFPREF*\n");
+//            writer.write("//profID, pref(m-a-e)\n");
+//            for (Professor p : profList.values()) {
+//                writer.write(p.getProfID() + "," + p.getPreference()[0] + "," + p.getPreference()[1] + "," + p.getPreference()[2] + "\n");
+//            }
+//            writer.write("*END*PROFPREF*\n");
+//
+//            writer.write("//*START*TIME*CREDIT*LEGEND*\n");
+//            StringBuilder cts = new StringBuilder();
+//            int creditCounter = 0;
+//            for (Double d : creditTimeslot.keySet()) {
+//                writer.write(creditCounter + "," + df.format(d) + "\n");
+//                cts.append(creditCounter++).append(",").append(creditTimeslot.get(d).size());
+//                for (int i = 0; i < creditTimeslot.get(d).size(); i++) {
+//                    cts.append(",").append(creditTimeslot.get(d).get(i));
+//                }
+//                cts.append("\n");
+//            }
+//            writer.write("*END*TIME*CREDIT*LEGEND*\n");
+//
+//            writer.write("//*START*CREDIT*TIMESLOT*\n");
+//            writer.write(cts.toString());
+//            writer.write("*END*CREDIT*TIMESLOT*\n");
+//
+//            writer.write("//*START*TIMESLOT*\n");
+//            writer.write("//timeslot_id	, credit rating, isMorning, isAfternoon, isEvening, overlap, consecutive, spreadout\n");
+//            for (TimeSlot t : timeslotList.values()) {
+//                writer.write(t.getID() + "," + df.format(t.getCredits()) + ",");
+//                if (t.isMorning()) {
+//                    writer.write("1");
+//                } else {
+//                    writer.write("0");
+//                }
+//                writer.write(",");
+//                if (t.isAfternoon()) {
+//                    writer.write("1");
+//                } else {
+//                    writer.write("0");
+//                }
+//
+//                writer.write(",");
+//                if (t.isEvening()) {
+//                    writer.write("1");
+//                } else {
+//                    writer.write("0");
+//                }
+//                writer.write(",");
+//                char[] overlap = new char[timeslotList.size()];
+//                char[] consecutive = new char[timeslotList.size()];
+//                char[] spreadOut = new char[timeslotList.size()];
+//
+//                for (TimeSlot ot : timeslotList.values()) {
+//                    if (t.isConflict(ot)) {
+//                        overlap[ot.getID()] = '1';
+//                    } else {
+//                        overlap[ot.getID()] = '0';
+//                    }
+//
+//                    if (t.isConsecutive(ot)) {
+//                        consecutive[ot.getID()] = '1';
+//                    } else {
+//                        consecutive[ot.getID()] = '0';
+//                    }
+//
+//                    if (t.isSpreadOut(ot)) {
+//                        spreadOut[ot.getID()] = '1';
+//                    } else {
+//                        spreadOut[ot.getID()] = '0';
+//                    }
+//                }
+//                writer.write(new String(overlap) + "," + new String(consecutive) + "," + new String(spreadOut));
+//                writer.write("\n");
+//            }
+//            writer.write("*END*TIMESLOT*\n");
+//
+//            writer.write("//*START*INITIAL*\n");
+//            for (Schedule s : scheduledCoursesList.values()) {
+//                writer.write(courseSectionListData.indexOf(s.course) + ",");
+//                writer.write(profList.get(s.prof).getProfID() + ",");
+//                writer.write(timeslotList.get(s.time).getID() + "\n");
+//            }
+//
+//            writer.write("*END*INITIAL*\n");
+//            //OUTPUT KEY
+//            writer.write("*START*KEY*\n");
+//            //Output section: sxx%SectionID
+//            for (int s : sectionLookup.keySet()) {
+//                writer.write("s" + s + "%" + sectionLookup.get(s) + "\n");
+//            }
+//
+//            if (profLookup.isEmpty()) {
+//                for (String prof : profList.keySet()) {
+//                    profLookup.put(profList.get(prof).getProfID(), prof);
+//                }
+//            }
+//            for (int p : profLookup.keySet()) {
+//                writer.write("p" + p + "%" + profLookup.get(p) + "\n");
+//            }
+//
+//            if (timeslotLookup.isEmpty()) {
+//                for (String ti : timeslotList.keySet()) {
+//                    timeslotLookup.put(timeslotList.get(ti).getID(), ti);
+//                }
+//            }
+//            for (int t : timeslotLookup.keySet()) {
+//                writer.write("t" + t + "%" + timeslotLookup.get(t) + "," + timeslotList.get(timeslotLookup.get(t)).TimeOfDay() + "\n");
+//            }
+//
+//            writer.write("*END*KEY*\n");
+        if (GenerateInputFile()) {
+            JOptionPane.showMessageDialog(pnlContainer, "<html><p>Input file generated to<br />" + txtFileNameInput.getText() + ".</p></html>", "Input File Generated Successfully", JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, "Error! Unable to generate input file.");
         }
+//            tabbedPanels.setEnabledAt(5, true);
+//            btnGenerateInputFile.setEnabled(true);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (writer != null) {
+//                    writer.close();
+//                }
+//            } catch (IOException e) {
+//
+//            }
+//        }
     }//GEN-LAST:event_btnGenerateInputFileActionPerformed
 
     private void btnBrowseSetupFileNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBrowseSetupFileNameActionPerformed
         JFileChooser fc = new JFileChooser();
-        if (!txtSetupFileName.getText().isEmpty()) {
-            fc = new JFileChooser(new File(txtSetupFileName.getText()));
+        if (!txtFileNameSetup.getText().isEmpty()) {
+            fc = new JFileChooser(new File(txtFileNameSetup.getText()));
         }
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setFileFilter(new FileNameExtensionFilter("Configuration File", new String[]{"conf"}));
@@ -3885,7 +4625,7 @@ public class GUIForm extends javax.swing.JFrame {
             if (!fileName.endsWith(".conf")) {
                 fileName += ".conf";
             }
-            txtSetupFileName.setText(fileName);
+            txtFileNameSetup.setText(fileName);
         } else if (returnVal == JFileChooser.CANCEL_OPTION) {
             saveAbort = true;
             return;
@@ -5637,49 +6377,7 @@ public class GUIForm extends javax.swing.JFrame {
         DataInputDialog rid = new DataInputDialog(this, "Restrict Initial Schedule", "Please enter the percentage of schedule to keep.", new SpinnerNumberModel(75, 0, 100, 1));
         rid.setVisible(true);
         int percentage = rid.getData();
-        int schedulesToShow = (int) Math.rint((percentage * scheduledCoursesListBackup.size()) / 100.0);
-        Random r = new Random();
-        if (schedulesToShow > scheduledCoursesList.size()) {
-            while (schedulesToShow > dtm.getRowCount()) {
-                //Retrieve schedule
-                int randomUnscheduledIndex = r.nextInt(unscheduledCourses.size());
-                currentSchedule = scheduledCoursesListBackup.get(unscheduledCourses.get(randomUnscheduledIndex));
-
-                dtm.addRow(new String[]{currentSchedule.course, currentSchedule.prof, currentSchedule.time});
-                scheduledCoursesList.put(currentSchedule.course, currentSchedule);
-                unscheduledCourses.removeElement(currentSchedule.course);
-            }
-            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
-            sorter.setSortsOnUpdates(true);
-            tableSchedule.setRowSorter(sorter);
-
-            List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-            int columnIndexToSort = 0;
-            sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
-            sorter.setSortKeys(sortKeys);
-            sorter.sort();
-            listUnscheduledCourses.setListData(unscheduledCourses);
-            spUnscheduledCourses.revalidate();
-            spUnscheduledCourses.repaint();
-        } else if (schedulesToShow < scheduledCoursesList.size()) {
-            //Remove some schedules
-            while (dtm.getRowCount() > schedulesToShow) {
-                int rawIndex = r.nextInt(dtm.getRowCount());
-                int rowToRemove = tableSchedule.convertRowIndexToModel(rawIndex);
-                String courseTitle = dtm.getValueAt(rowToRemove, 0).toString();
-                unscheduledCourses.add(courseTitle);
-                dtm.removeRow(rowToRemove);
-                scheduledCoursesList.remove(courseTitle);
-            }
-            Collections.sort(unscheduledCourses);
-            listUnscheduledCourses.setListData(unscheduledCourses);
-            spUnscheduledCourses.revalidate();
-            spUnscheduledCourses.repaint();
-        } else {
-            String message = "<html>You have chosen to keep " + percentage + "% of the schedule.<br />This will keep "
-                    + schedulesToShow + " of the " + scheduledCoursesList.size() + " schedules.<br />Hence, no changes have been made.";
-            JOptionPane.showMessageDialog(this, message, "No Changes Made", JOptionPane.INFORMATION_MESSAGE);
-        }
+        RestrictInitialSchedule(percentage);
     }//GEN-LAST:event_miAnalysis_RestrictInitialActionPerformed
 
     private void miExport_InitialScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miExport_InitialScheduleActionPerformed
@@ -5990,52 +6688,8 @@ public class GUIForm extends javax.swing.JFrame {
 
         int returnVal = fc.showOpenDialog(pnlContainer);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            try (
-                    FileReader inFile = new FileReader(fc.getSelectedFile());
-                    BufferedReader br = new BufferedReader(inFile);) {
-                String currLine;
-                while ((currLine = br.readLine()) != null) {
-                    String time = currLine.split(",")[0];
-                    double cred = Double.parseDouble(currLine.split(",")[1]);
-                    TimeSlot t = new TimeSlot(timeslotList.size(), cred);
-                    String[] dayTimes = time.replaceAll("\\(", "").replaceAll("\\)", "").split(" ");
-                    for (int i = 0; i < dayTimes.length; i += 2) {
-                        int start = Integer.parseInt(dayTimes[i + 1].trim().split(":")[0]);
-                        int end = Integer.parseInt(dayTimes[i + 1].trim().split(":")[1]);
-                        for (int day = 0; day < dayTimes[i].length(); day++) {
-                            switch (dayTimes[i].charAt(day)) {
-                                case 'M':
-                                    t.SetTime(0, start, end);
-                                    break;
-                                case 'T':
-                                    t.SetTime(1, start, end);
-                                    break;
-                                case 'W':
-                                    t.SetTime(2, start, end);
-                                    break;
-                                case 'R':
-                                    t.SetTime(3, start, end);
-                                    break;
-                                case 'F':
-                                    t.SetTime(4, start, end);
-                                    break;
-                                case 'S':
-                                    t.SetTime(5, start, end);
-                                    break;
-                            }
-                        }
-                    }
-                    timeslotList.put(t.toString(), t);
-                    timeslotListData.add(t.toString());
-                }
-            } catch (IOException e) {
-                System.err.println(e.getMessage());
-                e.printStackTrace();
-            }
-
-            listTimeslots.setListData(timeslotListData);
-            spTimeslotList.revalidate();
-            spTimeslotList.repaint();
+            String timeslotFile = fc.getSelectedFile().getPath();
+            ImportTimeslots(timeslotFile);
         }
     }//GEN-LAST:event_miImport_TimeslotActionPerformed
 
@@ -6063,7 +6717,7 @@ public class GUIForm extends javax.swing.JFrame {
         DecimalFormat df = new DecimalFormat("#.#");
         String message = "<html>Courses: " + courseList.size() + "<br />Professors: " + profList.size();
 
-        message += "<br />Course Credits: " + df.format(courseCredits) + "<br />Professor Credits:" + df.format(profCredits);
+        message += "<br />Total Course Credits: " + df.format(courseCredits) + "<br />Total Professor Credits:" + df.format(profCredits);
         if (Math.abs(profCredits - courseCredits) > 0) {
             if (profCredits > courseCredits) {
                 message += "<br />" + "Professor exceeds by: " + df.format(profCredits - courseCredits);
@@ -6071,17 +6725,70 @@ public class GUIForm extends javax.swing.JFrame {
                 message += "<br />" + "Course exceeds by: " + df.format(courseCredits - profCredits);
             }
         }
-        message += "<br/>Course Credit Distribution: ";
+//        message += "<br />Course Credit Distribution: ";
+//        for (Double key : courseCreditDistribution.keySet()) {
+//            message += "<br />" + String.valueOf(key) + ": " + courseCreditDistribution.get(key) + "(" + Math.round((100.0 * courseCreditDistribution.get(key)) / courseList.size()) + "%)";
+//        }
+//
+//        message += "<br />Prof Credit Distribution: ";
+//        for (Double key : profCreditDistribution.keySet()) {
+//            message += "<br />" + String.valueOf(key) + ": " + profCreditDistribution.get(key) + "(" + Math.round((100.0 * profCreditDistribution.get(key)) / profList.size()) + "%)";
+//        }
+        message += "<br />Course Credit Distribution: ";
         for (Double key : courseCreditDistribution.keySet()) {
-            message += "<br />" + String.valueOf(key) + ": " + courseCreditDistribution.get(key) + "(" + Math.round((100.0 * courseCreditDistribution.get(key)) / courseList.size()) + "%)";
+            message += "<br />" + String.valueOf(key) + ": (" + Math.round((100.0 * courseCreditDistribution.get(key)) / courseList.size()) + "%)";
         }
 
-        message += "<br/>Prof Credit Distribution: ";
+        message += "<br />Prof Credit Distribution: ";
         for (Double key : profCreditDistribution.keySet()) {
-            message += "<br />" + String.valueOf(key) + ": " + profCreditDistribution.get(key) + "(" + Math.round((100.0 * profCreditDistribution.get(key)) / profList.size()) + "%)";
+            message += "<br />" + String.valueOf(key) + ": (" + Math.round((100.0 * profCreditDistribution.get(key)) / profList.size()) + "%)";
         }
 
-        JOptionPane.showMessageDialog(this, message, "Credit Analysis", JOptionPane.INFORMATION_MESSAGE);
+        int minIncomp = Integer.MAX_VALUE, maxIncomp = -1;
+        int minCoursePerProfessor = Integer.MAX_VALUE, maxCoursePerProfessor = -1;
+        int minProfPerCourse = Integer.MAX_VALUE, maxProfPerCourse = -1;
+        HashMap<String, Integer> courseProf = new HashMap<>();
+        for (Professor p : profList.values()) {
+            for (Object course : p.getCoursesTaught()) {
+                if (!courseProf.containsKey(course.toString())) {
+                    courseProf.put(course.toString(), 1);
+                } else {
+                    courseProf.put(course.toString(), courseProf.get(course.toString()) + 1);
+                }
+            }
+            if (minCoursePerProfessor > p.getCoursesTaught().length) {
+                minCoursePerProfessor = p.getCoursesTaught().length;
+            }
+
+            if (maxCoursePerProfessor < p.getCoursesTaught().length) {
+                maxCoursePerProfessor = p.getCoursesTaught().length;
+            }
+        }
+
+        for (Course c : courseList.values()) {
+            if (c.getIncompCourses().size() < minIncomp) {
+                minIncomp = c.getIncompCourses().size();
+            }
+            if (c.getIncompCourses().size() > maxIncomp) {
+                maxIncomp = c.getIncompCourses().size();
+            }
+            if (courseProf.get(c.getTitle()) > maxProfPerCourse) {
+                maxProfPerCourse = courseProf.get(c.getTitle());
+            }
+            if (courseProf.get(c.getTitle()) < minProfPerCourse) {
+                minProfPerCourse = courseProf.get(c.getTitle());
+            }
+        }
+
+        message += "<br />Incompatible Courses Range: [" + minIncomp + "," + maxIncomp + "]";
+        message += "<br />Professors per Course Range: [" + minProfPerCourse + "," + maxProfPerCourse + "]";
+        message += "<br />Courses per Professor Range: [" + minCoursePerProfessor + "," + maxCoursePerProfessor + "]";
+        JOptionPane.showMessageDialog(this, message, "Input Statistics", JOptionPane.INFORMATION_MESSAGE);
+        message = message.replaceAll("<br />", "\n");
+        message = message.replace("<html>", "");
+        StringSelection selection = new StringSelection(message);
+        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clip.setContents(selection, null);
     }//GEN-LAST:event_miAnalysis_CreditsActionPerformed
 
     private Course GenerateRandomCourse(double creditValue) {
@@ -6137,309 +6844,14 @@ public class GUIForm extends javax.swing.JFrame {
             scheduleByTimeslot.put(timeslot, new ArrayList<>());
         }
         scheduleByTimeslot.get(timeslot).add(nSchedule);
-
+        if (!profsPerCourse.containsKey(c.getID())) {
+            profsPerCourse.put(c.getID(), new HashSet<>());
+        }
+        profsPerCourse.get(c.getID()).add(pr.getProfName());
         unscheduledCourses.remove(nSchedule.course);
         scheduledCoursesList.put(nSchedule.course, nSchedule);
         scheduledCoursesListBackup.put(nSchedule.course, nSchedule);
     }
-
-    private void miAnalysis_RandomInitScheduleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_RandomInitScheduleActionPerformed
-        HashMap<Double, ArrayList<String>> creditTimeslotList = new HashMap<>();
-        for (String t : timeslotList.keySet()) {
-            if (!creditTimeslotList.containsKey(timeslotList.get(t).getCredits())) {
-                creditTimeslotList.put(timeslotList.get(t).getCredits(), new ArrayList<>());
-            }
-            creditTimeslotList.get(timeslotList.get(t).getCredits()).add(t);
-        }
-
-        HashMap<String, ArrayList<Schedule>> scheduleByTimeslot = new HashMap<>();
-        HashMap<String, HashSet<String>> profTimeAssigned = new HashMap<>();
-        //First get the number of professors to schedule.
-        DataInputDialog did = new DataInputDialog(this, "Professor Count", "Number of Professors to schedule", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
-        did.setVisible(true);
-        int profCount = did.getData();
-
-        //Get the maximum number of courses to schedule.
-        String[] options = {"Overloaded", "Underloaded", "Balanced"};
-        ScheduleType scheduleType = ScheduleType.values()[JOptionPane.showOptionDialog(this, "Please select the type of schedule.", "Schedule Type",
-                JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[2])];
-
-        int delta = 0;
-        if (scheduleType == ScheduleType.OVERLOAD || scheduleType == ScheduleType.UNDERLOAD) {
-            did = new DataInputDialog(this, "Delta Value", "Please enter the delta value", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
-            did.setVisible(true);
-            delta = did.getData();
-        }
-        int digits = String.valueOf(profCount - 1).length();
-        Random random = new Random();
-        double totalProfCredits = 0.0, totalCourseCredits = 0.0;
-        int[] profCountDistribution = new int[4];
-        profCountDistribution[0] = (int) Math.round(0.02 * profCount);
-        profCountDistribution[1] = (int) Math.round(0.08 * profCount);
-        profCountDistribution[3] = (int) Math.round(0.15 * profCount);
-        profCountDistribution[2] = profCount - (profCountDistribution[0] + profCountDistribution[1] + profCountDistribution[3]);
-        for (int i = 0; i < profCount; i++) {
-            String pID = "p" + String.format("%" + digits + "s", String.valueOf(i)).replace(' ', '0');
-            double creds;
-            int credLocation = random.nextInt(4);
-            switch (credLocation) {
-                case 0:
-                    if (profCountDistribution[0] > 0) {
-                        profCountDistribution[0]--;
-                        creds = 3.0;
-                        break;
-                    }
-                case 1:
-                    if (profCountDistribution[1] > 0) {
-                        profCountDistribution[1]--;
-                        creds = 6.0;
-                        break;
-                    }
-                case 3:
-                    if (profCountDistribution[3] > 0) {
-                        profCountDistribution[3]--;
-                        creds = 12.0;
-                        break;
-                    }
-                default:
-                    profCountDistribution[2]--;
-                    creds = 9.0;
-                    break;
-            }
-
-            Professor pr = new Professor(i, pID, creds);
-            totalProfCredits += creds;
-            double rVal = random.nextDouble();
-            int[][] prefs = {{0, 1, 2}, {1, 0, 2}, {2, 1, 0}, {2, 0, 1}, {0, 2, 1}};
-            if (rVal <= 0.03) {
-                pr.setPreference(prefs[4]);
-            } else if (rVal > 0.03 && rVal <= 0.06) {
-                pr.setPreference(prefs[3]);
-            } else if (rVal > 0.06 && rVal <= 0.14) {
-                pr.setPreference(prefs[1]);
-            } else if (rVal > 0.14 && rVal <= 0.53) {
-                pr.setPreference(prefs[0]);
-            } else if (rVal > 0.53) {
-                pr.setPreference(prefs[2]);
-            }
-
-            double credsScheduled = 0.0;
-            //Based on creds, assign courses
-            if (creds == 3.0) {
-                //1. Generate a course
-                //2. Assign the course to the current professor
-                //3. Schedule the course to a given time slot
-                GenerateAddCourseToProf(pr, creds, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                totalCourseCredits += 3.0;
-            } else if (creds == 6.0) {
-                totalCourseCredits += 6.0;
-                if (random.nextDouble() > 0.8) { //do a 2-4 split
-                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                } else { //do a 3-3 split
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                }
-            } else if (creds == 9.0) {
-                int rand = random.nextInt(3);
-                totalCourseCredits += 9.0;
-                if (rand == 1) { //Do a 2-4-3 split
-                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                } else { //Do a 3-3-3 split
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                }
-            } else if (creds == 12.0) {
-                totalCourseCredits += 12.0;
-                int rand = random.nextInt(4);
-                if (rand == 0) {//Do a 4-4-4 split
-                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                } else if (rand == 1) { //Do a 4-3-3-2 split
-                    GenerateAddCourseToProf(pr, 4.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                } else if (rand >= 2) { //Do a 3-3-3-3 split
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                    GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                }
-            }
-
-            credsScheduled += creds;
-
-            //Underload or overload only 10% of the professors
-            if (random.nextDouble() <= 0.05) {
-                if (scheduleType == ScheduleType.OVERLOAD) {
-                    //Add more courses scheduled to pr to get to the delta limit.
-                    while ((credsScheduled - creds) < delta) {
-                        if (random.nextDouble() > 0.8) {//Schedule a 3 credit class
-                            GenerateAddCourseToProf(pr, 2.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                            credsScheduled += 2.0;
-                            totalCourseCredits += 2.0;
-                        } else { //Schedule a 2 credit class
-                            GenerateAddCourseToProf(pr, 3.0, creditTimeslotList, random, scheduleByTimeslot, profTimeAssigned);
-                            credsScheduled += 3.0;
-                            totalCourseCredits += 2.0;
-                        }
-                    }
-                }
-            }
-
-            profList.put(pID, pr);
-            profListData.add(pID);
-        }
-
-        double courseCreditDifference = totalProfCredits - totalCourseCredits;
-        double courseCreditLimit = (delta * profCount / 4);
-        if (scheduleType == ScheduleType.UNDERLOAD) {
-            //Remove a random course
-            while (courseCreditDifference < courseCreditLimit) {
-                Vector<String> temp = new Vector<>(courseList.keySet());
-                String cID = temp.get(random.nextInt(temp.size()));
-                String sID = cID + "(1)";
-                currentCourse = courseList.get(cID);
-                courseList.remove(cID);
-                courseSectionListData.removeElement(sID);
-                unscheduledCourses.removeElement(sID);
-                scheduleByTimeslot.get(scheduledCoursesList.get(sID).time).remove(scheduledCoursesList.get(sID));
-                profList.get(scheduledCoursesList.get(sID).prof).removeCourseTaught(cID);
-                scheduledCoursesList.remove(sID);
-                scheduledCoursesListBackup.remove(sID);
-                totalCourseCredits -= currentCourse.getCreditValue();
-                courseCreditDifference += currentCourse.getCreditValue();
-                currentCourse = null;
-            }
-        }
-
-        courseListData = new Vector<>(courseList.keySet());
-
-        // Add First 50% of courses, to between 70 and 90 % of professors.
-        double percentageOfProfessors = (random.nextInt(20) / 100) + .70;
-        int percentageOfCourses = 50;
-        Vector<String> courses = new Vector<>(courseListData);
-        int maxLimit = (courses.size() * percentageOfCourses) / 100;
-        int profsAddedTo = (int) Math.round(profListData.size() * percentageOfProfessors);
-        Vector<String> professors = new Vector<>(profListData);
-        while (professors.size() > profsAddedTo) {
-            professors.remove(random.nextInt(professors.size()));
-        }
-        while (courses.size() > maxLimit) {
-            String course = courses.get(random.nextInt(courses.size()));
-            for (String prof : professors) {
-                if (!profList.get(prof).hasCourse(course)) {
-                    profList.get(prof).addCourseTaught(course);
-                }
-            }
-            courses.remove(course);
-        }
-
-        //Add next 35-40% of courses to 50-70% professors
-        percentageOfProfessors = random.nextInt(20) + 50;
-        percentageOfCourses = random.nextInt(10) + 70;
-        maxLimit = (courses.size() * percentageOfCourses) / 100;
-        profsAddedTo = (int) Math.round(profListData.size() * percentageOfProfessors);
-        professors = new Vector<>(profListData);
-        while (professors.size() > profsAddedTo) {
-            professors.remove(random.nextInt(professors.size()));
-        }
-        while (courses.size() > maxLimit) {
-            String course = courses.get(random.nextInt(courses.size()));
-            for (String prof : professors) {
-                if (!profList.get(prof).hasCourse(course)) {
-                    profList.get(prof).addCourseTaught(course);
-                }
-            }
-            courses.remove(course);
-        }
-
-        //Add the next 10-15% of courses to 10-20% professors
-        percentageOfProfessors = random.nextInt(10) + 10;
-        profsAddedTo = (int) Math.round(profListData.size() * percentageOfProfessors);
-        professors = new Vector<>(profListData);
-        while (professors.size() > profsAddedTo) {
-            professors.remove(random.nextInt(professors.size()));
-        }
-        while (courses.size() > 0) {
-            String course = courses.get(random.nextInt(courses.size()));
-            for (String prof : professors) {
-                if (!profList.get(prof).hasCourse(course)) {
-                    profList.get(prof).addCourseTaught(course);
-                }
-            }
-            courses.remove(course);
-        }
-
-        for (int i = 0; i < courseListData.size(); i++) {
-            String cID = courseListData.get(i);
-            String sID = cID + "(1)";
-            String timeAssigned = scheduledCoursesList.get(sID).time;
-            dtm.addRow(new String[]{scheduledCoursesList.get(sID).course, scheduledCoursesList.get(sID).prof, scheduledCoursesList.get(sID).time});
-            for (int times = 0; times < timeslotListData.size(); times++) {
-                if (!timeslotList.get(timeAssigned).isConflict(timeslotList.get(timeslotListData.get(times))) && scheduleByTimeslot.containsKey(timeslotListData.get(times))) {
-                    double probability = random.nextDouble();
-                    if (probability <= 0.02) {
-                        //pick a random course scheduled for the second slot
-                        ArrayList<Schedule> schedules = scheduleByTimeslot.get(timeslotListData.get(times));
-                        int randomIndex = random.nextInt(schedules.size());
-                        String altCID = schedules.get(randomIndex).course;
-                        altCID = altCID.replace("(1)", " ").trim();
-                        courseList.get(cID).addIncompatibleCourse(altCID);
-                        courseList.get(altCID).addIncompatibleCourse(cID);
-                    }
-                }
-            }
-        }
-        listCourses.setListData(courseListData);
-        listProfs.setListData(profListData);
-        spCourseList.revalidate();
-        spCourseList.repaint();
-
-        spProfList.revalidate();
-        spProfList.repaint();
-        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tableSchedule.getModel());
-        sorter.setSortsOnUpdates(true);
-        tableSchedule.setRowSorter(sorter);
-
-        List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-        int columnIndexToSort = 0;
-        sortKeys.add(new RowSorter.SortKey(columnIndexToSort, SortOrder.ASCENDING));
-        sorter.setSortKeys(sortKeys);
-        sorter.sort();
-
-//        HashMap<String, ArrayList<String>> sectionProf = new HashMap<>();
-//        for (String prof : profList.keySet()) {
-//            Professor p = profList.get(prof);
-//            Object[] taught = p.getCoursesTaught(); 
-//            for (int i = 0; i < taught.length; i++) {
-//                String courseID = taught[i].toString();
-//                if (!sectionProf.containsKey(courseID)) {
-//                    sectionProf.put(courseID, new ArrayList<>());
-//                }
-//                sectionProf.get(courseID).add(prof);
-//            }
-//        }
-//
-//        HashMap<String, ArrayList<String>> sectionTimeslot = new HashMap<>();
-//        for (String course : courseList.keySet()) {
-//            Course c = courseList.get(course);
-//            if (!sectionTimeslot.containsKey(course)) {
-//                sectionTimeslot.put(course, new ArrayList<>());
-//            }
-//            sectionTimeslot.put(course, creditTimeslotList.get(c.getCreditValue()));
-//        }
-//
-//        if (incompatibleSectionList.isEmpty()) {
-//            incompatibleSectionList = GenerateIncompatibleSectionArray();
-//        }
-//        FillEmpty(sectionProf, sectionTimeslot);
-    }//GEN-LAST:event_miAnalysis_RandomInitScheduleActionPerformed
 
     private void miAnalysis_InitialSchedulePreferenceSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_InitialSchedulePreferenceSelectionActionPerformed
         if (scheduledCoursesList.isEmpty()) {
@@ -6499,6 +6911,240 @@ public class GUIForm extends javax.swing.JFrame {
         JOptionPane.showMessageDialog(this, message, "Initial Schedule Preference Analysis", JOptionPane.INFORMATION_MESSAGE);
 
     }//GEN-LAST:event_miAnalysis_InitialSchedulePreferenceSelectionActionPerformed
+
+    private void miAnalysis_GenerateAllInputsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_miAnalysis_GenerateAllInputsActionPerformed
+
+        long startTime = 0;
+        JFileChooser directoryChooser = new JFileChooser();
+        directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        directoryChooser.setDialogTitle("Select Destination Folder");
+        directoryChooser.setAcceptAllFileFilterUsed(false);
+
+        if (directoryChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            String destination = directoryChooser.getSelectedFile().getPath();
+            String pathData = destination + "\\Data";
+            String pathInputs = destination + "\\Input";
+            int confirm = JOptionPane.showConfirmDialog(this, "<html>The following directories will be created if they don't exist:<br />Data: " + pathData + "<br />Input: " + pathInputs);
+            if (confirm == JOptionPane.NO_OPTION || confirm == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+            File data = new File(pathData);
+            File input = new File(pathInputs);
+
+            if (!data.exists()) {
+                if (!data.mkdir()) {
+                    JOptionPane.showMessageDialog(this, "Nope.");
+                }
+            }
+
+            if (!input.exists()) {
+                if (!input.mkdir()) {
+                    JOptionPane.showMessageDialog(this, "Nope Again.");
+                }
+            }
+
+            pathData += "\\";
+            pathInputs += "\\";
+
+            DataInputDialog did = new DataInputDialog(this, "Total Professor Data Sets", "Enter total number of data sets of different professor size", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+            did.setVisible(true);
+            int profSizeCount = did.getData();
+            int[] profSizes = new int[profSizeCount];
+            for (int i = 0; i < profSizeCount; i++) {
+                did = new DataInputDialog(this, "Professor Size " + String.valueOf(i + 1), "Enter total number of professors", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+                did.setVisible(true);
+                profSizes[i] = did.getData();
+            }
+
+            did = new DataInputDialog(this, "Total Delta Values", "Enter total number of delta values", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+            did.setVisible(true);
+            int deltaValueCount = did.getData();
+            int[] deltaValues = new int[deltaValueCount];
+            for (int i = 0; i < deltaValueCount; i++) {
+                did = new DataInputDialog(this, "Delta Value " + String.valueOf(i + 1), "Enter delta value ", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+                did.setVisible(true);
+                deltaValues[i] = did.getData();
+            }
+
+            did = new DataInputDialog(this, "Total Instances", "Enter total number of instances", new SpinnerNumberModel(1, 1, Integer.MAX_VALUE, 1));
+            did.setVisible(true);
+            int instancesCount = did.getData();
+            String timeslotFile = "";
+            directoryChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            directoryChooser.setFileFilter(new FileNameExtensionFilter("Text File", new String[]{"txt"}));
+            directoryChooser.setDialogTitle("Select the Time Slots File");
+
+            int returnVal = directoryChooser.showOpenDialog(pnlContainer);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                timeslotFile = directoryChooser.getSelectedFile().getPath();
+            } else {
+                return;
+            }
+            startTime = System.nanoTime();
+            int[][][][] prof_Course_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] prof_Fitness_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] prof_Incomp_Min_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] prof_Incomp_Max_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] prof_per_Course_Min_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] prof_per_Course_Max_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] course_per_Prof_Min_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+            int[][][][] course_per_Prof_Max_Instance = new int[profSizeCount][instancesCount][deltaValueCount][3];
+
+            for (int instance = 0; instance < instancesCount; instance++) {
+                for (int p = 0; p < profSizeCount; p++) {
+                    for (int d = 0; d < deltaValueCount; d++) {
+                        char ins = (char) ('A' + instance);
+                        ResetAllData();
+                        ImportTimeslots(timeslotFile);
+                        GenerateRandomInitialSchedule(profSizes[p], ScheduleType.BALANCED, deltaValues[d]);
+                        prof_Course_Instance[p][instance][d][0] = courseList.size();
+                        prof_Fitness_Instance[p][instance][d][0] = CalculateMaxFitness();
+                        prof_Incomp_Min_Instance[p][instance][d][0] = GetIncomp(true);
+                        prof_Incomp_Max_Instance[p][instance][d][0] = GetIncomp(false);
+                        prof_per_Course_Min_Instance[p][instance][d][0] = GetProfPerCourse(true);
+                        prof_per_Course_Max_Instance[p][instance][d][0] = GetProfPerCourse(false);
+                        course_per_Prof_Min_Instance[p][instance][d][0] = GetCoursePerProf(true);
+                        course_per_Prof_Max_Instance[p][instance][d][0] = GetCoursePerProf(false);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_balanced_complete.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_balanced_complete.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        RestrictInitialSchedule(75);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_balanced_partial.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_balanced_partial.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        RestrictInitialSchedule(0);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_balanced_empty.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_balanced_empty.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        ResetAllData();
+                        ImportTimeslots(timeslotFile);
+
+                        GenerateRandomInitialSchedule(profSizes[p], ScheduleType.OVERLOAD, deltaValues[d]);
+                        prof_Course_Instance[p][instance][d][1] = courseList.size();
+                        prof_Fitness_Instance[p][instance][d][1] = CalculateMaxFitness();
+                        prof_Incomp_Min_Instance[p][instance][d][1] = GetIncomp(true);
+                        prof_Incomp_Max_Instance[p][instance][d][1] = GetIncomp(false);
+                        prof_per_Course_Min_Instance[p][instance][d][1] = GetProfPerCourse(true);
+                        prof_per_Course_Max_Instance[p][instance][d][1] = GetProfPerCourse(false);
+                        course_per_Prof_Min_Instance[p][instance][d][1] = GetCoursePerProf(true);
+                        course_per_Prof_Max_Instance[p][instance][d][1] = GetCoursePerProf(false);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_overload_complete.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_overload_complete.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        RestrictInitialSchedule(75);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_overload_partial.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_balanced_partial.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        RestrictInitialSchedule(0);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_overload_empty.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_overload_empty.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        ResetAllData();
+                        ImportTimeslots(timeslotFile);
+
+                        GenerateRandomInitialSchedule(profSizes[p], ScheduleType.UNDERLOAD, deltaValues[d]);
+                        prof_Course_Instance[p][instance][d][2] = courseList.size();
+                        prof_Fitness_Instance[p][instance][d][2] = CalculateMaxFitness();
+                        prof_Incomp_Min_Instance[p][instance][d][2] = GetIncomp(true);
+                        prof_Incomp_Max_Instance[p][instance][d][2] = GetIncomp(false);
+                        prof_per_Course_Min_Instance[p][instance][d][2] = GetProfPerCourse(true);
+                        prof_per_Course_Max_Instance[p][instance][d][2] = GetProfPerCourse(false);
+                        course_per_Prof_Min_Instance[p][instance][d][2] = GetCoursePerProf(true);
+                        course_per_Prof_Max_Instance[p][instance][d][2] = GetCoursePerProf(false);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_underload_complete.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_underload_complete.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        RestrictInitialSchedule(75);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_underload_partial.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_underload_partial.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                        RestrictInitialSchedule(0);
+                        txtFileNameInput.setText(pathInputs + String.valueOf(profSizes[p]) + ins + "_underload_empty.dat");
+                        txtFileNameSetup.setText(pathData + String.valueOf(profSizes[p]) + ins + "_underload_empty.conf");
+                        //btnGenerateInputFileActionPerformed(evt);
+                        GenerateInputFile();
+                        SaveSetupFile();
+                        //btnSaveSetupActionPerformed(evt);
+                    }
+                }
+            }
+            BufferedWriter writer = null;
+            DecimalFormat df = new DecimalFormat("#.##");
+            try {
+                String inputFile = destination + "\\Statistics.txt";
+                File outFile = new File(inputFile);
+                writer = new BufferedWriter(new FileWriter(outFile));
+                String[] loads = {"Balanced", "Overload", "Underload"};
+                String[] lines = new String[6];
+                for (int p = 0; p < profSizeCount; p++) {
+                    writer.write("Professor Count: " + String.valueOf(profSizes[p]) + "\n");
+                    for (int d = 0; d < deltaValueCount; d++) {
+                        writer.write("Delta Value: " + String.valueOf(deltaValues[d]) + "\n");
+                        for (int l = 0; l < loads.length; l++) {
+                            writer.write("Load: " + loads[l] + "\n");
+                            lines[0] = " ";
+                            lines[1] = "Total Courses: &";
+                            lines[2] = "Maximum Fitness $\\left(f_{max}\\right)$ &";
+                            lines[3] = "Range of Incompatible Courses per Course &";
+                            lines[4] = "Range of \\# of Professors per Course &";
+                            lines[5] = "Range of \\# of Courses per Professor";
+                            for (int instance = 0; instance < instancesCount; instance++) {
+                                lines[0] += " & " + (char) ('A' + instance);
+                                lines[1] += " & " + String.valueOf(prof_Course_Instance[p][instance][d][l]);
+                                lines[2] += " & $" + NumberFormat.getInstance().format(prof_Fitness_Instance[p][instance][d][l]) + "$ "; //String.valueOf(prof_Fitness_Instance[p][instance][d][l]);
+                                lines[3] += " & [$" + String.valueOf(prof_Incomp_Min_Instance[p][instance][d][l]) + ", " + String.valueOf(prof_Incomp_Max_Instance[p][instance][d][l]) + "$] ";
+                                lines[4] += " & [$" + String.valueOf(prof_per_Course_Min_Instance[p][instance][d][l]) + ", " + String.valueOf(prof_per_Course_Max_Instance[p][instance][d][l]) + "$] ";
+                                lines[5] += " & [$" + String.valueOf(course_per_Prof_Min_Instance[p][instance][d][l]) + ", " + String.valueOf(course_per_Prof_Max_Instance[p][instance][d][l]) + "$] ";
+                            }
+                            writer.write(lines[0] + "\\\\\n");
+                            writer.write(lines[1] + "\\\\\n");
+                            writer.write(lines[2] + "\\\\\n");
+                            writer.write(lines[3] + "\\\\\n");
+                            writer.write(lines[4] + "\\\\\n");
+                            writer.write(lines[5] + "\\\\\n");
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+
+                }
+            }
+        }
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime) / 1000000000;
+        JOptionPane.showMessageDialog(this, "Execution Took: " + duration + " seconds.", "Execution Time", JOptionPane.PLAIN_MESSAGE);
+    }//GEN-LAST:event_miAnalysis_GenerateAllInputsActionPerformed
 
     private void updateCourseTimePreferenceBoxes() {
         if (chkCourseNoPreference.isSelected()) {
@@ -7058,8 +7704,8 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JMenu menuFile;
     private javax.swing.JMenu menuImport;
     private javax.swing.JMenuItem miAnalysis_Credits;
+    private javax.swing.JMenuItem miAnalysis_GenerateAllInputs;
     private javax.swing.JMenuItem miAnalysis_InitialSchedulePreferenceSelection;
-    private javax.swing.JMenuItem miAnalysis_RandomInitSchedule;
     private javax.swing.JMenuItem miAnalysis_RestrictInitial;
     private javax.swing.JMenuItem miExport_Course;
     private javax.swing.JMenuItem miExport_Course_Incompibility;
@@ -7177,12 +7823,12 @@ public class GUIForm extends javax.swing.JFrame {
     private javax.swing.JTextField txtCourseGeneratedID;
     private javax.swing.JTextField txtCourseID;
     private javax.swing.JTextField txtCourseTitle;
-    private javax.swing.JTextField txtGeneratedFileName;
+    private javax.swing.JTextField txtFileNameInput;
+    private javax.swing.JTextField txtFileNameSetup;
     private javax.swing.JTextField txtProfGeneratedID;
     private javax.swing.JTextField txtProfName;
     private javax.swing.JTextField txtResultPath;
     private javax.swing.JTextField txtResultStatus;
-    private javax.swing.JTextField txtSetupFileName;
     private javax.swing.JTextField txtTSGeneratedID;
     private javax.swing.JTextField txtTimeSlotCreditValue;
     private javax.swing.ButtonGroup viewByGroup;

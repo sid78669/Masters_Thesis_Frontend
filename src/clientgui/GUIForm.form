@@ -184,6 +184,14 @@
             <Property name="text" type="java.lang.String" value="Analysis"/>
           </Properties>
           <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_GenerateAllInputs">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Generate All Input Files"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_GenerateAllInputsActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RestrictInitial">
               <Properties>
                 <Property name="accelerator" type="javax.swing.KeyStroke" editor="org.netbeans.modules.form.editors.KeyStrokeEditor">
@@ -195,17 +203,9 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RestrictInitialActionPerformed"/>
               </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_RandomInitSchedule">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Generate Random Initial Schedule"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_RandomInitScheduleActionPerformed"/>
-              </Events>
-            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="miAnalysis_Credits">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Credit Analysis"/>
+                <Property name="text" type="java.lang.String" value="Data Statistics"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="miAnalysis_CreditsActionPerformed"/>
@@ -2775,14 +2775,14 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="lbSetupFileName" min="-2" pref="91" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="txtSetupFileName" max="32767" attributes="0"/>
+                                  <Component id="txtFileNameSetup" max="32767" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="btnBrowseSetupFileName" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="lblGeneratedFileName" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Component id="txtGeneratedFileName" max="32767" attributes="0"/>
+                                  <Component id="txtFileNameInput" max="32767" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="btnBrowseGeneratedFileName" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -2798,7 +2798,7 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="lblGeneratedFileName" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="btnBrowseGeneratedFileName" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="txtGeneratedFileName" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="txtFileNameInput" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="pnlAdvancedConfig" min="-2" max="-2" attributes="0"/>
@@ -2808,7 +2808,7 @@
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="lbSetupFileName" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="btnBrowseSetupFileName" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="txtSetupFileName" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="txtFileNameSetup" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                           <Component id="btnSaveSetup" min="-2" pref="65" max="-2" attributes="0"/>
@@ -2943,12 +2943,12 @@
                 <Component class="javax.swing.JLabel" name="lbSetupFileName">
                   <Properties>
                     <Property name="labelFor" type="java.awt.Component" editor="org.netbeans.modules.form.ComponentChooserEditor">
-                      <ComponentRef name="txtSetupFileName"/>
+                      <ComponentRef name="txtFileNameSetup"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="Setup File Name"/>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JTextField" name="txtSetupFileName">
+                <Component class="javax.swing.JTextField" name="txtFileNameSetup">
                 </Component>
                 <Component class="javax.swing.JButton" name="btnBrowseSetupFileName">
                   <Properties>
@@ -2987,7 +2987,7 @@
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnBrowseGeneratedFileNameActionPerformed"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JTextField" name="txtGeneratedFileName">
+                <Component class="javax.swing.JTextField" name="txtFileNameInput">
                 </Component>
               </SubComponents>
             </Container>
